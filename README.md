@@ -48,6 +48,8 @@ feeds an explainable fraud score.
 
 Full requirements and design: [`docs/FinDoc_Guard_SRS_SDD.pdf`](docs/FinDoc_Guard_SRS_SDD.pdf).
 
+**Learning guide:** every file is explained, phase by phase, in [`docs/learn/`](docs/learn/README.md).
+
 ## Course outcome coverage
 
 | CO | Outcome | Where it's applied |
