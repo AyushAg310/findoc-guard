@@ -17,10 +17,40 @@ def test_version() -> None:
     assert __version__ in result.output
 
 
-def test_process_writes_json(sample_image: Path, tmp_path: Path) -> None:
+def test_process_writes_json_and_images(synth_photo_path: Path, tmp_path: Path) -> None:
     out = tmp_path / "result.json"
-    result = runner.invoke(app, ["process", str(sample_image), "--out", str(out)])
+    save = tmp_path / "imgs"
+    result = runner.invoke(
+        app, ["process", str(synth_photo_path), "--out", str(out), "--save-dir", str(save)]
+    )
     assert result.exit_code == 0, result.output
     data = json.loads(out.read_text())
     assert data["status"] == "ok"
-    assert data["stages"][0]["stage"] == "load"
+    assert [s["stage"] for s in data["stages"]][:5] == [
+        "load",
+        "quality",
+        "detect",
+        "rectify",
+        "enhance",
+    ]
+    names = sorted(p.name for p in save.iterdir())
+    assert names == ["synth_detected.jpg", "synth_enhanced.png", "synth_flat.png"]
+
+
+def test_process_no_ocr_flag(synth_photo_path: Path) -> None:
+    result = runner.invoke(app, ["process", str(synth_photo_path), "--no-ocr"])
+    assert result.exit_code == 0
+    assert "OCR skipped" not in result.output
+
+
+def test_blurry_photo_exit_code_zero_with_warning(blurry_photo_path: Path) -> None:
+    result = runner.invoke(app, ["process", str(blurry_photo_path)])
+    assert result.exit_code == 0  # rejection is a valid outcome, not a crash
+    assert "rejected_quality" in result.output
+
+
+def test_synth_command(tmp_path: Path) -> None:
+    result = runner.invoke(app, ["synth", "--n", "2", "--out", str(tmp_path), "--seed", "4"])
+    assert result.exit_code == 0, result.output
+    assert (tmp_path / "labels.json").exists()
+    assert len(list(tmp_path.glob("*.jpg"))) == 2

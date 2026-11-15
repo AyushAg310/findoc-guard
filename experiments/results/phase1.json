@@ -1,0 +1,32 @@
+{
+  "n": 200,
+  "detection": {
+    "success_rate": 1.0,
+    "mean_corner_error_pct_diag": 0.103,
+    "median_corner_error_pct_diag": 0.091,
+    "p95_corner_error_pct_diag": 0.19,
+    "methods": {
+      "edges": 199,
+      "threshold": 1
+    }
+  },
+  "quality_gate_acceptance_by_blur_sigma": {
+    "0.0": 1.0,
+    "1.0": 1.0,
+    "1.5": 0.18,
+    "2.0": 0.0,
+    "3.0": 0.0,
+    "5.0": 0.0
+  },
+  "illumination": {
+    "background_std_before": 24.07,
+    "background_std_after": 0.72,
+    "reduction_pct": 97.0
+  },
+  "median_latency_ms": {
+    "quality": 24.1,
+    "detect": 4.1,
+    "rectify": 15.6,
+    "enhance": 96.4
+  }
+}
