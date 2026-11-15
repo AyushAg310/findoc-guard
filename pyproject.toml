@@ -1,0 +1,71 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "findoc-guard"
+version = "0.1.0"
+description = "3D-aware cheque and invoice processing with explainable fraud detection"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Ayush", email = "AyushAg310@users.noreply.github.com" }]
+keywords = ["computer-vision", "document-ai", "ocr", "3d-reconstruction", "fraud-detection", "fintech"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Image Recognition",
+]
+dependencies = [
+    "numpy>=1.26",
+    "opencv-python-headless>=4.9",
+    "pillow>=10.0",
+    "pydantic>=2.6",
+    "pydantic-settings>=2.2",
+    "typer>=0.12",
+    "rich>=13.7",
+]
+
+[project.optional-dependencies]
+# Phase 1: OCR engine (pulls in PyTorch)
+ocr = ["easyocr>=1.7"]
+# Demo UI
+ui = ["streamlit>=1.35"]
+# Phase 4: 3D reconstruction
+recon3d = ["pycolmap>=0.6", "open3d>=0.18", "trimesh>=4.0"]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.5",
+    "mypy>=1.10",
+    "pre-commit>=3.7",
+]
+
+[project.scripts]
+findoc = "findoc.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/AyushAg310/findoc-guard"
+Issues = "https://github.com/AyushAg310/findoc-guard/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["findoc"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "N", "SIM"]
+ignore = ["B008"]  # typer uses function calls in argument defaults
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --cov=findoc --cov-report=term-missing"
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+strict_optional = true

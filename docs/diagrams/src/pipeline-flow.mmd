@@ -1,0 +1,29 @@
+flowchart TD
+    subgraph S1[1. Capture and quality gate]
+    direction LR
+    A([Upload photo<br/>or video]) --> B[Quality score:<br/>blur, glare, coverage] --> C[Route by<br/>input type]
+    end
+    RT([Retake with reason])
+    subgraph S2[2a. Video path: 3D, CO-4 and CO-5]
+    direction LR
+    D[KLT tracking<br/>+ keyframes] --> E[SfM + MVS<br/>+ ARAP flatten] --> F[Confidence<br/>check]
+    end
+    subgraph S3[2b. Photo path and fallback]
+    direction LR
+    P[Curvature<br/>check] --> G[Single-image 3D net<br/>if curved] --> P1[Else perspective<br/>correction]
+    end
+    subgraph S4[3. Extraction]
+    direction LR
+    H([Flat page +<br/>corr map]) --> I[Doc type +<br/>bank template] --> J[Cheque: template align<br/>Invoice: LayoutLMv3] --> L[OCR, HTR, MICR,<br/>amount parser]
+    end
+    subgraph S5[4. Fraud checks and decision]
+    direction LR
+    M[Validation rules<br/>amount, date, IFSC, GSTIN] --> N[Tamper heatmap<br/>mapped to flat page] --> O[Duplicate +<br/>signature] --> R[Risk score<br/>0 to 100] --> Z([Low: auto-approve<br/>Medium: review<br/>High: escalate])
+    end
+    S1 -. quality fails .-> RT
+    S1 -- video --> S2
+    S1 -- photo --> S3
+    S2 -- confident --> S4
+    S2 -. low confidence .-> S3
+    S3 --> S4
+    S4 --> S5

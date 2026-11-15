@@ -1,0 +1,106 @@
+erDiagram
+    ORGANIZATION ||--o{ USER : has
+    ORGANIZATION ||--o{ BANK_TEMPLATE : configures
+    ORGANIZATION ||--o{ RULE_CONFIG : configures
+    USER ||--o{ DOCUMENT : submits
+    DOCUMENT ||--o{ CAPTURE : "has media"
+    DOCUMENT ||--o| RECONSTRUCTION : "may have"
+    DOCUMENT ||--o{ EXTRACTED_FIELD : contains
+    DOCUMENT ||--o{ CHECK_RESULT : produces
+    DOCUMENT ||--|| RISK_ASSESSMENT : "scored by"
+    DOCUMENT ||--o{ REVIEW_DECISION : "reviewed in"
+    DOCUMENT ||--o| DOC_FINGERPRINT : indexed
+    BANK_TEMPLATE ||--o{ DOCUMENT : "matched to"
+    USER ||--o{ REVIEW_DECISION : makes
+
+    DOCUMENT {
+        uuid id PK
+        uuid org_id FK
+        uuid submitted_by FK
+        string doc_type
+        uuid template_id FK
+        string status
+        string flat_image_uri
+        jsonb model_versions
+        timestamp created_at
+    }
+    CAPTURE {
+        uuid id PK
+        uuid document_id FK
+        string media_type
+        string uri
+        float quality_score
+        jsonb keyframes
+    }
+    RECONSTRUCTION {
+        uuid id PK
+        uuid document_id FK
+        string method
+        float reproj_error_px
+        float coverage
+        float confidence
+        string mesh_uri
+        string corr_map_uri
+    }
+    EXTRACTED_FIELD {
+        uuid id PK
+        uuid document_id FK
+        string name
+        string value
+        string corrected_value
+        float confidence
+        jsonb bbox
+    }
+    CHECK_RESULT {
+        uuid id PK
+        uuid document_id FK
+        string check_id
+        bool fired
+        float severity
+        float confidence
+        string reason
+        jsonb evidence
+    }
+    RISK_ASSESSMENT {
+        uuid document_id PK
+        int score
+        string band
+        jsonb contributions
+    }
+    DOC_FINGERPRINT {
+        uuid document_id PK
+        bigint phash
+        string descriptor_uri
+    }
+    REVIEW_DECISION {
+        uuid id PK
+        uuid document_id FK
+        uuid reviewer_id FK
+        string decision
+        string comment
+        timestamp decided_at
+    }
+    BANK_TEMPLATE {
+        uuid id PK
+        string bank_name
+        string reference_uri
+        jsonb field_boxes
+        int version
+    }
+    RULE_CONFIG {
+        uuid id PK
+        uuid org_id FK
+        jsonb weights
+        jsonb thresholds
+    }
+    USER {
+        uuid id PK
+        uuid org_id FK
+        string email
+        string role
+        string password_hash
+    }
+    ORGANIZATION {
+        uuid id PK
+        string name
+    }

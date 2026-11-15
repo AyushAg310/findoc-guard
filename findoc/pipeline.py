@@ -1,0 +1,74 @@
+"""Pipeline orchestration.
+
+A pipeline is an ordered list of stages. Each stage is a callable that takes a
+:class:`~findoc.types.Document` and returns it (usually mutated). Stages are added
+phase by phase; Phase 0 only loads the input.
+
+Stage roadmap (see README):
+    Phase 1  preprocess   quality score, detection, rectification, OCR
+    Phase 2  localize     cheque template alignment, field recognition, rules
+    Phase 3  track        KLT tracking and keyframe selection (video)
+    Phase 4  recon3d      SfM + MVS + mesh + ARAP flattening
+    Phase 5  fraud        tamper map, duplicates, signature, risk score
+    Phase 6  invoices     LayoutLMv3 extraction, GST checks
+"""
+
+from __future__ import annotations
+
+import time
+from collections.abc import Callable
+from pathlib import Path
+
+from findoc.io import detect_kind, load_image
+from findoc.logging import get_logger
+from findoc.types import Document, InputKind, StageLog, Status
+
+log = get_logger(__name__)
+
+Stage = Callable[[Document], Document]
+
+
+def load_stage(doc: Document) -> Document:
+    if doc.kind is InputKind.IMAGE:
+        doc.original = load_image(doc.source)
+        h, w = doc.original.shape[:2]
+        doc.messages.append(f"Loaded image {w}x{h}")
+    else:
+        doc.messages.append("Video input registered (processing arrives in Phase 3)")
+    return doc
+
+
+class Pipeline:
+    def __init__(self, stages: list[tuple[str, Stage]] | None = None) -> None:
+        self.stages: list[tuple[str, Stage]] = stages or [("load", load_stage)]
+
+    def add(self, name: str, stage: Stage) -> Pipeline:
+        self.stages.append((name, stage))
+        return self
+
+    def run(self, source: Path) -> Document:
+        doc = Document(source=source, kind=detect_kind(source))
+        for name, stage in self.stages:
+            if doc.status is not Status.OK:
+                break
+            t0 = time.perf_counter()
+            try:
+                doc = stage(doc)
+                ok, note = True, ""
+            except Exception as exc:  # noqa: BLE001 - record failure, don't crash
+                log.exception("Stage %s failed", name)
+                doc.status = Status.FAILED
+                ok, note = False, str(exc)
+            doc.stages.append(
+                StageLog(stage=name, ms=(time.perf_counter() - t0) * 1000, ok=ok, note=note)
+            )
+        return doc
+
+
+def default_pipeline() -> Pipeline:
+    return Pipeline()
+
+
+def process(source: str | Path) -> Document:
+    """Run the default pipeline on one input file."""
+    return default_pipeline().run(Path(source))

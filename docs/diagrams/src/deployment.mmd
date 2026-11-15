@@ -1,0 +1,14 @@
+flowchart TD
+    B[Browser / mobile web] -->|HTTPS| N[Nginx reverse proxy]
+    N --> F[React static frontend]
+    N --> A[FastAPI API container]
+    A --> P[(PostgreSQL)]
+    A --> M[(MinIO object storage)]
+    A --> R[(Redis queue)]
+    R --> W1[GPU worker: recon3d + forensics]
+    R --> W2[GPU/CPU worker: OCR + LayoutLMv3 + rules]
+    W1 --> M
+    W2 --> M
+    W1 --> P
+    W2 --> P
+    A --> PR[Prometheus /metrics]

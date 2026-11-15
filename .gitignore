@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+.ipynb_checkpoints/
+
+# Environment / secrets
+.env
+*.key
+
+# Data, models and run outputs (never commit real documents)
+data/raw/
+data/processed/
+data/synthetic/
+models/
+weights/
+*.pt
+*.pth
+*.onnx
+*.ckpt
+outputs/
+runs/
+mlruns/
+wandb/
+
+# 3D artefacts
+*.ply
+*.glb
+colmap_workspace/
+
+# Video
+*.mp4
+*.mov
+*.avi
+
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

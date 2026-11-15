@@ -1,0 +1,22 @@
+flowchart TD
+    subgraph S1[1. Sparse matching]
+    direction LR
+    K0([Keyframes + masks]) --> K1[SuperPoint<br/>keypoints] --> K2[LightGlue<br/>matching] --> K3[RANSAC<br/>verification]
+    end
+    subgraph S2[2. Camera geometry]
+    direction LR
+    K5[Incremental SfM<br/>PnP + triangulation] --> K6[Bundle<br/>adjustment] --> K7[Quality gate: reproj.<br/>below 1 px, 70 pct views]
+    end
+    subgraph S3[3. Dense surface]
+    direction LR
+    K9[PatchMatch MVS<br/>document region] --> K10[Depth fusion<br/>dense cloud] --> K11[Outlier removal<br/>+ normals] --> K12[Poisson or<br/>developable fit]
+    end
+    subgraph S4[4. Flattening and output]
+    direction LR
+    K13[LSCM<br/>init] --> K14[ARAP refine<br/>+ metric scale] --> K15[Best-view<br/>texture] --> K16[Correspondence<br/>map] --> K17([Flat page, mesh,<br/>corr map])
+    end
+    S1 -- enough matches --> S2
+    S2 -- gate passed --> S3
+    S3 --> S4
+    S1 -. too few matches .-> FB([Fallback: single-image 3D network])
+    S2 -. gate failed .-> FB

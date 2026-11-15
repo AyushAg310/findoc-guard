@@ -1,0 +1,16 @@
+.git
+.venv
+venv
+__pycache__
+*.pyc
+.pytest_cache
+.ruff_cache
+.mypy_cache
+outputs
+data/raw
+data/processed
+experiments
+notebooks
+docs
+frontend
+tests
