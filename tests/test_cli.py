@@ -54,3 +54,29 @@ def test_synth_command(tmp_path: Path) -> None:
     assert result.exit_code == 0, result.output
     assert (tmp_path / "labels.json").exists()
     assert len(list(tmp_path.glob("*.jpg"))) == 2
+
+
+def test_synth_cheques_and_process(tmp_path: Path) -> None:
+    out = tmp_path / "cheques"
+    result = runner.invoke(app, ["synth", "--kind", "cheque", "--n", "1", "--out", str(out)])
+    assert result.exit_code == 0, result.output
+    photo = next(out.glob("*.jpg"))
+    save = tmp_path / "imgs"
+    result = runner.invoke(app, ["process", str(photo), "--no-ocr", "--save-dir", str(save)])
+    assert result.exit_code == 0, result.output
+    assert "Cheque template" in result.output
+    assert "SIGNATURE_MISSING" in result.output
+    assert (save / f"{photo.stem}_fields.png").exists()
+
+
+def test_synth_bad_kind(tmp_path: Path) -> None:
+    result = runner.invoke(app, ["synth", "--kind", "invoice", "--out", str(tmp_path)])
+    assert result.exit_code != 0
+
+
+def test_templates_commands(tmp_path: Path) -> None:
+    result = runner.invoke(app, ["templates", "list"])
+    assert result.exit_code == 0 and "ARAVALLI BANK" in result.output
+    result = runner.invoke(app, ["templates", "export", "--out", str(tmp_path)])
+    assert result.exit_code == 0
+    assert (tmp_path / "ARVL" / "template.json").exists()
