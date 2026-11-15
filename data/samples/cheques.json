@@ -1,0 +1,38 @@
+{
+  "synthetic_cheque_clean.jpg": {
+    "bank": "KVRY",
+    "ifsc": "KVRY0904817",
+    "payee": "Pink City Supplies",
+    "amount": "650775.00",
+    "amount_words": "Six Lakh Fifty Thousand Seven Hundred Seventy Five Only",
+    "date": "2026-11-12",
+    "account_number": "48332729445",
+    "micr": "555987 302729659 729445 10",
+    "signed": true,
+    "fraud": {
+      "mismatch": false,
+      "stale": false,
+      "postdated": false,
+      "unsigned": false
+    },
+    "note": "dated relative to 2026-11-15"
+  },
+  "synthetic_cheque_mismatch.jpg": {
+    "bank": "INDV",
+    "ifsc": "INDV0183870",
+    "payee": "Aditya Verma",
+    "amount": "3000189.00",
+    "amount_words": "Sixty Lakh Three Hundred Seventy Eight Only",
+    "date": "2026-11-02",
+    "account_number": "541723424847",
+    "micr": "922516 302702710 424847 10",
+    "signed": true,
+    "fraud": {
+      "mismatch": true,
+      "stale": false,
+      "postdated": false,
+      "unsigned": false
+    },
+    "note": "dated relative to 2026-11-15"
+  }
+}

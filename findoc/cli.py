@@ -33,7 +33,9 @@ def version() -> None:
 
 
 def save_artifacts(doc: Document, save_dir: Path) -> list[Path]:
-    """Write the annotated original, flat page and enhanced page as images."""
+    """Write the annotated original, flat page, enhanced page and registered cheque."""
+    from findoc.config import get_settings
+    from findoc.localize.templates import default_store, draw_fields
     from findoc.preprocess.detect import draw_detection
 
     written: list[Path] = []
@@ -48,6 +50,10 @@ def save_artifacts(doc: Document, save_dir: Path) -> list[Path]:
     if doc.enhanced is not None:
         written.append(save_dir / f"{stem}_enhanced.png")
         save_image(written[-1], doc.enhanced)
+    if doc.registered is not None and doc.template_id:
+        template = default_store(get_settings().templates_dir).get(doc.template_id)
+        written.append(save_dir / f"{stem}_fields.png")
+        save_image(written[-1], draw_fields(doc.registered, template))
     return written
 
 
@@ -84,6 +90,23 @@ def process_cmd(
     console.print(f"Status: [bold {colour}]{doc.status.value}[/]")
     for msg in doc.messages:
         console.print(f"  - {msg}")
+    if doc.fields:
+        ft = Table(title=f"Cheque fields ({doc.template_id})")
+        for col in ("Field", "Read", "Validated", "Conf"):
+            ft.add_column(col)
+        for f in doc.fields:
+            ok = f.normalized is not None
+            ft.add_row(
+                f.name, f.value, f.normalized if ok else "[red]invalid[/]", f"{f.confidence:.2f}"
+            )
+        console.print(ft)
+    if doc.checks:
+        ct = Table(title="Checks")
+        for col in ("Check", "Result", "Reason"):
+            ct.add_column(col)
+        for c in doc.checks:
+            ct.add_row(c.id, "[red]FLAG[/]" if c.fired else "[green]pass[/]", c.reason)
+        console.print(ct)
     if doc.full_text:
         console.print("[bold]Text:[/]")
         console.print(doc.full_text, highlight=False)
@@ -103,15 +126,51 @@ def process_cmd(
 @app.command()
 def synth(
     n: int = typer.Option(10, "--n", help="Number of photos"),
-    out_dir: Path = typer.Option(Path("data/synthetic/photos"), "--out", "-o"),
+    out_dir: Path | None = typer.Option(None, "--out", "-o", help="Default: data/synthetic/<kind>"),
+    kind: str = typer.Option("page", help="'page' (generic document) or 'cheque'"),
     seed: int = typer.Option(0, help="Random seed (same seed = same photos)"),
     blur: float = typer.Option(0.0, help="Gaussian blur sigma, to simulate camera shake"),
+    fraud_rate: float = typer.Option(
+        0.4, help="Cheques only: share with a fraud condition (mismatch/stale/postdated/unsigned)"
+    ),
 ) -> None:
-    """Generate synthetic document photos with ground-truth corners."""
-    from findoc.synth.photo import generate
+    """Generate synthetic photos with ground truth (labels.json)."""
+    out_dir = out_dir or Path("data/synthetic") / kind
+    if kind == "page":
+        from findoc.synth.photo import generate
 
-    paths = generate(n, out_dir, seed=seed, blur_sigma=blur)
+        paths = generate(n, out_dir, seed=seed, blur_sigma=blur)
+    elif kind == "cheque":
+        from findoc.synth.dataset import generate_cheques
+
+        paths = generate_cheques(n, out_dir, seed=seed, blur_sigma=blur, fraud_rate=fraud_rate)
+    else:
+        raise typer.BadParameter("kind must be 'page' or 'cheque'")
     console.print(f"Wrote {len(paths)} photos and labels.json to {out_dir}")
+
+
+templates_app = typer.Typer(help="Manage cheque templates.", no_args_is_help=True)
+app.add_typer(templates_app, name="templates")
+
+
+@templates_app.command("list")
+def templates_list() -> None:
+    """Show the templates in use."""
+    from findoc.localize.templates import default_store
+
+    store = default_store(get_settings().templates_dir)
+    for t in store:
+        console.print(f"{t.id}  {t.name}  {t.size[0]}x{t.size[1]}  fields={len(t.fields)}")
+
+
+@templates_app.command("export")
+def templates_export(out_dir: Path = typer.Option(Path("data/templates"), "--out", "-o")) -> None:
+    """Write the built-in templates to a folder (edit them or add your own, then set
+    FINDOC_TEMPLATES_DIR to that folder)."""
+    from findoc.localize.templates import builtin_store
+
+    for path in builtin_store().save(out_dir):
+        console.print(f"Wrote {path}")
 
 
 if __name__ == "__main__":
