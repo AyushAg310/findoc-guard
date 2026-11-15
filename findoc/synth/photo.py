@@ -86,12 +86,19 @@ def render_page(rng: np.random.Generator, width: int = 850, height: int = 1100) 
     return page
 
 
-def _random_quad(rng: np.random.Generator, w: int, h: int, fill: tuple[float, float]) -> np.ndarray:
-    """Four corners of a tilted page covering roughly ``fill`` of the frame."""
+def _random_quad(
+    rng: np.random.Generator, w: int, h: int, fill: tuple[float, float], aspect: float
+) -> np.ndarray:
+    """Four corners of a tilted page covering roughly ``fill`` of the frame.
+
+    ``aspect`` is the page's width / height, preserved so the ground truth stays a true
+    perspective view of the page.
+    """
     frac = rng.uniform(*fill)
-    qh = h * np.sqrt(frac) * 1.05
-    qw = qh * 850 / 1100
-    qw = min(qw, w * 0.9)
+    area = frac * w * h
+    qw, qh = np.sqrt(area * aspect), np.sqrt(area / aspect)
+    shrink = min(1.0, 0.9 * w / qw, 0.9 * h / qh)  # keep the page inside the frame
+    qw, qh = qw * shrink, qh * shrink
     cx = w / 2 + rng.uniform(-0.08, 0.08) * w
     cy = h / 2 + rng.uniform(-0.06, 0.06) * h
     base = np.array(
@@ -115,15 +122,18 @@ def photograph(
     shadow: bool = True,
     jpeg_quality: int = 90,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Simulate a phone photo of ``page``. Returns (photo, ground-truth corners)."""
+    """Simulate a phone photo of ``page``. Returns (photo, ground-truth corners).
+
+    ``size`` is (width, height) of the photo; ``fill`` the range of page area / frame area.
+    """
     w, h = size
     bg_colour = rng.uniform(40, 120, size=3)
     photo = np.empty((h, w, 3), np.float32)
     photo[:] = bg_colour
     photo += rng.normal(0, 8, size=(h, w, 1)).astype(np.float32)  # desk texture
 
-    quad = _random_quad(rng, w, h, fill)
     ph, pw = page.shape[:2]
+    quad = _random_quad(rng, w, h, fill, aspect=pw / ph)
     src = np.array([[0, 0], [pw - 1, 0], [pw - 1, ph - 1], [0, ph - 1]], np.float32)
     homography = cv2.getPerspectiveTransform(src, quad)
     warped = cv2.warpPerspective(page, homography, (w, h)).astype(np.float32)
