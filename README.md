@@ -5,7 +5,7 @@
 **3D-aware cheque and invoice processing with explainable fraud detection**
 
 [![CI](https://github.com/AyushAg310/findoc-guard/actions/workflows/ci.yml/badge.svg)](https://github.com/AyushAg310/findoc-guard/actions/workflows/ci.yml)
-![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11-blue)
+![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Status](https://img.shields.io/badge/status-Phase%200%20of%208-orange)
 
