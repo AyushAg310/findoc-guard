@@ -7,7 +7,7 @@
 [![CI](https://github.com/AyushAg310/findoc-guard/actions/workflows/ci.yml/badge.svg)](https://github.com/AyushAg310/findoc-guard/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Status](https://img.shields.io/badge/status-Phase%200%20of%208-orange)
+![Status](https://img.shields.io/badge/status-Phase%201%20of%208-orange)
 
 </div>
 
@@ -31,6 +31,27 @@ document dewarping and tamper detection. FinDoc Guard unifies them into one depl
 multi-view 3D reconstruction flattens folded documents while preserving forensic evidence,
 template alignment handles cheques, LayoutLMv3 handles invoices, and Indian-format validation
 feeds an explainable fraud score.
+
+## Current capability (Phase 1)
+
+A photo goes through a quality gate, page detection, perspective correction and shadow removal,
+then OCR:
+
+<p align="center"><img src="docs/images/phase1_demo.jpg" width="760" alt="Phase 1: detected page, perspective corrected, shadows removed"></p>
+
+Measured on 200 synthetic photos with known ground truth
+([`experiments/phase1_detection_eval.py`](experiments/phase1_detection_eval.py)):
+
+| Metric | Result |
+| --- | --- |
+| Page detection success (corner error < 2% of diagonal) | 100% |
+| Mean corner error | 0.10% of image diagonal |
+| Blur gate: photos accepted at blur sigma 1 / 1.5 / 2 px | 100% / 18% / 0% |
+| Background lighting unevenness after normalisation | 97% lower |
+| Median latency: quality + detect + rectify + enhance (CPU) | ~140 ms |
+
+Synthetic photos are easier than real ones; real-photo results will be added as they are
+collected.
 
 ## Architecture
 
@@ -67,8 +88,8 @@ Each phase is a working, demoable increment released as a new minor version.
 | Phase | Version | Adds | Status |
 | --- | --- | --- | --- |
 | 0 | 0.1 | Scaffold: package, CLI, tests, CI, Docker | ✅ Done |
-| 1 | 0.2 | Flat-photo pipeline: quality gate, detection, rectification, OCR | ⏳ Next |
-| 2 | 0.3 | Cheque understanding: templates, field recognition, amount-in-words, rules | ⬜ |
+| 1 | 0.2 | Flat-photo pipeline: quality gate, detection, rectification, OCR | ✅ Done |
+| 2 | 0.3 | Cheque understanding: templates, field recognition, amount-in-words, rules | ⏳ Next |
 | 3 | 0.4 | Video + KLT tracking + keyframe selection | ⬜ |
 | 4 | 0.5 | 3D reconstruction: SfM + MVS + mesh + ARAP flattening | ⬜ |
 | 5 | 0.6 | Fraud engine: tamper mapping, duplicates, signature, risk score | ⬜ |
@@ -83,18 +104,23 @@ git clone https://github.com/AyushAg310/findoc-guard.git
 cd findoc-guard
 python -m venv .venv
 # Windows: .venv\Scripts\activate    macOS/Linux: source .venv/bin/activate
-pip install -e ".[dev]"
+pip install -e ".[dev,ui]"        # add ",ocr" for text recognition (installs PyTorch)
 
 findoc --help
-findoc process path/to/photo.jpg --out outputs/result.json
+findoc process data/samples/synthetic_shadow.jpg --save-dir outputs --out outputs/result.json
+findoc synth --n 20                # synthetic photos with ground-truth corners
+streamlit run demo/streamlit_app.py
 pytest
 ```
+
+For GPU OCR on Windows with an NVIDIA card, install the CUDA build of PyTorch first
+(see [pytorch.org](https://pytorch.org/get-started/locally/)), then `pip install -e ".[ocr]"`.
 
 With Docker:
 
 ```bash
 docker build -t findoc-guard .
-docker run --rm -v "$PWD:/work" -w /work findoc-guard process data/samples/example.jpg
+docker run --rm -v "$PWD:/work" -w /work findoc-guard process data/samples/synthetic_tilted.jpg --no-ocr
 ```
 
 ## Project structure

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "findoc-guard"
-version = "0.1.0"
+version = "0.2.0"
 description = "3D-aware cheque and invoice processing with explainable fraud detection"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -33,7 +33,7 @@ dependencies = [
 # Phase 1: OCR engine (pulls in PyTorch)
 ocr = ["easyocr>=1.7"]
 # Demo UI
-ui = ["streamlit>=1.35"]
+ui = ["streamlit>=1.50"]
 # Phase 4: 3D reconstruction
 recon3d = ["pycolmap>=0.6", "open3d>=0.18", "trimesh>=4.0"]
 dev = [

@@ -7,8 +7,8 @@ line yourself.
 | Guide | Covers | Version |
 | --- | --- | --- |
 | [Phase 0 - Scaffold](phase-0-scaffold.md) | Packaging, CLI, config, pipeline design, data models, tests, CI, Docker, git hygiene | 0.1.0 |
-| Phase 1 - Flat-photo pipeline | Quality score, document detection, homography, illumination, OCR | coming next |
-| Phase 2 - Cheque understanding | Template alignment, field recognition, amount-in-words, rules | |
+| [Phase 1 - Flat-photo pipeline](phase-1-flat-photo.md) | Quality gate, page detection, homography, shadow removal, OCR, synthetic data, evaluation | 0.2.0 |
+| Phase 2 - Cheque understanding | Template alignment, field recognition, amount-in-words, rules | coming next |
 | Phase 3 - Video and tracking | KLT optical flow, keyframe selection | |
 | Phase 4 - 3D reconstruction | SfM, MVS, meshing, ARAP flattening, correspondence maps | |
 | Phase 5 - Fraud engine | Tamper heatmaps, duplicate search, signature check, risk score | |
