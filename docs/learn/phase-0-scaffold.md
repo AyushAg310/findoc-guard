@@ -221,19 +221,19 @@ class Pipeline:
 
     def add(self, name, stage):
         self.stages.append((name, stage))
-        return self          # allows chaining: Pipeline().add(...).add(...)
+        return self  # allows chaining: Pipeline().add(...).add(...)
 
     def run(self, source):
         doc = Document(source=source, kind=detect_kind(source))
         for name, stage in self.stages:
             if doc.status is not Status.OK:
-                break                      # e.g. quality gate rejected the photo
+                break  # e.g. quality gate rejected the photo
             t0 = time.perf_counter()
             try:
                 doc = stage(doc)
                 ok, note = True, ""
             except Exception as exc:
-                log.exception(...)         # full traceback in the log
+                log.exception(...)  # full traceback in the log
                 doc.status = Status.FAILED
                 ok, note = False, str(exc)
             doc.stages.append(StageLog(stage=name, ms=..., ok=ok, note=note))
