@@ -43,9 +43,11 @@ class ExtractedField(BaseModel):
     """A field extracted from a document (payee, amount, GSTIN, ...)."""
 
     name: str
-    value: str
+    value: str  # text as read (cleaned)
+    raw: str = ""  # OCR output before cleaning
+    normalized: str | None = None  # validated canonical value, None if invalid/unreadable
     confidence: float = 0.0
-    bbox: BBox | None = None
+    bbox: BBox | None = None  # in template coordinates for cheques
 
 
 class OcrWord(BaseModel):
@@ -92,6 +94,11 @@ class Document(BaseModel):
     corners: list[list[float]] | None = None
     homography: list[list[float]] | None = None
     detection_method: str | None = None
+
+    # Template matching (Phase 2): which cheque template, and flat-page -> template homography
+    template_id: str | None = None
+    template_homography: list[list[float]] | None = None
+    registered: np.ndarray | None = Field(default=None, exclude=True)
 
     quality: dict[str, float] = Field(default_factory=dict)
     words: list[OcrWord] = Field(default_factory=list)

@@ -13,6 +13,7 @@ EasyOCR internally uses CRAFT (a CNN that finds text regions) followed by a CRNN
 
 from __future__ import annotations
 
+import time
 from functools import lru_cache
 from typing import Protocol
 
@@ -20,7 +21,7 @@ import numpy as np
 
 from findoc.config import get_settings
 from findoc.logging import get_logger
-from findoc.types import BBox, Document, OcrWord
+from findoc.types import BBox, DocType, Document, OcrWord
 
 log = get_logger(__name__)
 
@@ -30,7 +31,15 @@ class OcrUnavailableError(RuntimeError):
 
 
 class OcrEngine(Protocol):
-    def read(self, img: np.ndarray) -> list[OcrWord]: ...
+    device: str
+
+    def read(self, img: np.ndarray) -> list[OcrWord]:
+        """Find and read all text in a page image."""
+        ...
+
+    def read_line(self, img: np.ndarray, allowlist: str | None = None) -> tuple[str, float]:
+        """Read one known text region (no detection step). Returns (text, confidence)."""
+        ...
 
 
 def _use_gpu(device: str) -> bool:
@@ -53,6 +62,7 @@ class EasyOcrEngine:
                 'EasyOCR is not installed. Run: pip install -e ".[ocr]"'
             ) from exc
         gpu = _use_gpu(device)
+        self.device = "gpu" if gpu else "cpu"
         log.info("Loading EasyOCR (gpu=%s); first run downloads model weights", gpu)
         self._reader = easyocr.Reader(list(languages), gpu=gpu, verbose=False)
 
@@ -74,11 +84,37 @@ class EasyOcrEngine:
             )
         return words
 
+    def read_line(self, img: np.ndarray, allowlist: str | None = None) -> tuple[str, float]:
+        # recognize() skips CRAFT text detection and reads the whole crop as one line.
+        results = self._reader.recognize(img, allowlist=allowlist, detail=1, paragraph=False)
+        if not results:
+            return "", 0.0
+        texts = [str(r[1]) for r in results]
+        confs = [float(r[2]) for r in results]
+        return " ".join(texts), sum(confs) / len(confs)
+
 
 @lru_cache(maxsize=1)
 def get_engine() -> OcrEngine:
     """Create the OCR engine once per process (model loading is slow)."""
     return EasyOcrEngine(device=get_settings().device)
+
+
+def load_engine() -> tuple[OcrEngine, float | None]:
+    """Get the cached engine; also return load time in ms if this call created it."""
+    info = getattr(get_engine, "cache_info", None)
+    first = info is not None and info().currsize == 0
+    t0 = time.perf_counter()
+    engine = get_engine()
+    return engine, (time.perf_counter() - t0) * 1000 if first else None
+
+
+def note_engine_load(doc: Document, engine: OcrEngine, load_ms: float | None) -> None:
+    """Record model-load time separately so stage timings show recognition cost."""
+    if load_ms is not None:
+        doc.quality["ocr_model_load_ms"] = round(load_ms, 1)
+        device = getattr(engine, "device", "unknown")
+        doc.messages.append(f"OCR model loaded on {device} in {load_ms / 1000:.1f} s")
 
 
 def words_to_text(words: list[OcrWord], line_tol: float = 0.6) -> str:
@@ -101,14 +137,17 @@ def words_to_text(words: list[OcrWord], line_tol: float = 0.6) -> str:
 
 
 def ocr_stage(doc: Document) -> Document:
+    """Full-page OCR for documents without a template (cheque fields are read in Phase 2's
+    field stage instead)."""
     img = doc.enhanced if doc.enhanced is not None else doc.flat
-    if img is None:
+    if img is None or doc.doc_type is DocType.CHEQUE:
         return doc
     try:
-        engine = get_engine()
+        engine, load_ms = load_engine()
     except OcrUnavailableError as exc:
         doc.messages.append(f"OCR skipped: {exc}")
         return doc
+    note_engine_load(doc, engine, load_ms)
     doc.words = engine.read(img)
     doc.full_text = words_to_text(doc.words)
     if doc.words:

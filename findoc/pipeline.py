@@ -6,7 +6,7 @@ phase by phase.
 
 Stage roadmap (see README):
     Phase 1  preprocess   quality gate, detection, rectification, illumination, OCR  (done)
-    Phase 2  localize     cheque template alignment, field recognition, rules
+    Phase 2  localize     cheque template alignment, field recognition, rules  (done)
     Phase 3  track        KLT tracking and keyframe selection (video)
     Phase 4  recon3d      SfM + MVS + mesh + ARAP flattening
     Phase 5  fraud        tamper map, duplicates, signature, risk score
@@ -68,9 +68,13 @@ class Pipeline:
 def default_pipeline(ocr: bool = True) -> Pipeline:
     """The full pipeline for the current phase.
 
-    Phase 1: load -> quality -> detect -> rectify -> enhance -> ocr
+    Phase 1: load -> quality -> detect -> rectify -> enhance
+    Phase 2: -> align (cheque template) -> fields -> rules
+    then:    -> ocr (full-page text, for documents that aren't known cheques)
     """
     # Imported here so `findoc --help` stays fast and import cycles are impossible.
+    from findoc.fraud.stages import rules_stage
+    from findoc.localize.stages import align_stage, make_fields_stage
     from findoc.preprocess.stages import detect_stage, enhance_stage, quality_stage, rectify_stage
     from findoc.recognize.ocr import ocr_stage
 
@@ -79,6 +83,9 @@ def default_pipeline(ocr: bool = True) -> Pipeline:
     pipe.add("detect", detect_stage)
     pipe.add("rectify", rectify_stage)
     pipe.add("enhance", enhance_stage)
+    pipe.add("align", align_stage)
+    pipe.add("fields", make_fields_stage(use_ocr=ocr))
+    pipe.add("rules", rules_stage)
     if ocr:
         pipe.add("ocr", ocr_stage)
     return pipe

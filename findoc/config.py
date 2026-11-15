@@ -24,7 +24,11 @@ class Settings(BaseSettings):
     # Capture / quality (Phase 1)
     max_side_px: int = 2000
     blur_threshold: float = 100.0  # variance of Laplacian below this = blurry
-    min_coverage: float = 0.40  # document area / frame area
+    min_coverage: float = 0.25  # document area / frame area (cheques are long and thin)
+
+    # Cheques (Phase 2)
+    templates_dir: Path | None = None  # folder of custom templates; None = built-in banks
+    feature_method: str = "sift"  # "sift" or "orb"
 
     # Risk score bands (Phase 5)
     risk_medium: int = 30
