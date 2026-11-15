@@ -2,10 +2,10 @@
 
 A pipeline is an ordered list of stages. Each stage is a callable that takes a
 :class:`~findoc.types.Document` and returns it (usually mutated). Stages are added
-phase by phase; Phase 0 only loads the input.
+phase by phase.
 
 Stage roadmap (see README):
-    Phase 1  preprocess   quality score, detection, rectification, OCR
+    Phase 1  preprocess   quality gate, detection, rectification, illumination, OCR  (done)
     Phase 2  localize     cheque template alignment, field recognition, rules
     Phase 3  track        KLT tracking and keyframe selection (video)
     Phase 4  recon3d      SfM + MVS + mesh + ARAP flattening
@@ -65,10 +65,25 @@ class Pipeline:
         return doc
 
 
-def default_pipeline() -> Pipeline:
-    return Pipeline()
+def default_pipeline(ocr: bool = True) -> Pipeline:
+    """The full pipeline for the current phase.
+
+    Phase 1: load -> quality -> detect -> rectify -> enhance -> ocr
+    """
+    # Imported here so `findoc --help` stays fast and import cycles are impossible.
+    from findoc.preprocess.stages import detect_stage, enhance_stage, quality_stage, rectify_stage
+    from findoc.recognize.ocr import ocr_stage
+
+    pipe = Pipeline()
+    pipe.add("quality", quality_stage)
+    pipe.add("detect", detect_stage)
+    pipe.add("rectify", rectify_stage)
+    pipe.add("enhance", enhance_stage)
+    if ocr:
+        pipe.add("ocr", ocr_stage)
+    return pipe
 
 
-def process(source: str | Path) -> Document:
+def process(source: str | Path, ocr: bool = True) -> Document:
     """Run the default pipeline on one input file."""
-    return default_pipeline().run(Path(source))
+    return default_pipeline(ocr=ocr).run(Path(source))

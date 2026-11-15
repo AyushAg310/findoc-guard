@@ -48,6 +48,14 @@ class ExtractedField(BaseModel):
     bbox: BBox | None = None
 
 
+class OcrWord(BaseModel):
+    """One word or line recognised by OCR, in flat-page pixel coordinates."""
+
+    text: str
+    confidence: float
+    bbox: BBox
+
+
 class CheckResult(BaseModel):
     id: str
     fired: bool
@@ -77,8 +85,17 @@ class Document(BaseModel):
     # Images are kept out of the JSON result (exclude=True)
     original: np.ndarray | None = Field(default=None, exclude=True)
     flat: np.ndarray | None = Field(default=None, exclude=True)
+    enhanced: np.ndarray | None = Field(default=None, exclude=True)
+
+    # Geometry (Phase 1): page corners in the original image (tl, tr, br, bl) and the
+    # 3x3 homography that maps original pixels to flat-page pixels.
+    corners: list[list[float]] | None = None
+    homography: list[list[float]] | None = None
+    detection_method: str | None = None
 
     quality: dict[str, float] = Field(default_factory=dict)
+    words: list[OcrWord] = Field(default_factory=list)
+    full_text: str = ""
     fields: list[ExtractedField] = Field(default_factory=list)
     checks: list[CheckResult] = Field(default_factory=list)
     risk_score: int | None = None
