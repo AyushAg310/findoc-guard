@@ -47,7 +47,7 @@ cheaper than a wrong extraction later. This is requirement FR-CAP-03.
    early-stop rule).
 3. `detect`: finds the page's 4 corners, stores them in `doc.corners`, the method used in
    `doc.detection_method`, and the page/frame area ratio in `doc.quality["coverage"]`. Rejects
-   if the page is too small (< 40% of the frame).
+   if the page is too small (< 25% of the frame; 40% before v0.3.0).
 4. `rectify`: computes the homography from those corners to a rectangle and warps the photo
    into `doc.flat`. Stores the 3x3 matrix in `doc.homography`.
 5. `enhance`: removes uneven lighting from `doc.flat` into `doc.enhanced`.
@@ -147,7 +147,7 @@ fixed order (top-left, top-right, bottom-right, bottom-left). Trick: top-left ha
 `x + y`, bottom-right the largest; top-right has the smallest `y - x`, bottom-left the largest.
 
 **Coverage.** `contourArea(corners) / (h * w)`. In `stages.py`, a page covering less than
-`FINDOC_MIN_COVERAGE` (40%) is rejected with "Move closer", because the page would have too few
+`FINDOC_MIN_COVERAGE` (25% since v0.3.0, 40% in v0.2.0) is rejected with "Move closer", because the page would have too few
 pixels for reliable OCR.
 
 `draw_detection` draws the quadrilateral and labelled corners on a **copy** (never modify

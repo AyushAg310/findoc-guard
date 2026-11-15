@@ -7,7 +7,7 @@
 [![CI](https://github.com/AyushAg310/findoc-guard/actions/workflows/ci.yml/badge.svg)](https://github.com/AyushAg310/findoc-guard/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Status](https://img.shields.io/badge/status-Phase%201%20of%208-orange)
+![Status](https://img.shields.io/badge/status-Phase%202%20of%208-orange)
 
 </div>
 
@@ -32,26 +32,39 @@ multi-view 3D reconstruction flattens folded documents while preserving forensic
 template alignment handles cheques, LayoutLMv3 handles invoices, and Indian-format validation
 feeds an explainable fraud score.
 
-## Current capability (Phase 1)
+## Current capability (Phase 2)
 
-A photo goes through a quality gate, page detection, perspective correction and shadow removal,
-then OCR:
+**Cheques.** A cheque photo is matched to its bank's template with SIFT features and a RANSAC
+homography, every field box is placed, the pre-printed template is subtracted so only the
+writing remains, and each field is read, parsed and checked:
 
-<p align="center"><img src="docs/images/phase1_demo.jpg" width="760" alt="Phase 1: detected page, perspective corrected, shadows removed"></p>
+<p align="center"><img src="docs/images/phase2_demo.jpg" width="760" alt="Phase 2: cheque detected, registered to template, field crops after template subtraction"></p>
 
-Measured on 200 synthetic photos with known ground truth
-([`experiments/phase1_detection_eval.py`](experiments/phase1_detection_eval.py)):
+Checks so far: amount in words vs. figures (Indian lakh/crore system), stale and post-dated
+cheques (RBI 3-month validity), IFSC / account / MICR format, missing signature.
+
+Measured on 120 synthetic cheque photos from four fictional banks
+([`experiments/phase2_cheque_eval.py`](experiments/phase2_cheque_eval.py)):
 
 | Metric | Result |
 | --- | --- |
-| Page detection success (corner error < 2% of diagonal) | 100% |
-| Mean corner error | 0.10% of image diagonal |
-| Blur gate: photos accepted at blur sigma 1 / 1.5 / 2 px | 100% / 18% / 0% |
-| Background lighting unevenness after normalisation | 97% lower |
-| Median latency: quality + detect + rectify + enhance (CPU) | ~140 ms |
+| Bank template identification | 100% |
+| Field-box IoU vs. ground truth (mean / worst) | 0.995 / 0.982 |
+| Signature presence | 100% |
+| Fraud recall with 2% simulated OCR character errors (mismatch / stale / post-dated / unsigned) | 100% / 87% / 100% / 100% |
+| Median template matching time (4 templates, CPU) | ~0.4 s |
 
-Synthetic photos are easier than real ones; real-photo results will be added as they are
-collected.
+OCR errors mainly cause *false* flags (a misread digit looks like an amount mismatch), which is
+why the Phase 5 risk score weights every check by OCR confidence. Real-OCR results:
+`python experiments/phase2_cheque_eval.py --real-ocr`.
+
+**Any document (Phase 1).** Quality gate, page detection, perspective correction, shadow removal
+and OCR: 100% page detection and 0.10% mean corner error on 200 synthetic photos
+([details](docs/learn/phase-1-flat-photo.md#311-experimentsphase1_detection_evalpy-measuring-the-pipeline)).
+
+<p align="center"><img src="docs/images/phase1_demo.jpg" width="640" alt="Phase 1: detected page, perspective corrected, shadows removed"></p>
+
+Synthetic data is easier than real photos; real-capture results will be added in Phase 8.
 
 ## Architecture
 
@@ -89,8 +102,8 @@ Each phase is a working, demoable increment released as a new minor version.
 | --- | --- | --- | --- |
 | 0 | 0.1 | Scaffold: package, CLI, tests, CI, Docker | ✅ Done |
 | 1 | 0.2 | Flat-photo pipeline: quality gate, detection, rectification, OCR | ✅ Done |
-| 2 | 0.3 | Cheque understanding: templates, field recognition, amount-in-words, rules | ⏳ Next |
-| 3 | 0.4 | Video + KLT tracking + keyframe selection | ⬜ |
+| 2 | 0.3 | Cheque understanding: templates, field recognition, amount-in-words, rules | ✅ Done |
+| 3 | 0.4 | Video + KLT tracking + keyframe selection | ⏳ Next |
 | 4 | 0.5 | 3D reconstruction: SfM + MVS + mesh + ARAP flattening | ⬜ |
 | 5 | 0.6 | Fraud engine: tamper mapping, duplicates, signature, risk score | ⬜ |
 | 6 | 0.7 | Invoices: LayoutLMv3, GSTIN, invoice arithmetic, Excel export | ⬜ |
@@ -107,8 +120,10 @@ python -m venv .venv
 pip install -e ".[dev,ui]"        # add ",ocr" for text recognition (installs PyTorch)
 
 findoc --help
+findoc process data/samples/synthetic_cheque_mismatch.jpg --save-dir outputs
 findoc process data/samples/synthetic_shadow.jpg --save-dir outputs --out outputs/result.json
-findoc synth --n 20                # synthetic photos with ground-truth corners
+findoc synth --kind cheque --n 20  # synthetic cheque photos with ground truth
+findoc templates list
 streamlit run demo/streamlit_app.py
 pytest
 ```
@@ -133,11 +148,11 @@ findoc-guard/
 │   ├── cli.py           # `findoc` command-line tool
 │   ├── preprocess/      # Phase 1  quality, detection, rectification   (CO-1)
 │   ├── recognize/       # Phase 1-2 OCR, handwriting, MICR, amount parser
-│   ├── classify/        # Phase 2-6 doc type and bank template
-│   ├── localize/        # Phase 2-6 template alignment, LayoutLMv3     (CO-2, CO-3)
+│   ├── classify/        # Phase 6  document-type classifier
+│   ├── localize/        # Phase 2  cheque templates, SIFT + RANSAC registration (CO-3)
 │   ├── track/           # Phase 3  KLT tracking, keyframes              (CO-4)
 │   ├── recon3d/         # Phase 4  SfM, MVS, mesh, ARAP flattening      (CO-5)
-│   ├── fraud/           # Phase 5  rules, tamper, duplicates, risk score
+│   ├── fraud/           # Phase 2  rule checks; Phase 5 tamper, duplicates, risk score
 │   └── export/          # Phase 6  JSON, Excel, annotated images
 ├── app/                 # Phase 7  FastAPI service
 ├── frontend/            # Phase 7  React review UI

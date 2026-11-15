@@ -3,6 +3,42 @@
 All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org/);
 each build phase is released as a minor version.
 
+## [0.3.0] - Phase 2: Cheque understanding
+
+### Added
+- Synthetic CTS-2010-style cheque generator with four fictional banks, handwriting-style
+  fields, signature scribbles, MICR line and fraud conditions (amount mismatch, stale,
+  post-dated, unsigned) (`findoc/synth/cheque.py`, `findoc/synth/dataset.py`).
+- Cheque template store: reference image + field boxes, loadable from a folder
+  (`findoc/localize/templates.py`); `findoc templates list|export`.
+- Template identification and registration with SIFT (or ORB) features, Lowe ratio test and
+  RANSAC homography, with sanity checks and an ambiguity margin (`findoc/localize/align.py`).
+- Field extraction with template subtraction: pre-printed lines, labels and security pattern
+  are removed before OCR (`findoc/recognize/fields.py`).
+- Parsers for amount in words (Indian lakh/crore system, OCR typo repair), amount in figures
+  (Indian digit grouping), cheque dates, IFSC, account numbers and MICR lines
+  (`findoc/recognize/parsers.py`).
+- Rule checks: amount mismatch/unreadable, stale and post-dated cheques (RBI 3-month
+  validity), IFSC/account/MICR format, missing signature (`findoc/fraud/rules.py`).
+- OCR engine `read_line` (recognition-only on known regions); model-load time reported
+  separately from recognition time.
+- Simulated OCR with realistic character errors for robustness experiments
+  (`findoc/synth/ocr_noise.py`).
+- `findoc synth --kind cheque`; cheque fields and checks tables in `findoc process`; registered
+  cheque with field boxes saved by `--save-dir`.
+- Streamlit demo: synthetic cheques with fraud conditions, field table, checks, field crops.
+- Evaluation (`experiments/phase2_cheque_eval.py`): geometry, simulated-OCR robustness and a
+  `--real-ocr` mode.
+- Learning guide `docs/learn/phase-2-cheques.md`.
+
+### Changed
+- Pipeline: load -> quality -> detect -> rectify -> enhance -> align -> fields -> rules -> ocr.
+  Full-page OCR is skipped for recognised cheques.
+- `ExtractedField` gains `raw` and `normalized`; `Document` gains `template_id`,
+  `template_homography`, `registered`.
+- Default `FINDOC_MIN_COVERAGE` lowered from 0.40 to 0.25 (cheques are long and thin).
+- Synthetic photo generator preserves any page aspect ratio.
+
 ## [0.2.0] - Phase 1: Flat-photo pipeline
 
 ### Added
