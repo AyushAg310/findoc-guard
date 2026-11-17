@@ -126,10 +126,12 @@ def region_sharpness(gray: np.ndarray, corners: np.ndarray | None, width: int = 
 
 
 def _coverage_and_inside(corners: np.ndarray, shape: tuple[int, int]) -> tuple[float, bool]:
+    """Coverage, and whether the whole document is in view. A corner on (or within a few pixels
+    of) the image border counts as *not* in view: the page detector clips outlines that run off
+    the image to the border, so a corner there usually means the page continues beyond it."""
     h, w = shape
     area = cv2.contourArea(corners.astype(np.float32))
-    inside = bool(np.all((corners >= 0) & (corners <= [w - 1, h - 1])))
-    return float(area / (w * h)), inside
+    return float(area / (w * h)), _clear_of_border(corners, shape)
 
 
 def detect_features(gray: np.ndarray, corners: np.ndarray) -> np.ndarray:

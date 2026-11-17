@@ -14,7 +14,7 @@ import numpy as np
 from findoc.config import get_settings
 from findoc.io import read_frames, read_video, video_info
 from findoc.track.keyframes import select_keyframes
-from findoc.track.klt import track_document
+from findoc.track.klt import MIN_FOR_HOMOGRAPHY, TrackResult, track_document
 from findoc.types import Document, InputKind, Keyframe, Status, TrackedFrame
 
 
@@ -32,6 +32,30 @@ def video_load_stage(doc: Document) -> Document:
         f"{len(frames)} frames for tracking (every {stride}), scale {scale:.2f}"
     )
     return doc
+
+
+def rejection_reasons(result: TrackResult) -> list[str]:
+    """Explain why no frame was usable, most fundamental cause first."""
+    frames = result.frames
+    found = [f for f in frames if f.corners is not None]
+    reasons = ["No usable frame: none was sharp with the whole document in view."]
+    if found and np.mean([f.n_tracks for f in frames]) < MIN_FOR_HOMOGRAPHY:
+        reasons.append(
+            "The document has too little detail to track (a blank page has nothing for optical "
+            "flow to follow). Film a cheque or a page with printed text."
+        )
+    if found and not any(f.in_frame for f in found):
+        reasons.append(
+            "The document never fits fully inside the frame. Hold the phone farther away so all "
+            "four corners and a little background are visible."
+        )
+    if not found:
+        reasons.append(
+            "No document outline was found. Use a background that contrasts with the paper."
+        )
+    if len(reasons) == 1:
+        reasons.append("Most frames are blurred. Move the phone slowly and keep it steady.")
+    return reasons
 
 
 def _round(c: np.ndarray, inv_scale: float) -> list[list[float]]:
@@ -84,10 +108,7 @@ def track_stage(doc: Document) -> Document:
     }
     if sel.best is None:
         doc.status = Status.REJECTED_QUALITY
-        doc.messages.append(
-            "No sharp frame with the whole document in view. Hold the phone steadier and keep "
-            "the document inside the frame."
-        )
+        doc.messages.extend(rejection_reasons(result))
         return doc
 
     doc.best_frame = num[sel.best]

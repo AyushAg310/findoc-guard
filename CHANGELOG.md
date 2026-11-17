@@ -3,6 +3,17 @@
 All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org/);
 each build phase is released as a minor version.
 
+## [0.4.1] - Clear reasons when a video is rejected
+
+### Fixed
+- A rejected video now says why (`findoc.track.stages.rejection_reasons`): the document has too
+  little detail to track (e.g. a blank page), it never fits fully inside the frame, no outline
+  was found, or the frames are blurred. Previously every case got "hold the phone steadier".
+  Found with the first real phone video (4K portrait, a blank notebook page larger than the
+  frame).
+- A document outline touching the image border no longer counts as "fully in view": the page
+  detector clips off-image outlines to the border, so such a page usually continues beyond it.
+
 ## [0.4.0] - Phase 3: video input, KLT tracking, keyframe selection
 
 ### Added

@@ -183,6 +183,31 @@ def test_track_stage_rejects_unusable_video(monkeypatch: pytest.MonkeyPatch) -> 
     doc = track_stage(doc)
     assert doc.status is Status.REJECTED_QUALITY
     assert doc.tracking["lost"] == 3
+    assert any("No document outline" in m for m in doc.messages)
+
+
+def test_rejection_reasons_explain_the_cause() -> None:
+    from findoc.track.stages import rejection_reasons
+
+    c = np.array([[0, 0], [99, 0], [99, 59], [0, 59]], np.float32)  # touches the border
+    blank = TrackResult([FrameTrack(i, c, 5, 0.0, 50.0, 1.0, False) for i in range(4)])
+    msgs = " ".join(rejection_reasons(blank))
+    assert "too little detail" in msgs and "never fits fully" in msgs
+    blurred = TrackResult([FrameTrack(i, c, 300, 0.0, 5.0, 0.5, True) for i in range(4)])
+    assert "blurred" in rejection_reasons(blurred)[-1]
+
+
+def test_outline_on_the_border_is_not_in_view() -> None:
+    from findoc.track.klt import _coverage_and_inside
+
+    _, inside = _coverage_and_inside(
+        np.array([[0, 0], [99, 0], [99, 59], [0, 59]], float), (60, 100)
+    )
+    assert not inside
+    _, inside = _coverage_and_inside(
+        np.array([[10, 10], [90, 10], [90, 50], [10, 50]], float), (60, 100)
+    )
+    assert inside
 
 
 # ---------------------------------------------------------------- video I/O and pipeline

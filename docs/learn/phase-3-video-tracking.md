@@ -1,6 +1,6 @@
 # Phase 3 - Video input and tracking: complete code explanation
 
-Version **0.4.0** · Course outcomes **CO-4** (motion and tracking, the core of this phase),
+Version **0.4.0** (patch 0.4.1) · Course outcomes **CO-4** (motion and tracking, the core of this phase),
 **CO-3** (feature matching, used to re-find a lost document), **CO-5** groundwork (a pinhole
 camera model and the keyframes that Phase 4 reconstructs in 3D).
 
@@ -238,6 +238,14 @@ reconstruction (Phase 4) wants **several sharp frames from different viewpoints*
   pixels, so it can be compared with ground truth and used with the full-resolution frames.
 - If the second pass fails to read the best frame (unusual codecs), the tracking-size frame is
   used instead, with corners at that scale.
+- If no frame is usable, `rejection_reasons` says *why*, most fundamental cause first: too
+  little detail to track (fewer than 20 points per frame on average), the document never fully
+  inside the frame, no outline found at all, or (if none of those) blur. (v0.4.1: the first real
+  test video, a blank notebook page larger than the frame, was rejected correctly but with a
+  generic "hold steadier" message.)
+- "Fully in view" (`_coverage_and_inside` in `klt.py`) requires every corner to be at least a
+  few pixels inside the image. The page detector clips outlines that run off the image to the
+  border, so a corner exactly on the border means the page continues beyond it.
 
 ### 3.7 `findoc/types.py`, `config.py`, `pipeline.py`, `preprocess/stages.py`: what changed
 
@@ -317,7 +325,7 @@ About 9.6 keyframes per clip, covering 23.7 of the 26.1 degrees of viewing angle
 The script also takes `--real-ocr` to compare field accuracy on best / first / random frames
 with EasyOCR (results file `experiments/results/phase3_real_ocr.json`).
 
-### 3.10 Tests (139 in total, 95% coverage)
+### 3.10 Tests (141 in total, 95% coverage)
 
 `tests/test_track.py` uses small, fast clips (640x360, 1.5 s, 3 sub-frames; shared by a
 module-scoped fixture):
@@ -328,7 +336,8 @@ module-scoped fixture):
 - tracking: corners within 1% of the diagonal, start from given corners, recovery after a cut
   (blank frames inserted -> lost -> re-acquired), mask and drawing.
 - keyframes: `viewpoint_change` ~0 for a similarity and >0.02 for a keystone, frontalness,
-  keyframes sorted and less blurred than the worst frame, empty input, rejection message.
+  keyframes sorted and less blurred than the worst frame, empty input, rejection reasons
+  (blank page, page larger than the frame, blur), outlines on the border not counted as in view.
 - video I/O: stride, scale, second-pass reading, bad file.
 - pipeline: end to end on a video, nothing image-like in the JSON; CLI `synth --kind video`
   and `process -s` on a 1280x720 clip (template found).
