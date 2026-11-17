@@ -59,7 +59,7 @@ class ChequeTemplate:
     def load(cls, folder: Path) -> ChequeTemplate:
         meta = json.loads((folder / "template.json").read_text(encoding="utf-8"))
         fields = [
-            FieldSpec(f["name"], tuple(f["box"]), f["kind"], f.get("allowlist"))  # type: ignore[arg-type]
+            FieldSpec(f["name"], tuple(f["box"]), f["kind"], f.get("allowlist"), f.get("cells", 1))  # type: ignore[arg-type]
             for f in meta["fields"]
         ]
         return cls(meta["id"], meta["name"], load_image(folder / "reference.png"), fields)

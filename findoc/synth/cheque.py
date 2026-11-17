@@ -56,6 +56,7 @@ class FieldSpec:
     box: Box
     kind: str  # "handwritten" | "printed" | "signature"
     allowlist: str | None = None
+    cells: int = 1  # >1 for boxed fields: one character per equal-width cell (date boxes)
 
 
 @dataclass(frozen=True)
@@ -96,7 +97,7 @@ def field_specs(style: BankStyle) -> list[FieldSpec]:
         return (x0 + dx, y0 + dy, x1 + dx, y1 + dy)
 
     return [
-        FieldSpec("date", b(1172, 36, 1556, 100), "handwritten", DIGITS),
+        FieldSpec("date", b(1172, 36, 1556, 100), "handwritten", DIGITS, cells=8),
         FieldSpec("payee", b(110, 196, 1290, 262), "handwritten"),
         FieldSpec("amount_words_1", b(170, 276, 1290, 342), "handwritten"),
         FieldSpec("amount_words_2", b(40, 352, 1090, 418), "handwritten"),

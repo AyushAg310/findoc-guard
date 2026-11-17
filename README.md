@@ -51,12 +51,23 @@ Measured on 120 synthetic cheque photos from four fictional banks
 | Bank template identification | 100% |
 | Field-box IoU vs. ground truth (mean / worst) | 0.995 / 0.982 |
 | Signature presence | 100% |
-| Fraud recall with 2% simulated OCR character errors (mismatch / stale / post-dated / unsigned) | 100% / 87% / 100% / 100% |
-| Median template matching time (4 templates, CPU) | ~0.4 s |
+| Median template matching time (4 templates, laptop CPU) | ~0.2 s |
 
-OCR errors mainly cause *false* flags (a misread digit looks like an amount mismatch), which is
-why the Phase 5 risk score weights every check by OCR confidence. Real-OCR results:
-`python experiments/phase2_cheque_eval.py --real-ocr`.
+With **real OCR** (EasyOCR on an RTX 3050 laptop GPU, 100 cheques, v0.3.0):
+
+| Metric | Result |
+| --- | --- |
+| Field accuracy: payee, amount in words, account, IFSC, MICR | 100% each |
+| Field accuracy: amount in figures / date | 99% / 94% |
+| Fraud recall: amount mismatch / stale / unsigned / post-dated | 100% / 100% / 100% / 83% |
+| Clean cheques with any flag (false alarms) | 8% |
+| Field reading time per cheque (GPU) | ~0.5 s |
+
+The date boxes were the weak point (digits spaced far apart confuse OCR); v0.3.1 re-spaces them
+before reading. A simulated-OCR sweep shows how errors would hurt: at a 2% character error rate,
+fraud recall stays high but false alarms rise, mostly from a misread digit looking like an
+altered amount, which is why the Phase 5 risk score weights every check by OCR confidence
+([details](docs/learn/phase-2-cheques.md#312-experimentsphase2_cheque_evalpy-results)).
 
 **Any document (Phase 1).** Quality gate, page detection, perspective correction, shadow removal
 and OCR: 100% page detection and 0.10% mean corner error on 200 synthetic photos

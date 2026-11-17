@@ -1,0 +1,148 @@
+{
+  "n": 100,
+  "geometry": {
+    "template_accuracy": 1.0,
+    "field_iou_mean": {
+      "date": 0.9956,
+      "payee": 0.9965,
+      "amount_words_1": 0.996,
+      "amount_words_2": 0.9954,
+      "amount_figures": 0.9946,
+      "account_number": 0.993,
+      "ifsc": 0.9947,
+      "signature": 0.9965,
+      "micr": 0.9917
+    },
+    "field_iou_overall_mean": 0.9949,
+    "field_iou_min": 0.9817,
+    "signature_presence_accuracy": 1.0,
+    "median_align_ms": 205.5
+  },
+  "simulated_ocr": {
+    "0.0": {
+      "field_accuracy": {
+        "date": 1.0,
+        "payee": 1.0,
+        "amount_words": 1.0,
+        "amount_figures": 1.0,
+        "account_number": 1.0,
+        "ifsc": 1.0,
+        "micr": 1.0
+      },
+      "rules": {
+        "recall_mismatch": 1.0,
+        "recall_stale": 1.0,
+        "recall_postdated": 1.0,
+        "recall_unsigned": 1.0,
+        "clean_with_any_flag": 0.0,
+        "false_flags_on_clean": {}
+      },
+      "median_fields_ms": 374.6
+    },
+    "0.02": {
+      "field_accuracy": {
+        "date": 0.88,
+        "payee": 0.79,
+        "amount_words": 0.92,
+        "amount_figures": 0.92,
+        "account_number": 0.83,
+        "ifsc": 0.93,
+        "micr": 0.66
+      },
+      "rules": {
+        "recall_mismatch": 1.0,
+        "recall_stale": 0.8462,
+        "recall_postdated": 1.0,
+        "recall_unsigned": 1.0,
+        "clean_with_any_flag": 0.42,
+        "false_flags_on_clean": {
+          "MICR_INVALID": 0.12,
+          "AMOUNT_MISMATCH": 0.16,
+          "IFSC_INVALID": 0.06,
+          "DATE_UNREADABLE": 0.1,
+          "DATE_POSTDATED": 0.04
+        }
+      },
+      "median_fields_ms": 393.0
+    },
+    "0.05": {
+      "field_accuracy": {
+        "date": 0.73,
+        "payee": 0.55,
+        "amount_words": 0.82,
+        "amount_figures": 0.79,
+        "account_number": 0.62,
+        "ifsc": 0.76,
+        "micr": 0.41
+      },
+      "rules": {
+        "recall_mismatch": 1.0,
+        "recall_stale": 0.8462,
+        "recall_postdated": 0.9167,
+        "recall_unsigned": 1.0,
+        "clean_with_any_flag": 0.7,
+        "false_flags_on_clean": {
+          "IFSC_INVALID": 0.16,
+          "DATE_UNREADABLE": 0.24,
+          "AMOUNT_MISMATCH": 0.38,
+          "MICR_INVALID": 0.12,
+          "DATE_POSTDATED": 0.02,
+          "AMOUNT_UNREADABLE": 0.02
+        }
+      },
+      "median_fields_ms": 383.3
+    },
+    "0.1": {
+      "field_accuracy": {
+        "date": 0.57,
+        "payee": 0.32,
+        "amount_words": 0.62,
+        "amount_figures": 0.65,
+        "account_number": 0.36,
+        "ifsc": 0.57,
+        "micr": 0.18
+      },
+      "rules": {
+        "recall_mismatch": 0.9231,
+        "recall_stale": 0.6923,
+        "recall_postdated": 0.8333,
+        "recall_unsigned": 1.0,
+        "clean_with_any_flag": 0.94,
+        "false_flags_on_clean": {
+          "AMOUNT_MISMATCH": 0.56,
+          "MICR_INVALID": 0.44,
+          "IFSC_INVALID": 0.3,
+          "DATE_UNREADABLE": 0.32,
+          "AMOUNT_UNREADABLE": 0.04,
+          "DATE_STALE": 0.02,
+          "DATE_POSTDATED": 0.08
+        }
+      },
+      "median_fields_ms": 363.7
+    }
+  },
+  "real_ocr": {
+    "field_accuracy": {
+      "date": 0.94,
+      "payee": 1.0,
+      "amount_words": 1.0,
+      "amount_figures": 0.99,
+      "account_number": 1.0,
+      "ifsc": 1.0,
+      "micr": 1.0
+    },
+    "rules": {
+      "recall_mismatch": 1.0,
+      "recall_stale": 1.0,
+      "recall_postdated": 0.8333,
+      "recall_unsigned": 1.0,
+      "clean_with_any_flag": 0.08,
+      "false_flags_on_clean": {
+        "DATE_UNREADABLE": 0.06,
+        "AMOUNT_MISMATCH": 0.02
+      }
+    },
+    "median_fields_ms": 493.0,
+    "device": "gpu"
+  }
+}

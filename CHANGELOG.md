@@ -3,6 +3,18 @@
 All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org/);
 each build phase is released as a minor version.
 
+## [0.3.1] - Date-box reading fix, real-OCR results
+
+### Added
+- Real-OCR evaluation results (EasyOCR on an RTX 3050 laptop GPU, 100 cheques):
+  `experiments/results/phase2_real_ocr_v0.3.0.json`.
+
+### Fixed
+- Date boxes are now read as a compact digit string: the crop is cut into its 8 cells, each
+  digit trimmed and re-joined with normal spacing (`compact_cells`). With v0.3.0 the date was
+  the weakest field (94%) and caused most false flags and missed post-dated cheques.
+- `FieldSpec` gains `cells` (saved in template JSON; defaults to 1 for existing templates).
+
 ## [0.3.0] - Phase 2: Cheque understanding
 
 ### Added

@@ -136,6 +136,25 @@ def test_template_subtraction_removes_preprinted_content() -> None:
     assert crops["signature"].ink_ratio > 0.006
 
 
+def test_compact_cells_respaces_date_digits() -> None:
+    from findoc.recognize.fields import compact_cells
+
+    template = builtin_store().get("ARVL")
+    filled, truth = render_cheque(np.random.default_rng(9), bank="ARVL", today=TODAY)
+    spec = template.field("date")
+    assert spec.cells == 8
+    date_crop = crop_fields(filled, template)["date"].image
+    compact = compact_cells(date_crop, spec.cells)
+    assert compact.shape[0] == date_crop.shape[0]
+    assert compact.shape[1] < 0.75 * date_crop.shape[1]  # wide gaps removed
+    ink_cols = (cv2.cvtColor(compact, cv2.COLOR_BGR2GRAY) < 200).any(axis=0)
+    runs = np.count_nonzero(np.diff(ink_cols.astype(int)) == 1) + int(ink_cols[0])
+    assert runs == len(truth.fields["date"])  # one ink run per digit, in order
+
+    blank = np.full_like(date_crop, 255)
+    assert compact_cells(blank, 8) is blank  # nothing written: returned unchanged
+
+
 def test_read_fields_without_ocr_reports_signature_only() -> None:
     template = builtin_store().get("ARVL")
     filled, _ = render_cheque(np.random.default_rng(6), bank="ARVL", unsigned=True, today=TODAY)

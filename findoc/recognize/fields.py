@@ -72,8 +72,32 @@ def crop_fields(registered: np.ndarray, template: ChequeTemplate) -> dict[str, F
     return crops
 
 
-def _prepare(crop: np.ndarray) -> np.ndarray:
+def compact_cells(crop: np.ndarray, cells: int, gap_ratio: float = 0.15) -> np.ndarray:
+    """Re-space a boxed field (one character per cell) like ordinary text.
+
+    Date boxes put each digit in its own box, so after template subtraction the digits sit far
+    apart. OCR models trained on normal text then drop or merge characters. Cutting the crop
+    into its cells, trimming each character and joining them with a normal letter gap turns
+    "1   8   0   9 ..." into "18092026". Empty cells are skipped.
+    """
+    h, w = crop.shape[:2]
+    gap = np.full((h, max(2, round(h * gap_ratio)), 3), 255, np.uint8)
+    parts: list[np.ndarray] = []
+    for i in range(cells):
+        cell = crop[:, round(i * w / cells) : round((i + 1) * w / cells)]
+        xs = np.where((cv2.cvtColor(cell, cv2.COLOR_BGR2GRAY) < 200).any(axis=0))[0]
+        if len(xs) == 0:
+            continue
+        if parts:
+            parts.append(gap)
+        parts.append(cell[:, max(0, xs.min() - 2) : xs.max() + 3])
+    return np.hstack(parts) if parts else crop
+
+
+def _prepare(crop: np.ndarray, cells: int = 1) -> np.ndarray:
     """Trim empty margins and scale to a height the recogniser expects."""
+    if cells > 1:
+        crop = compact_cells(crop, cells)
     gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
     ys, xs = np.where(gray < 200)
     if len(xs):
@@ -113,7 +137,7 @@ def read_cheque_fields(
             if crop.ink_ratio < 0.001:  # nothing written there
                 raw[spec.name] = ("", 0.0)
                 continue
-            text, conf = _read(engine, spec, _prepare(crop.image))
+            text, conf = _read(engine, spec, _prepare(crop.image, spec.cells))
             raw[spec.name] = (text.strip(), conf)
 
     out: list[ExtractedField] = []

@@ -237,6 +237,13 @@ tests and experiments needs to know which field it's "reading".
 value or `None`), via the parsers. The amount in words joins both lines; its confidence is the
 OCR confidence times the parser's confidence (lower when typos had to be repaired).
 
+**Boxed fields (`compact_cells`, v0.3.1).** A `FieldSpec` with `cells > 1` (the date: 8 cells)
+holds one character per equal-width box. Before reading, the crop is split into its cells, each
+character is trimmed to its ink, and the characters are re-joined with a gap of 15% of the crop
+height, like normal letter spacing. Empty cells are skipped (a missing digit then fails date
+validation instead of being invented). Without this, the recogniser saw "1   8   0   9 ..." with
+huge gaps and sometimes dropped digits: date accuracy was 94% in the real-OCR evaluation.
+
 **Signature.** No OCR: present if at least 0.6% of the signature box is ink after subtraction.
 
 ### 3.7 `findoc/recognize/parsers.py`: from noisy text to validated values
@@ -354,6 +361,24 @@ Field-box IoU compares each template box mapped into the photo through our estim
 | Clean cheques with any flag | 0% | 45% | 72% | 93% |
 | ... flagged by AMOUNT_MISMATCH | 0% | 20% | 40% | 57% |
 
+**Real OCR** (EasyOCR on an RTX 3050 laptop GPU, 100 cheques, v0.3.0):
+
+| Metric | Result |
+| --- | --- |
+| Payee, amount in words, account, IFSC, MICR accuracy | 100% each |
+| Amount in figures accuracy | 99% |
+| Date accuracy | 94% |
+| Recall: mismatch / stale / unsigned / post-dated | 100% / 100% / 100% / 83% |
+| Clean cheques with any flag | 8% (date unreadable 6%, amount mismatch 2%) |
+| Median field-reading time | 0.49 s per cheque |
+
+Real OCR on template-subtracted crops behaves better than the 2% simulation: the clean crops
+are close to what OCR models are trained on. The **date** was the weak field: each digit sits
+in its own box, so after subtraction the digits are far apart and the recogniser sometimes
+dropped one. That single issue caused both missed post-dated cheques and most false flags.
+**v0.3.1** fixes it with `compact_cells` (section 3.6): the date crop is cut into its 8 cells,
+each digit trimmed, and the digits re-joined with normal spacing before OCR.
+
 **What this means (put it in the paper):** detection of real fraud is robust to OCR errors,
 because a misread rarely turns a bad cheque into a consistent one. The cost is **false flags**:
 one misread digit in the figures looks exactly like an altered amount. Since altering a single
@@ -454,6 +479,12 @@ A: No. Recall of real fraud stays high (100% for amount mismatch at 2-5% charact
 a single misread digit mimics an altered amount, so clean cheques get flagged for review. The
 Phase 5 risk score weights each check by OCR confidence, and the system's role is to route
 cheques to a reviewer, not reject them. We report both numbers honestly.
+
+**Q: How accurate is it with real OCR?**
+A: On 100 synthetic cheques with EasyOCR on a laptop GPU: 100% on payee, amount in words,
+account, IFSC and MICR; 99% on figures; 94% on the date. Amount mismatches, stale and unsigned
+cheques were all caught; 8% of clean cheques got a flag. The date errors came from widely spaced
+boxed digits, which we fixed by re-spacing them before OCR.
 
 **Q: Why ORB as an option?**
 A: ORB is several times faster and patent-free; SIFT is more accurate under blur and scale
