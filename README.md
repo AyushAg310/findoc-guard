@@ -52,6 +52,7 @@ covering a corner, and the camera panning away and back
 | In-view frames tracked through pan-away and back | 99.7% |
 | Keyframes blurred > 3 px (selected vs. evenly spaced) | 0% vs. 20.5% |
 | Bank identified on the selected frame vs. first / random frame | 100% vs. 22% / 50% |
+| Field accuracy with real OCR (EasyOCR, RTX 3050) on selected vs. first / random frame | 94.4% vs. 19.0% / 44.4% |
 | Processing time for a 4 s clip (laptop CPU, no OCR) | ~2.9 s |
 
 On these clips a per-frame page detector is as accurate as tracking (0.14% on clean clips), so

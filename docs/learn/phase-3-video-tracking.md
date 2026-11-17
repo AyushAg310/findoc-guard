@@ -322,8 +322,19 @@ About 9.6 keyframes per clip, covering 23.7 of the 26.1 degrees of viewing angle
    was rejected by the coverage gate in 78% of clips (the camera starts farther away and at an
    angle), and a random frame often lands in a blur burst.
 
-The script also takes `--real-ocr` to compare field accuracy on best / first / random frames
-with EasyOCR (results file `experiments/results/phase3_real_ocr.json`).
+With `--real-ocr` the script also reads the fields with EasyOCR on each of the three frames
+(run on the RTX 3050 laptop, `experiments/results/phase3_real_ocr.json`; a frame whose template
+was not identified scores 0):
+
+| Frame | Field accuracy (EasyOCR) |
+| --- | --- |
+| Selected best frame | 94.4% |
+| First frame | 19.0% |
+| Random frame | 44.4% |
+
+This is the clearest result of the phase: choosing the frame roughly doubles to quintuples what
+OCR gets right. It is below the 100% of Phase 2 photos; the evaluation records accuracy per
+clip, not per field, so finding out which fields fail on video frames is a follow-up.
 
 ### 3.10 Tests (141 in total, 95% coverage)
 
@@ -463,7 +474,8 @@ similarity cannot undo.
 **Q: How do you pick the best frame?**
 A: Highest product of relative sharpness, frontalness and relative coverage. Sent to the 2D
 pipeline, it was identified 100% of the time, against 22% for the first frame (too far away and
-rejected by the coverage gate) and 50% for a random frame (often blurred).
+rejected by the coverage gate) and 50% for a random frame (often blurred). With real OCR, field
+accuracy was 94.4% on the best frame, 19% on the first and 44% on a random frame.
 
 **Q: Why render synthetic videos?**
 A: Exact ground truth for every frame (corners, blur, visibility, camera pose) and full control
