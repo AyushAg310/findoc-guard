@@ -15,7 +15,10 @@ each build phase is released as a minor version.
 
 ### Added
 - `experiments/date_reading_ablation.py`: accuracy of each date-reading method on real OCR,
-  with images of failures.
+  with images of failures. Results (RTX 3050, 100 cheques): as written 96%, re-spaced 45%,
+  digit by digit 100%, validated pipeline 100%.
+- Real-OCR results for 0.3.2 (`experiments/results/phase2_real_ocr.json`): 100% on every
+  field, 100% recall for all four fraud types, 0% false alarms on clean cheques.
 
 ## [0.3.1] - Date-box re-spacing (superseded), real-OCR results
 

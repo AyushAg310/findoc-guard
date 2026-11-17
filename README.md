@@ -53,21 +53,22 @@ Measured on 120 synthetic cheque photos from four fictional banks
 | Signature presence | 100% |
 | Median template matching time (4 templates, laptop CPU) | ~0.2 s |
 
-With **real OCR** (EasyOCR on an RTX 3050 laptop GPU, 100 cheques, v0.3.0):
+With **real OCR** (EasyOCR on an RTX 3050 laptop GPU, 100 cheques, v0.3.2):
 
 | Metric | Result |
 | --- | --- |
-| Field accuracy: payee, amount in words, account, IFSC, MICR | 100% each |
-| Field accuracy: amount in figures / date | 99% / 94% |
-| Fraud recall: amount mismatch / stale / unsigned / post-dated | 100% / 100% / 100% / 83% |
-| Clean cheques with any flag (false alarms) | 8% |
+| Field accuracy: date, payee, amount in words and figures, account, IFSC, MICR | 100% each |
+| Fraud recall: amount mismatch / stale / post-dated / unsigned | 100% each |
+| Clean cheques with any flag (false alarms) | 0% |
 | Field reading time per cheque (GPU) | ~0.5 s |
 
-The date boxes were the weak point. Re-spacing the boxed digits alone (v0.3.1) made it worse
-(49%), so v0.3.2 reads the date several ways and keeps the reading that is a valid calendar date
-([ablation](experiments/date_reading_ablation.py)). A simulated-OCR sweep shows how errors would hurt: at a 2% character error rate,
-fraud recall stays high but false alarms rise, mostly from a misread digit looking like an
-altered amount, which is why the Phase 5 risk score weights every check by OCR confidence
+Getting the boxed date digits right took an ablation: read as written 96%, re-spaced 45% (the
+recogniser splits the slashed zero into "0" + "8"), digit by digit 100%. The pipeline tries them in
+turn and keeps the first valid calendar date
+([ablation](experiments/date_reading_ablation.py), v0.3.0: 94% date accuracy, 8% false alarms).
+A simulated-OCR sweep shows how errors would hurt: at a 2% character error rate fraud recall stays
+high but false alarms rise, mostly from a misread digit looking like an altered amount, which is
+why the Phase 5 risk score weights every check by OCR confidence
 ([details](docs/learn/phase-2-cheques.md#312-experimentsphase2_cheque_evalpy-results)).
 
 **Any document (Phase 1).** Quality gate, page detection, perspective correction, shadow removal

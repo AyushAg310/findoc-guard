@@ -1,0 +1,21 @@
+{
+  "n": 100,
+  "device": "gpu",
+  "accuracy": {
+    "spaced": 0.96,
+    "compact": 0.45,
+    "per_cell": 1.0,
+    "validated": 1.0
+  },
+  "valid_date_rate": {
+    "spaced": 0.96,
+    "compact": 0.45,
+    "per_cell": 1.0,
+    "validated": 1.0
+  },
+  "validated_variant_used": {
+    "spaced": 96,
+    "per_cell": 2,
+    "compact": 2
+  }
+}
