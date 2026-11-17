@@ -40,6 +40,16 @@ def save_artifacts(doc: Document, save_dir: Path) -> list[Path]:
 
     written: list[Path] = []
     stem = doc.source.stem
+    if doc.frames:  # video input
+        from findoc.track.viz import keyframe_sheet, write_tracking_video
+
+        written.append(write_tracking_video(doc, save_dir / f"{stem}_tracking.mp4"))
+        if doc.keyframes:
+            written.append(save_dir / f"{stem}_keyframes.jpg")
+            save_image(written[-1], keyframe_sheet(doc))
+        if doc.original is not None:
+            written.append(save_dir / f"{stem}_best.jpg")
+            save_image(written[-1], doc.original)
     if doc.original is not None and doc.corners is not None:
         overlay = draw_detection(doc.original, np.array(doc.corners, dtype=np.float32))
         written.append(save_dir / f"{stem}_detected.jpg")
@@ -62,7 +72,10 @@ def process_cmd(
     source: Path = typer.Argument(..., exists=True, dir_okay=False, help="Image or video file"),
     out: Path | None = typer.Option(None, "--out", "-o", help="Write result JSON here"),
     save_dir: Path | None = typer.Option(
-        None, "--save-dir", "-s", help="Save detected/flat/enhanced images in this folder"
+        None,
+        "--save-dir",
+        "-s",
+        help="Save detected/flat/enhanced images (video: tracking video, keyframes) here",
     ),
     ocr: bool = typer.Option(True, "--ocr/--no-ocr", help="Run OCR (needs the [ocr] extra)"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Debug logging"),
@@ -82,6 +95,11 @@ def process_cmd(
         table.add_row(s.stage, f"{s.ms:.1f}", "yes" if s.ok else f"no: {s.note}")
     console.print(table)
 
+    if doc.tracking:
+        console.print(
+            "Tracking: " + ", ".join(f"{k}={v}" for k, v in doc.tracking.items()), highlight=False
+        )
+        console.print(f"Keyframes: {[k.frame for k in doc.keyframes]}", highlight=False)
     if doc.quality:
         console.print(
             "Quality: " + ", ".join(f"{k}={v}" for k, v in doc.quality.items()), highlight=False
@@ -125,14 +143,15 @@ def process_cmd(
 
 @app.command()
 def synth(
-    n: int = typer.Option(10, "--n", help="Number of photos"),
+    n: int = typer.Option(10, "--n", help="Number of photos or videos"),
     out_dir: Path | None = typer.Option(None, "--out", "-o", help="Default: data/synthetic/<kind>"),
-    kind: str = typer.Option("page", help="'page' (generic document) or 'cheque'"),
+    kind: str = typer.Option("page", help="'page' (generic document), 'cheque' or 'video'"),
     seed: int = typer.Option(0, help="Random seed (same seed = same photos)"),
     blur: float = typer.Option(0.0, help="Gaussian blur sigma, to simulate camera shake"),
     fraud_rate: float = typer.Option(
         0.4, help="Cheques only: share with a fraud condition (mismatch/stale/postdated/unsigned)"
     ),
+    seconds: float = typer.Option(4.0, help="Videos only: clip length"),
 ) -> None:
     """Generate synthetic photos with ground truth (labels.json)."""
     out_dir = out_dir or Path("data/synthetic") / kind
@@ -144,9 +163,14 @@ def synth(
         from findoc.synth.dataset import generate_cheques
 
         paths = generate_cheques(n, out_dir, seed=seed, blur_sigma=blur, fraud_rate=fraud_rate)
+    elif kind == "video":
+        from findoc.synth.video import generate_videos
+
+        paths = generate_videos(n, out_dir, seed=seed, fraud_rate=fraud_rate, seconds=seconds)
     else:
-        raise typer.BadParameter("kind must be 'page' or 'cheque'")
-    console.print(f"Wrote {len(paths)} photos and labels.json to {out_dir}")
+        raise typer.BadParameter("kind must be 'page', 'cheque' or 'video'")
+    what = "videos" if kind == "video" else "photos"
+    console.print(f"Wrote {len(paths)} {what} and labels.json to {out_dir}")
 
 
 templates_app = typer.Typer(help="Manage cheque templates.", no_args_is_help=True)

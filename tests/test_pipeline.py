@@ -26,7 +26,8 @@ def test_load_image(sample_image: Path) -> None:
 def test_default_pipeline_stage_order() -> None:
     names = [n for n, _ in default_pipeline().stages]
     assert names == [
-        "load", "quality", "detect", "rectify", "enhance", "align", "fields", "rules", "ocr"
+        "load", "video", "track", "quality", "detect", "rectify", "enhance", "align", "fields",
+        "rules", "ocr",
     ]  # fmt: skip
     assert "ocr" not in [n for n, _ in default_pipeline(ocr=False).stages]
 
@@ -46,7 +47,8 @@ def test_process_synthetic_photo(synth_photo_path: Path) -> None:
 def test_blurry_photo_is_rejected_early(blurry_photo_path: Path) -> None:
     doc = process(blurry_photo_path)
     assert doc.status is Status.REJECTED_QUALITY
-    assert [s.stage for s in doc.stages] == ["load", "quality"]  # later stages skipped
+    # video/track are no-ops for photos; stages after the quality gate are skipped
+    assert [s.stage for s in doc.stages] == ["load", "video", "track", "quality"]
     assert any("blurry" in m for m in doc.messages)
 
 
@@ -65,13 +67,13 @@ def test_small_document_is_rejected(tmp_path: Path) -> None:
         assert any("Move closer" in m for m in doc.messages)
 
 
-def test_video_input_is_registered_not_processed(tmp_path: Path) -> None:
+def test_unreadable_video_fails_cleanly(tmp_path: Path) -> None:
     path = tmp_path / "clip.mp4"
     path.write_bytes(b"\x00")
     doc = process(path)
-    assert doc.status is Status.OK
+    assert doc.status is Status.FAILED
     assert doc.flat is None
-    assert any("Phase 3" in m for m in doc.messages)
+    assert doc.stages[-1].stage == "video" and not doc.stages[-1].ok
 
 
 def test_failing_stage_is_recorded(sample_image: Path) -> None:

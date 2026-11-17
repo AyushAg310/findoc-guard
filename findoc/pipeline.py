@@ -7,7 +7,7 @@ phase by phase.
 Stage roadmap (see README):
     Phase 1  preprocess   quality gate, detection, rectification, illumination, OCR  (done)
     Phase 2  localize     cheque template alignment, field recognition, rules  (done)
-    Phase 3  track        KLT tracking and keyframe selection (video)
+    Phase 3  track        KLT tracking and keyframe selection (video)  (done)
     Phase 4  recon3d      SfM + MVS + mesh + ARAP flattening
     Phase 5  fraud        tamper map, duplicates, signature, risk score
     Phase 6  invoices     LayoutLMv3 extraction, GST checks
@@ -33,9 +33,7 @@ def load_stage(doc: Document) -> Document:
         doc.original = load_image(doc.source)
         h, w = doc.original.shape[:2]
         doc.messages.append(f"Loaded image {w}x{h}")
-    else:
-        doc.messages.append("Video input registered (processing arrives in Phase 3)")
-    return doc
+    return doc  # video frames are read by the Phase 3 video stage
 
 
 class Pipeline:
@@ -68,7 +66,8 @@ class Pipeline:
 def default_pipeline(ocr: bool = True) -> Pipeline:
     """The full pipeline for the current phase.
 
-    Phase 1: load -> quality -> detect -> rectify -> enhance
+    Phase 3: load -> video -> track (video only: best frame + keyframes)
+    Phase 1: -> quality -> detect -> rectify -> enhance
     Phase 2: -> align (cheque template) -> fields -> rules
     then:    -> ocr (full-page text, for documents that aren't known cheques)
     """
@@ -77,8 +76,11 @@ def default_pipeline(ocr: bool = True) -> Pipeline:
     from findoc.localize.stages import align_stage, make_fields_stage
     from findoc.preprocess.stages import detect_stage, enhance_stage, quality_stage, rectify_stage
     from findoc.recognize.ocr import ocr_stage
+    from findoc.track.stages import track_stage, video_load_stage
 
     pipe = Pipeline()
+    pipe.add("video", video_load_stage)
+    pipe.add("track", track_stage)
     pipe.add("quality", quality_stage)
     pipe.add("detect", detect_stage)
     pipe.add("rectify", rectify_stage)

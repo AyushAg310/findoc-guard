@@ -3,6 +3,40 @@
 All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org/);
 each build phase is released as a minor version.
 
+## [0.4.0] - Phase 3: video input, KLT tracking, keyframe selection
+
+### Added
+- **Video input** (`.mp4`, `.mov`, `.avi`, `.mkv`, `.webm`): two-pass reading. Frames are
+  streamed, subsampled to at most 180 and downscaled to 960 px for tracking
+  (`findoc.io.read_video`); only the chosen frames are decoded again at full resolution
+  (`read_frames`).
+- **KLT document tracking** (`findoc/track/klt.py`): Shi-Tomasi corners inside the document,
+  pyramidal Lucas-Kanade, forward-backward check (1 px), reference-anchored RANSAC homography,
+  re-detection below 150 points with drift correction (snap to the page detector when it
+  agrees within 1% of the diagonal, else verify against a SIFT anchor view), loss detection and
+  SIFT re-localisation, and sharpness measured on the rectified document.
+- **Keyframe and best-frame selection** (`findoc/track/keyframes.py`): usable = tracked, fully in
+  view, at least 75% of the median sharpness; keyframes by projective viewpoint change (corner
+  residual after the best similarity); best frame by sharpness x frontalness x coverage.
+- Pipeline stages `video` and `track` (`findoc/track/stages.py`): the best frame and its tracked
+  corners feed the unchanged Phase 1-2 stages. New `Document` fields: `track`, `tracking`,
+  `keyframes`, `best_frame`, `video`, `frame_numbers` (frames and keyframe images are kept out
+  of the JSON). New settings: `video_max_frames`, `video_track_side`,
+  `keyframe_min_view_change`, `keyframe_max`.
+- **Synthetic hand-held videos** with exact per-frame ground truth: pinhole camera model
+  (`findoc/synth/camera.py`, plane-induced homography), camera sweep, hand shake, wrist jerks,
+  shutter-integrated motion blur, optional thumb occlusion and pan-away
+  (`findoc/synth/video.py`). `findoc synth --kind video`.
+- CLI: tracking summary; `--save-dir` writes the tracking video, keyframe contact sheet and best
+  frame. Streamlit: video upload and "Cheque video" mode.
+- `experiments/phase3_tracking_eval.py` and results (`experiments/results/phase3.json`), with
+  `--real-ocr`.
+- Learning guide `docs/learn/phase-3-video-tracking.md`. 139 tests, 95% coverage.
+
+### Changed
+- `detect_stage` keeps tracked corners for video input.
+- An unreadable video now fails in the `video` stage (previously video was only registered).
+
 ## [0.3.2] - Validated date reading, figures parser fix
 
 ### Fixed

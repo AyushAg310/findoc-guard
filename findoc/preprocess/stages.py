@@ -6,6 +6,7 @@ Each function has the stage signature ``(Document) -> Document`` and is register
 
 from __future__ import annotations
 
+import cv2
 import numpy as np
 
 from findoc.config import get_settings
@@ -17,7 +18,7 @@ from findoc.types import Document, Status
 
 
 def _require_image(doc: Document) -> bool:
-    """Phase 1 handles images; video frames arrive in Phase 3."""
+    """Stages need an image: a photo, or the best video frame chosen by the track stage."""
     return doc.original is not None
 
 
@@ -36,6 +37,12 @@ def quality_stage(doc: Document) -> Document:
 
 def detect_stage(doc: Document) -> Document:
     if not _require_image(doc):
+        return doc
+    if doc.detection_method == "tracked" and doc.corners is not None:
+        # Video: the tracker already located the document in the best frame.
+        h, w = doc.original.shape[:2]
+        area = cv2.contourArea(np.array(doc.corners, dtype=np.float32))
+        doc.quality["coverage"] = round(area / (w * h), 4)
         return doc
     det = find_document(doc.original)
     doc.corners = det.corners.round(2).tolist()

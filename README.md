@@ -7,7 +7,7 @@
 [![CI](https://github.com/AyushAg310/findoc-guard/actions/workflows/ci.yml/badge.svg)](https://github.com/AyushAg310/findoc-guard/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Status](https://img.shields.io/badge/status-Phase%202%20of%208-orange)
+![Status](https://img.shields.io/badge/status-Phase%203%20of%208-orange)
 
 </div>
 
@@ -32,9 +32,34 @@ multi-view 3D reconstruction flattens folded documents while preserving forensic
 template alignment handles cheques, LayoutLMv3 handles invoices, and Indian-format validation
 feeds an explainable fraud score.
 
-## Current capability (Phase 2)
+## Current capability (Phase 3)
 
-**Cheques.** A cheque photo is matched to its bank's template with SIFT features and a RANSAC
+**Video (Phase 3).** Film the cheque for a few seconds instead of taking a photo. The document is
+tracked through every frame with KLT optical flow (Shi-Tomasi corners, pyramidal Lucas-Kanade,
+forward-backward check, RANSAC homography, drift correction and SIFT re-localisation when it
+leaves the view). The sharpest, most head-on frame goes to the cheque pipeline, and a set of
+sharp keyframes from spread-out viewpoints is kept for 3D reconstruction (Phase 4):
+
+<p align="center"><img src="docs/images/phase3_demo.jpg" width="760" alt="Phase 3: blurred frame skipped, best frame chosen, sharpness over time with keyframes, keyframe contact sheet"></p>
+
+Measured on 18 synthetic hand-held clips (4 s, 1280x720) with exact ground truth: clean, a thumb
+covering a corner, and the camera panning away and back
+([`experiments/phase3_tracking_eval.py`](experiments/phase3_tracking_eval.py)):
+
+| Metric | Result |
+| --- | --- |
+| Corner error, clean / thumb / pan-away (% of frame diagonal) | 0.13% / 1.44% / 0.31% |
+| In-view frames tracked through pan-away and back | 99.7% |
+| Keyframes blurred > 3 px (selected vs. evenly spaced) | 0% vs. 20.5% |
+| Bank identified on the selected frame vs. first / random frame | 100% vs. 22% / 50% |
+| Processing time for a 4 s clip (laptop CPU, no OCR) | ~2.9 s |
+
+On these clips a per-frame page detector is as accurate as tracking (0.14% on clean clips), so
+tracking is not claimed to be more accurate. Its value is consistent outlines across frames for
+keyframe selection, recovery when the edges are hidden or out of view, and the point tracks
+Phase 4 needs ([discussion](docs/learn/phase-3-video-tracking.md#39-experimentsphase3_tracking_evalpy-results)).
+
+**Cheques (Phase 2).** A cheque photo is matched to its bank's template with SIFT features and a RANSAC
 homography, every field box is placed, the pre-printed template is subtracted so only the
 writing remains, and each field is read, parsed and checked:
 
@@ -116,8 +141,8 @@ Each phase is a working, demoable increment released as a new minor version.
 | 0 | 0.1 | Scaffold: package, CLI, tests, CI, Docker | ✅ Done |
 | 1 | 0.2 | Flat-photo pipeline: quality gate, detection, rectification, OCR | ✅ Done |
 | 2 | 0.3 | Cheque understanding: templates, field recognition, amount-in-words, rules | ✅ Done |
-| 3 | 0.4 | Video + KLT tracking + keyframe selection | ⏳ Next |
-| 4 | 0.5 | 3D reconstruction: SfM + MVS + mesh + ARAP flattening | ⬜ |
+| 3 | 0.4 | Video + KLT tracking + keyframe selection | ✅ Done |
+| 4 | 0.5 | 3D reconstruction: SfM + MVS + mesh + ARAP flattening | ⏳ Next |
 | 5 | 0.6 | Fraud engine: tamper mapping, duplicates, signature, risk score | ⬜ |
 | 6 | 0.7 | Invoices: LayoutLMv3, GSTIN, invoice arithmetic, Excel export | ⬜ |
 | 7 | 0.8 | Product: FastAPI, PostgreSQL, workers, React review UI, Docker Compose | ⬜ |
@@ -136,6 +161,8 @@ findoc --help
 findoc process data/samples/synthetic_cheque_mismatch.jpg --save-dir outputs
 findoc process data/samples/synthetic_shadow.jpg --save-dir outputs --out outputs/result.json
 findoc synth --kind cheque --n 20  # synthetic cheque photos with ground truth
+findoc synth --kind video --n 1 --seed 3 -o data/synthetic/video   # hand-held cheque video
+findoc process data/synthetic/video/video_0003.mp4 --save-dir outputs   # tracking + keyframes
 findoc templates list
 streamlit run demo/streamlit_app.py
 pytest

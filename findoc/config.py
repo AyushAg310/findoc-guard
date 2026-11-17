@@ -30,6 +30,12 @@ class Settings(BaseSettings):
     templates_dir: Path | None = None  # folder of custom templates; None = built-in banks
     feature_method: str = "sift"  # "sift" or "orb"
 
+    # Video (Phase 3)
+    video_max_frames: int = 180  # frames kept for tracking (evenly subsampled)
+    video_track_side: int = 960  # longest side of frames used for tracking
+    keyframe_min_view_change: float = 0.008  # projective shape change between keyframes
+    keyframe_max: int = 25
+
     # Risk score bands (Phase 5)
     risk_medium: int = 30
     risk_high: int = 70

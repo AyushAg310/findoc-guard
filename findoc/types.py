@@ -68,6 +68,24 @@ class CheckResult(BaseModel):
     evidence: dict[str, Any] = Field(default_factory=dict)
 
 
+class TrackedFrame(BaseModel):
+    """Per-frame tracking result (video input). Corners are in original-video pixels."""
+
+    frame: int  # frame number in the source video
+    corners: list[list[float]] | None  # None = document lost in this frame
+    tracks: int
+    motion_px: float
+    sharpness: float
+    in_frame: bool
+
+
+class Keyframe(BaseModel):
+    frame: int
+    sharpness: float
+    view_change: float  # projective shape change from the previous keyframe
+    corners: list[list[float]]
+
+
 class StageLog(BaseModel):
     stage: str
     ms: float
@@ -100,6 +118,18 @@ class Document(BaseModel):
     template_id: str | None = None
     template_homography: list[list[float]] | None = None
     registered: np.ndarray | None = Field(default=None, exclude=True)
+
+    # Video (Phase 3): tracked frames (downscaled, for tracking), the per-frame track, the
+    # keyframes chosen for 3D reconstruction (full-resolution images kept for Phase 4) and the
+    # best frame, which becomes ``original`` for the 2D stages.
+    frames: list[np.ndarray] | None = Field(default=None, exclude=True)
+    frame_numbers: list[int] = Field(default_factory=list)
+    video: dict[str, float] = Field(default_factory=dict)
+    track: list[TrackedFrame] = Field(default_factory=list)
+    tracking: dict[str, float] = Field(default_factory=dict)
+    keyframes: list[Keyframe] = Field(default_factory=list)
+    keyframe_images: list[np.ndarray] = Field(default_factory=list, exclude=True)
+    best_frame: int | None = None
 
     quality: dict[str, float] = Field(default_factory=dict)
     words: list[OcrWord] = Field(default_factory=list)
