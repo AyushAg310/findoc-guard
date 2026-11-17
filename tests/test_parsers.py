@@ -85,6 +85,8 @@ def test_words_to_amount_rejects_non_numbers() -> None:
         ("₹ 8,40,515/-", "840515.00"),
         ("25,OOO", "25000.00"),  # letter O read for zero
         ("1.234.56", "1234.56"),  # only the last dot is decimal
+        ("30,00.189/-", "3000189.00"),  # comma misread as a dot: 3 digits can't be paise
+        ("25,000.5", "25000.50"),
     ],
 )
 def test_parse_amount_figures(text: str, value: str) -> None:

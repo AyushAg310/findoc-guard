@@ -212,11 +212,14 @@ def parse_amount_figures(text: str) -> Decimal | None:
     """'Rs. 2,50,000.00/-' -> Decimal('250000.00')."""
     t = re.sub(r"(?i)rs\.?|inr|₹|/-", "", text).strip()
     t = t.translate(DIGIT_FIXES)
-    t = re.sub(r"[^\d.,]", "", t).replace(",", "")
-    if t.count(".") > 1:  # keep only the last dot as the decimal point
-        head, _, tail = t.rpartition(".")
-        t = head.replace(".", "") + "." + tail
-    t = t.strip(".")
+    t = re.sub(r"[^\d.,]", "", t).strip(".,")
+    # A decimal point is only ever followed by 1-2 digits (paise) at the end. Any other dot is
+    # a misread comma: "30,00.189" is 30,00,189, not 3000.189.
+    head, dot, tail = t.rpartition(".")
+    if dot and 1 <= len(tail) <= 2 and tail.isdigit():
+        t = head.replace(".", "").replace(",", "") + "." + tail
+    else:
+        t = t.replace(".", "").replace(",", "")
     if not t:
         return None
     try:

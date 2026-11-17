@@ -3,7 +3,21 @@
 All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org/);
 each build phase is released as a minor version.
 
-## [0.3.1] - Date-box reading fix, real-OCR results
+## [0.3.2] - Validated date reading, figures parser fix
+
+### Fixed
+- **Regression from 0.3.1:** reading the date only in re-spaced form dropped real-OCR date
+  accuracy from 94% to 49%. Boxed fields are now read with validated fallbacks
+  (`read_boxed`): as written, then re-spaced, then digit by digit, keeping the first reading
+  that is a valid calendar date. The method used is recorded in `ExtractedField.method`.
+- Amount in figures: a dot followed by three digits is a misread comma, not a decimal point
+  (`30,00.189` was parsed as 3,000.19; now 30,00,189).
+
+### Added
+- `experiments/date_reading_ablation.py`: accuracy of each date-reading method on real OCR,
+  with images of failures.
+
+## [0.3.1] - Date-box re-spacing (superseded), real-OCR results
 
 ### Added
 - Real-OCR evaluation results (EasyOCR on an RTX 3050 laptop GPU, 100 cheques):

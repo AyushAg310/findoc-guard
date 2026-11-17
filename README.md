@@ -63,8 +63,9 @@ With **real OCR** (EasyOCR on an RTX 3050 laptop GPU, 100 cheques, v0.3.0):
 | Clean cheques with any flag (false alarms) | 8% |
 | Field reading time per cheque (GPU) | ~0.5 s |
 
-The date boxes were the weak point (digits spaced far apart confuse OCR); v0.3.1 re-spaces them
-before reading. A simulated-OCR sweep shows how errors would hurt: at a 2% character error rate,
+The date boxes were the weak point. Re-spacing the boxed digits alone (v0.3.1) made it worse
+(49%), so v0.3.2 reads the date several ways and keeps the reading that is a valid calendar date
+([ablation](experiments/date_reading_ablation.py)). A simulated-OCR sweep shows how errors would hurt: at a 2% character error rate,
 fraud recall stays high but false alarms rise, mostly from a misread digit looking like an
 altered amount, which is why the Phase 5 risk score weights every check by OCR confidence
 ([details](docs/learn/phase-2-cheques.md#312-experimentsphase2_cheque_evalpy-results)).

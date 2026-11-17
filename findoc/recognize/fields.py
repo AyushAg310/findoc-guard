@@ -114,6 +114,59 @@ def _bbox(box: tuple[int, int, int, int]) -> BBox:
     return BBox(x0=box[0], y0=box[1], x1=box[2], y1=box[3])
 
 
+def per_cell_images(crop: np.ndarray, cells: int, pad: int = 10) -> list[np.ndarray]:
+    """Each non-empty cell's character, trimmed and padded on white (one image per digit)."""
+    h, w = crop.shape[:2]
+    out = []
+    for i in range(cells):
+        cell = crop[:, round(i * w / cells) : round((i + 1) * w / cells)]
+        gray = cv2.cvtColor(cell, cv2.COLOR_BGR2GRAY)
+        ys, xs = np.where(gray < 200)
+        if len(xs) == 0:
+            continue
+        glyph = cell[ys.min() : ys.max() + 1, xs.min() : xs.max() + 1]
+        out.append(cv2.copyMakeBorder(glyph, pad, pad, pad, pad, cv2.BORDER_CONSTANT,
+                                      value=(255, 255, 255)))  # fmt: skip
+    return out
+
+
+# How to tell a plausible reading of a boxed field from a garbled one.
+BOXED_VALIDATORS = {"date": lambda text: parse_cheque_date(text) is not None}
+
+
+def read_boxed(engine: object, spec: FieldSpec, crop: np.ndarray) -> tuple[str, float, str]:
+    """Read a boxed field (one character per cell) with validated fallbacks.
+
+    Tries, in order of measured reliability, and keeps the first reading that validates:
+
+    1. ``spaced``: the crop as written (digits far apart);
+    2. ``compact``: cells re-joined with normal letter spacing (:func:`compact_cells`);
+    3. ``per_cell``: each character recognised on its own, then concatenated.
+
+    Returns (text, confidence, variant). If nothing validates, the ``spaced`` reading is
+    returned so the rule reports the field as unreadable.
+    """
+    validate = BOXED_VALIDATORS.get(spec.name, lambda text: bool(text))
+    first: tuple[str, float, str] | None = None
+    for variant in ("spaced", "compact"):
+        img = _prepare(crop, spec.cells if variant == "compact" else 1)
+        text, conf = _read(engine, spec, img)
+        text = text.strip()
+        first = first or (text, conf, variant)
+        if validate(text):
+            return text, conf, variant
+    chars, confs = [], []
+    for glyph in per_cell_images(crop, spec.cells):
+        text, conf = _read(engine, spec, _prepare(glyph))
+        chars.append(text.strip()[:1])
+        confs.append(conf)
+    text = "".join(chars)
+    if validate(text):
+        return text, min(confs, default=0.0), "per_cell"
+    assert first is not None
+    return first
+
+
 def _read(engine: object, spec: FieldSpec, img: np.ndarray) -> tuple[str, float]:
     """Call the engine. Simulation/test engines may implement ``read_field`` to know which
     field they are reading; real engines only see the image."""
@@ -129,6 +182,7 @@ def read_cheque_fields(
     """Extract and normalise every field. ``engine`` None = no OCR (signature only)."""
     crops = crop_fields(registered, template)
     raw: dict[str, tuple[str, float]] = {}
+    variants: dict[str, str] = {}
     if engine is not None:
         for spec in template.fields:
             if spec.kind == "signature":
@@ -137,7 +191,11 @@ def read_cheque_fields(
             if crop.ink_ratio < 0.001:  # nothing written there
                 raw[spec.name] = ("", 0.0)
                 continue
-            text, conf = _read(engine, spec, _prepare(crop.image, spec.cells))
+            if spec.cells > 1:
+                text, conf, variant = read_boxed(engine, spec, crop.image)
+                variants[spec.name] = variant
+            else:
+                text, conf = _read(engine, spec, _prepare(crop.image))
             raw[spec.name] = (text.strip(), conf)
 
     out: list[ExtractedField] = []
@@ -149,6 +207,7 @@ def read_cheque_fields(
                 value=value,
                 raw=value,
                 normalized=normalized,
+                method=variants.get(box_of),
                 confidence=round(conf, 4),
                 bbox=_bbox(template.field(box_of).box),
             )

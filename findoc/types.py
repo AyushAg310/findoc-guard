@@ -46,6 +46,7 @@ class ExtractedField(BaseModel):
     value: str  # text as read (cleaned)
     raw: str = ""  # OCR output before cleaning
     normalized: str | None = None  # validated canonical value, None if invalid/unreadable
+    method: str | None = None  # how it was read, e.g. "compact" for re-spaced date boxes
     confidence: float = 0.0
     bbox: BBox | None = None  # in template coordinates for cheques
 

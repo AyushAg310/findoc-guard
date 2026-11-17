@@ -155,6 +155,53 @@ def test_compact_cells_respaces_date_digits() -> None:
     assert compact_cells(blank, 8) is blank  # nothing written: returned unchanged
 
 
+class ScriptedEngine:
+    """Returns pre-set readings in call order (stands in for a real OCR engine)."""
+
+    device = "test"
+
+    def __init__(self, outputs: list[str]) -> None:
+        self.outputs = list(outputs)
+        self.calls = 0
+
+    def read_line(self, img: np.ndarray, allowlist: str | None = None) -> tuple[str, float]:
+        self.calls += 1
+        return (self.outputs.pop(0) if self.outputs else ""), 0.9
+
+
+@pytest.mark.parametrize(
+    ("outputs", "expected_text", "expected_variant"),
+    [
+        (["18092026"], "18092026", "spaced"),  # first reading valid: no further calls
+        (["1809206", "18092026"], "18092026", "compact"),  # dropped digit, re-spaced works
+        (["1809", "18O9", *"18092026"], "18092026", "per_cell"),  # digit by digit
+        (["1809", "18O9", *"99999999"], "1809", "spaced"),  # nothing valid: report as read
+    ],
+)
+def test_read_boxed_validated_fallbacks(
+    outputs: list[str], expected_text: str, expected_variant: str
+) -> None:
+    from findoc.recognize.fields import read_boxed
+
+    template = builtin_store().get("ARVL")
+    filled, _ = render_cheque(np.random.default_rng(9), bank="ARVL", today=TODAY)
+    crop = crop_fields(filled, template)["date"].image
+    engine = ScriptedEngine(outputs)
+    text, _, variant = read_boxed(engine, template.field("date"), crop)
+    assert (text, variant) == (expected_text, expected_variant)
+    if expected_variant == "spaced" and expected_text == "18092026":
+        assert engine.calls == 1
+
+
+def test_per_cell_images_one_per_digit() -> None:
+    from findoc.recognize.fields import per_cell_images
+
+    template = builtin_store().get("INDV")
+    filled, truth = render_cheque(np.random.default_rng(12), bank="INDV", today=TODAY)
+    crop = crop_fields(filled, template)["date"].image
+    assert len(per_cell_images(crop, 8)) == len(truth.fields["date"])
+
+
 def test_read_fields_without_ocr_reports_signature_only() -> None:
     template = builtin_store().get("ARVL")
     filled, _ = render_cheque(np.random.default_rng(6), bank="ARVL", unsigned=True, today=TODAY)
