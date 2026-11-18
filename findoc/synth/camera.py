@@ -13,7 +13,7 @@ For points on the plane Z = 0, X = (x, y, 0), this collapses to a homography:
     x ~ K [r1 r2 t] (x, y, 1)^T        (r1, r2 = first two columns of R)
 
 which is exactly why a flat page seen by a moving camera is related frame-to-frame by
-homographies (Phase 1 and Phase 3), and why a *curved* page is not (Phase 4).
+homographies (Phase 1 and Phase 3), and why a *curved* page is not (Phase 5).
 """
 
 from __future__ import annotations

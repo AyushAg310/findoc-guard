@@ -20,6 +20,18 @@ def _no_real_ocr(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(ocr, "get_engine", unavailable)
 
 
+@pytest.fixture(autouse=True)
+def _classical_detection(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Tests are deterministic whether or not a trained segmenter exists on this machine
+    (``models/docseg.onnx``): the learned detector is off unless a test turns it on."""
+    from findoc.config import get_settings
+
+    monkeypatch.setenv("FINDOC_SEGMENTATION", "off")
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
+
+
 @pytest.fixture
 def sample_image(tmp_path: Path) -> Path:
     """A simple 'document on a desk' photo: white page, dark text lines, grey background."""

@@ -64,6 +64,7 @@ MIN_FOR_HOMOGRAPHY = 20
 RELOC_MIN_INLIERS = 25
 RATIO = 0.75
 BORDER_PX = 4
+BORDER_FRACTION = 0.01
 SHARPNESS_SIGMA = 1.0  # pre-smoothing before the Laplacian (noise suppression)
 SNAP_MAX = 0.01  # max disagreement (fraction of the frame diagonal) to accept a detector snap
 
@@ -177,8 +178,13 @@ class Anchor:
 
 
 def _clear_of_border(corners: np.ndarray, shape: tuple[int, int]) -> bool:
+    """All corners at least a margin inside the image: 1% of the longer side, at least
+    ``BORDER_PX``. The margin scales with the image because the learned detector (Phase 4)
+    predicts at 256 px, so its outline of a page running off the frame can stop a mask cell or
+    two (about 1% of the image) short of the border."""
     h, w = shape
-    return bool(np.all((corners > BORDER_PX) & (corners < [w - 1 - BORDER_PX, h - 1 - BORDER_PX])))
+    m = max(BORDER_PX, BORDER_FRACTION * max(h, w))
+    return bool(np.all((corners > m) & (corners < [w - 1 - m, h - 1 - m])))
 
 
 def snap_to_detection(frame: np.ndarray, corners: np.ndarray) -> np.ndarray | None:

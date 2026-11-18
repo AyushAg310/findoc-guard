@@ -8,9 +8,10 @@ Stage roadmap (see README):
     Phase 1  preprocess   quality gate, detection, rectification, illumination, OCR  (done)
     Phase 2  localize     cheque template alignment, field recognition, rules  (done)
     Phase 3  track        KLT tracking and keyframe selection (video)  (done)
-    Phase 4  recon3d      SfM + MVS + mesh + ARAP flattening
-    Phase 5  fraud        tamper map, duplicates, signature, risk score
-    Phase 6  invoices     LayoutLMv3 extraction, GST checks
+    Phase 4  segment      learned page detection (used inside detect and track)  (done)
+    Phase 5  recon3d      SfM + MVS + mesh + ARAP flattening
+    Phase 6  fraud        tamper map, duplicates, signature, risk score
+    Phase 7  invoices     LayoutLMv3 extraction, GST checks
 """
 
 from __future__ import annotations

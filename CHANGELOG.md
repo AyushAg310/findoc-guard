@@ -3,6 +3,52 @@
 All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org/);
 each build phase is released as a minor version.
 
+## [0.5.0] - Phase 4: learned page detection
+
+Added after real phone videos showed the classical detector depends on the background (it
+outlined a whole pale wooden board instead of the cheque on it). 3D reconstruction moves to
+Phase 5; later phases shift by one.
+
+### Added
+- **Hard synthetic backgrounds** (`findoc/synth/backgrounds.py`): pale wood, near-white tables,
+  bright boards on dark surrounds, patterned cloth, white-text posters, clutter, noise.
+- **Segmentation training samples** (`findoc/synth/segdata.py`): cheques, pages and plain sheets
+  in several paper tints, in perspective (including sideways), thumbs, lighting, blur, noise,
+  JPEG; exact full-document masks.
+- **DocSegNet** (`findoc/segment/model.py`): small U-Net, 1.2 M parameters, 256x256 input.
+- **Training** (`findoc/segment/train.py`, `findoc segment train`): on-the-fly synthetic data,
+  BCE + Dice loss, AdamW, one-cycle schedule, validation IoU on unseen documents, ONNX export
+  plus a JSON training record. New `[train]` extra (PyTorch, onnx); weights stay out of git.
+- **Inference without PyTorch** (`findoc/segment/infer.py`): ONNX through OpenCV DNN, largest
+  region to quadrilateral, sub-pixel edge refinement with robust (Huber) line fits, and a
+  mask/quadrilateral agreement score.
+- `findoc segment check IMAGE`: heat map and fitted outline.
+- `experiments/phase4_segmentation_eval.py`: learned vs. classical vs. learned-without-refinement
+  on hard synthetic backgrounds, plus optional real videos.
+- Learning guide `docs/learn/phase-4-learned-segmentation.md`.
+
+### Changed
+- `find_document` uses the learned detector when a model exists (`FINDOC_SEGMENTER_MODEL`,
+  default `models/docseg.onnx`) and its outline agrees with its mask (IoU >= 0.9); otherwise the
+  classical detector (`find_document_classical`), unchanged. `FINDOC_SEGMENTATION=off` disables
+  it. Tracking start, drift correction and re-localisation use it automatically.
+- "Clear of the image border" margin is now 1% of the longer image side (at least 4 px): the
+  learned outline of a page running off a 960 px frame can stop 6-7 px short of the edge.
+- Roadmap renumbered: 3D reconstruction is Phase 5, fraud engine 6, invoices 7, product 8,
+  evaluation 9.
+
+### Results (development model, CPU-trained)
+- Hard synthetic backgrounds: page found 90% (classical 45%); near-white table 78% (5%), bright
+  board 88% (8%), white-text poster 92% (25%); corner error 0.38% (0.56%); cut-off pages never
+  called whole.
+- Real videos: the whole cheque on a pale wooden board is now processed (classical rejected it);
+  the two videos with the cheque running off the frame are still rejected.
+
+### Notes
+- Mask holes are filled before fitting (`solid_region`); sides along the image border are not
+  edge-refined; training includes 20% documents running off the frame. Each came from a failure
+  on real or synthetic data, described in the learning guide.
+
 ## [0.4.2] - Track only the whole document
 
 ### Fixed

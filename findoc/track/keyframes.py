@@ -4,7 +4,7 @@ Two consumers need different frames:
 
 * the **2D pipeline** (Phases 1-2) wants the single **best frame**: sharp, document fully in
   view and large, viewed as head-on as possible;
-* the **3D reconstruction** (Phase 4) wants a set of **keyframes**: all sharp, and seen from
+* the **3D reconstruction** (Phase 5) wants a set of **keyframes**: all sharp, and seen from
   well-spread viewpoints, because depth comes from parallax between views.
 
 **Viewpoint change without 3D.** Image displacement alone is a poor proxy: panning the camera

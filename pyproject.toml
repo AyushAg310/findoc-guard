@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "findoc-guard"
-version = "0.4.2"
+version = "0.5.0"
 description = "3D-aware cheque and invoice processing with explainable fraud detection"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -34,7 +34,9 @@ dependencies = [
 ocr = ["easyocr>=1.7"]
 # Demo UI
 ui = ["streamlit>=1.50"]
-# Phase 4: 3D reconstruction
+# Phase 4: training the page-segmentation model (inference needs only OpenCV)
+train = ["torch>=2.2", "onnx>=1.15"]
+# Phase 5: 3D reconstruction
 recon3d = ["pycolmap>=0.6", "open3d>=0.18", "trimesh>=4.0"]
 dev = [
     "pytest>=8.0",

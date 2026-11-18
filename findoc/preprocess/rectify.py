@@ -6,7 +6,7 @@ Four point correspondences (the page corners) determine H exactly
 (``cv2.getPerspectiveTransform``), and ``cv2.warpPerspective`` resamples the image.
 
 The homography is kept in the result: later phases use it to map boxes and evidence
-between the original photo and the flat page (the 2D version of the Phase 4
+between the original photo and the flat page (the 2D version of the Phase 5
 correspondence map).
 """
 

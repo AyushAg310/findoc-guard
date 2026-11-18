@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     blur_threshold: float = 100.0  # variance of Laplacian below this = blurry
     min_coverage: float = 0.25  # document area / frame area (cheques are long and thin)
 
+    # Learned page detection (Phase 4): "auto" uses the model if the file exists, "off" never
+    segmentation: str = "auto"
+    segmenter_model: Path = Path("models/docseg.onnx")
+
     # Cheques (Phase 2)
     templates_dir: Path | None = None  # folder of custom templates; None = built-in banks
     feature_method: str = "sift"  # "sift" or "orb"

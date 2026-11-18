@@ -2,7 +2,7 @@
 
 Version **0.4.0** (patches 0.4.1, 0.4.2) · Course outcomes **CO-4** (motion and tracking, the core of this phase),
 **CO-3** (feature matching, used to re-find a lost document), **CO-5** groundwork (a pinhole
-camera model and the keyframes that Phase 4 reconstructs in 3D).
+camera model and the keyframes that Phase 5 reconstructs in 3D).
 
 Phase 3 lets the user film a cheque instead of photographing it:
 
@@ -10,13 +10,13 @@ Phase 3 lets the user film a cheque instead of photographing it:
 load -> video -> track -> quality -> detect -> rectify -> ... (Phases 1-2, unchanged)
           |        |
    read frames   KLT optical flow follows the document through every frame;
-   (streamed,    pick keyframes (sharp, spread viewpoints) for 3D in Phase 4
+   (streamed,    pick keyframes (sharp, spread viewpoints) for 3D in Phase 5
    downscaled)   and the single best frame for the 2D pipeline
 ```
 
 Why video at all? A photo is one chance: if it is blurred, glared or taken at a bad angle, the
 user retakes. A 3-4 second sweep gives ~100 chances, and the system picks the best one. Video
-is also the input that Phase 4 needs: depth comes from **parallax**, i.e. seeing the same point
+is also the input that Phase 5 needs: depth comes from **parallax**, i.e. seeing the same point
 from different viewpoints.
 
 ---
@@ -60,7 +60,7 @@ truth `video_0000_truth.json` and `labels.json`. Then
    - `read_frames` re-reads only the best frame and keyframes **at full resolution** (second
      pass). The best frame becomes `doc.original`, its tracked corners `doc.corners`, and
      `doc.detection_method = "tracked"`. Keyframe images go to `doc.keyframe_images` for
-     Phase 4.
+     Phase 5.
    - If no frame is sharp with the whole document in view, the status becomes
      `rejected_quality` with a "hold steadier" message.
 4. `quality`, `detect`, `rectify`, `enhance`, `align`, `fields`, `rules`: exactly Phases 1-2.
@@ -220,7 +220,7 @@ window has gradients in two directions, i.e. at corners. On a straight edge one 
 ### 3.5 `findoc/track/keyframes.py`: choosing frames
 
 Two consumers want different frames. The 2D pipeline wants **one best frame**; 3D
-reconstruction (Phase 4) wants **several sharp frames from different viewpoints**.
+reconstruction (Phase 5) wants **several sharp frames from different viewpoints**.
 
 - `viewpoint_change(a, b)`: how differently two outlines are *shaped*. Moving the camera
   sideways or closer moves and scales the outline, which says nothing about the viewing angle.
@@ -321,14 +321,14 @@ About 9.7 keyframes per clip, covering 24.0 of the 26.1 degrees of viewing angle
 2. **Why track, then?** (a) Keyframe selection needs a *consistent* outline in every frame to
    measure viewpoint change between frames, including frames where detection fails: on real
    captures (busy desks, white paper on a white table) edge detection fails far more often
-   than on synthetic data. (b) Phase 4's Structure-from-Motion needs **point tracks**: the
+   than on synthetic data. (b) Phase 5's Structure-from-Motion needs **point tracks**: the
    same physical point followed across frames. KLT produces exactly that; per-frame detection
    produces only four corners. (c) Tracking knows where the document is when its edges are
    hidden or out of view (99.5% of in-view frames tracked through pan-away and back).
 3. **Thumb occlusion fools both** (about 1.3-1.4%): the thumb sits on the corner, and the
    tracker is initialised from, and snaps to, the detector. This does **not** hurt the 2D
    result (IoU 0.990), because Phase 2's SIFT registration to the template corrects the
-   outline. Phase 4 can use the same trick (template-registered corners) for keyframes.
+   outline. Phase 5 can use the same trick (template-registered corners) for keyframes.
 4. **Selection matters a lot.** Keyframes avoid blur completely (0% vs 18.5%). The first frame
    was rejected by the coverage gate in 78% of clips (the camera starts farther away and at an
    angle), and a random frame often lands in a blur burst.
@@ -388,7 +388,7 @@ registered but not processed" became "an unreadable video fails cleanly".
 | Re-localisation | Recognise a stored view (SIFT + RANSAC) to recover after tracking is lost. |
 | Laplacian variance | High-frequency energy; drops with blur. Comparable only for the same content at the same scale, hence rectifying first. |
 | Similarity vs. projective change | A similarity cannot turn a rectangle into a trapezoid; what is left after removing the best similarity measures viewpoint change. |
-| Parallax and baselines | Depth needs the same point seen from different positions; keyframes are spread out so that Phase 4 has parallax. |
+| Parallax and baselines | Depth needs the same point seen from different positions; keyframes are spread out so that Phase 5 has parallax. |
 | Two-pass video reading | Track on small frames, then decode only the chosen frames at full resolution: bounded memory, full detail where it matters. |
 
 ---
@@ -462,7 +462,7 @@ of in-view frames were tracked in pan-away clips, with about one re-localisation
 **Q: Your per-frame detector was as accurate as the tracker. Why track at all?**
 A: On synthetic clips with a contrasting desk, edge detection works in every frame, so yes.
 Tracking matters because (1) real backgrounds break edge detection much more often, (2)
-keyframe selection needs consistent outlines in every frame, and (3) Phase 4's
+keyframe selection needs consistent outlines in every frame, and (3) Phase 5's
 Structure-from-Motion needs point correspondences across frames, which the detector does not
 provide. I report this honestly rather than claim tracking is more accurate.
 
@@ -503,9 +503,9 @@ A: Two phone videos so far, and both exposed problems the synthetic data hid. A 
 page larger than the frame was correctly rejected but with the wrong advice (fixed in 0.4.1:
 specific reasons). A cheque filmed in portrait never fit in the frame, and the tracker followed
 the visible part as if it were the whole document (fixed in 0.4.2: tracking starts only from an
-outline clear of the image border). Systematic real-capture evaluation is planned for Phase 8.
+outline clear of the image border). Systematic real-capture evaluation is planned for Phase 9.
 
 **Q: What are the limitations?**
-A: Synthetic evaluation only so far (real captures in Phase 8); a thumb over a corner biases
+A: Synthetic evaluation only so far (real captures in Phase 9); a thumb over a corner biases
 the initial outline (the 2D result is corrected by template registration); the tracker is about
 2x slower than detection per frame; and `mp4v` output does not play in every browser.

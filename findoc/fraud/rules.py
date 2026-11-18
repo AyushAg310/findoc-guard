@@ -2,7 +2,7 @@
 
 Each rule returns a :class:`~findoc.types.CheckResult` whether or not it fired, so the
 report shows what was verified as well as what failed. ``severity`` (how bad if true) and
-``confidence`` (how sure we are) feed the Phase 5 risk score.
+``confidence`` (how sure we are) feed the Phase 6 risk score.
 
 Rules never guess: if a field couldn't be read, the rule reports it as unverifiable
 (``*_UNREADABLE``) instead of passing or failing it.
@@ -97,7 +97,7 @@ def check_date(fields: dict[str, ExtractedField], today: date) -> CheckResult:
 def check_formats(fields: dict[str, ExtractedField]) -> list[CheckResult]:
     results = []
     # Format rules are sanity checks (often tripped by a single OCR error), not evidence of
-    # fraud on their own, so their severity is low; the risk score (Phase 5) weighs them.
+    # fraud on their own, so their severity is low; the risk score (Phase 6) weighs them.
     specs = [
         ("ifsc", "IFSC_INVALID", "IFSC must be 4 letters, '0', then 6 letters/digits.", 0.4),
         ("account_number", "ACCOUNT_INVALID", "Account number must be 9-18 digits.", 0.4),
@@ -130,7 +130,7 @@ def check_signature(fields: dict[str, ExtractedField]) -> CheckResult:
         confidence=f.confidence if f else 1.0,
         reason="No signature found in the signature area."
         if absent
-        else "Signature area contains ink (presence only; similarity check in Phase 5).",
+        else "Signature area contains ink (presence only; similarity check in Phase 6).",
     )
 
 

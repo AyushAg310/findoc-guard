@@ -18,7 +18,7 @@ Pipeline for each template:
    ``min_inliers`` and the homography is geometrically sane.
 
 Template descriptors are computed once and cached. The SuperPoint + LightGlue matcher arrives
-with the 3D module in Phase 4 and can be swapped in behind :class:`FeatureMatcher`.
+with the 3D module in Phase 5 and can be swapped in behind :class:`FeatureMatcher`.
 """
 
 from __future__ import annotations

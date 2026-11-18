@@ -173,6 +173,65 @@ def synth(
     console.print(f"Wrote {len(paths)} {what} and labels.json to {out_dir}")
 
 
+segment_app = typer.Typer(help="Learned page detection (Phase 4).", no_args_is_help=True)
+app.add_typer(segment_app, name="segment")
+
+
+@segment_app.command("train")
+def segment_train(
+    out: Path = typer.Option(Path("models/docseg.onnx"), "--out", "-o", help="ONNX model to write"),
+    samples: int = typer.Option(20000, help="Synthetic training images per epoch"),
+    epochs: int = typer.Option(12),
+    batch_size: int = typer.Option(16, "--batch-size"),
+    workers: int = typer.Option(2, help="Data-generation worker processes"),
+    device: str = typer.Option("auto", help="'auto', 'cuda' or 'cpu'"),
+) -> None:
+    """Train the document segmenter on synthetic data and export it to ONNX (needs PyTorch)."""
+    try:
+        from findoc.segment.train import train
+    except ImportError as exc:
+        raise typer.BadParameter(
+            f'Training needs PyTorch ({exc}). Install it, e.g. pip install -e ".[ocr]"'
+        ) from exc
+    result = train(
+        out,
+        samples=samples,
+        epochs=epochs,
+        batch_size=batch_size,
+        workers=workers,
+        device=device,
+        log=console.print,
+    )
+    console.print(
+        f"Best validation IoU {result.best_val_iou:.4f} on {result.device} in "
+        f"{result.seconds / 60:.1f} min; model written to {result.onnx_path}"
+    )
+
+
+@segment_app.command("check")
+def segment_check(
+    image: Path = typer.Argument(..., exists=True, dir_okay=False),
+    out: Path = typer.Option(Path("outputs/segment_check.jpg"), "--out", "-o"),
+) -> None:
+    """Show what the segmenter sees on one image: probability mask and the fitted outline."""
+    import cv2
+
+    from findoc.io import load_image
+    from findoc.segment.infer import load_segmenter
+
+    model = load_segmenter(str(get_settings().segmenter_model))
+    if model is None:
+        raise typer.BadParameter(f"No model at {get_settings().segmenter_model}; train one first")
+    img = load_image(image)
+    seg = model.segment(img)
+    heat = cv2.applyColorMap((seg.mask * 255).astype(np.uint8), cv2.COLORMAP_JET)
+    view = cv2.addWeighted(img, 0.6, heat, 0.4, 0)
+    if seg.corners is not None:
+        cv2.polylines(view, [seg.corners.astype(np.int32).reshape(-1, 1, 2)], True, (0, 255, 0), 3)
+    save_image(out, view)
+    console.print(f"agreement {seg.agreement:.3f}; saved {out}")
+
+
 templates_app = typer.Typer(help="Manage cheque templates.", no_args_is_help=True)
 app.add_typer(templates_app, name="templates")
 

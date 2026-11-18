@@ -120,7 +120,7 @@ class Document(BaseModel):
     registered: np.ndarray | None = Field(default=None, exclude=True)
 
     # Video (Phase 3): tracked frames (downscaled, for tracking), the per-frame track, the
-    # keyframes chosen for 3D reconstruction (full-resolution images kept for Phase 4) and the
+    # keyframes chosen for 3D reconstruction (full-resolution images kept for Phase 5) and the
     # best frame, which becomes ``original`` for the 2D stages.
     frames: list[np.ndarray] | None = Field(default=None, exclude=True)
     frame_numbers: list[int] = Field(default_factory=list)

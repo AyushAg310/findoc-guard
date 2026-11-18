@@ -7,7 +7,7 @@
 [![CI](https://github.com/AyushAg310/findoc-guard/actions/workflows/ci.yml/badge.svg)](https://github.com/AyushAg310/findoc-guard/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Status](https://img.shields.io/badge/status-Phase%203%20of%208-orange)
+![Status](https://img.shields.io/badge/status-Phase%204%20of%209-orange)
 
 </div>
 
@@ -32,13 +32,36 @@ multi-view 3D reconstruction flattens folded documents while preserving forensic
 template alignment handles cheques, LayoutLMv3 handles invoices, and Indian-format validation
 feeds an explainable fraud score.
 
-## Current capability (Phase 3)
+## Current capability (Phase 4)
+
+**Page detection that doesn't depend on the background (Phase 4).** Real phone videos showed the
+classical detector failing on a pale wooden board (it outlined the whole board) and on patterned
+cloth. A small U-Net, trained only on synthetic images with deliberately hard backgrounds and
+run through OpenCV DNN (no PyTorch needed at runtime), now finds the page; the classical
+detector remains as a fallback.
+
+Measured on 320 hard synthetic images (1280x720, unseen documents) plus 160 where the page runs
+off the frame ([`experiments/phase4_segmentation_eval.py`](experiments/phase4_segmentation_eval.py)),
+with a small CPU-trained development model:
+
+| Metric | Classical | Learned |
+| --- | --- | --- |
+| Page found (corners within 2% of the diagonal) | 45% | 90% |
+| ... on a near-white table / bright board / white-text poster | 5% / 8% / 25% | 78% / 88% / 92% |
+| Corner error when found (% of diagonal) | 0.56% | 0.38% |
+| Cut-off page wrongly called whole | 0% | 0% |
+
+On the three real phone videos, the learned detector processes the one filmed correctly (whole
+cheque on a pale wooden board: 70 usable frames, 6 keyframes, rectified to the cheque's 2.3:1
+shape), which the classical detector rejected, and still rejects the two where the cheque runs
+off the frame.
+
 
 **Video (Phase 3).** Film the cheque for a few seconds instead of taking a photo. The document is
 tracked through every frame with KLT optical flow (Shi-Tomasi corners, pyramidal Lucas-Kanade,
 forward-backward check, RANSAC homography, drift correction and SIFT re-localisation when it
 leaves the view). The sharpest, most head-on frame goes to the cheque pipeline, and a set of
-sharp keyframes from spread-out viewpoints is kept for 3D reconstruction (Phase 4):
+sharp keyframes from spread-out viewpoints is kept for 3D reconstruction (Phase 5):
 
 <p align="center"><img src="docs/images/phase3_demo.jpg" width="760" alt="Phase 3: blurred frame skipped, best frame chosen, sharpness over time with keyframes, keyframe contact sheet"></p>
 
@@ -94,7 +117,7 @@ turn and keeps the first valid calendar date
 ([ablation](experiments/date_reading_ablation.py), v0.3.0: 94% date accuracy, 8% false alarms).
 A simulated-OCR sweep shows how errors would hurt: at a 2% character error rate fraud recall stays
 high but false alarms rise, mostly from a misread digit looking like an altered amount, which is
-why the Phase 5 risk score weights every check by OCR confidence
+why the Phase 6 risk score weights every check by OCR confidence
 ([details](docs/learn/phase-2-cheques.md#312-experimentsphase2_cheque_evalpy-results)).
 
 **Any document (Phase 1).** Quality gate, page detection, perspective correction, shadow removal
@@ -103,7 +126,7 @@ and OCR: 100% page detection and 0.10% mean corner error on 200 synthetic photos
 
 <p align="center"><img src="docs/images/phase1_demo.jpg" width="640" alt="Phase 1: detected page, perspective corrected, shadows removed"></p>
 
-Synthetic data is easier than real photos; real-capture results will be added in Phase 8.
+Synthetic data is easier than real photos; real-capture results will be added in Phase 9.
 
 ## Architecture
 
@@ -128,7 +151,7 @@ Full requirements and design: [`docs/FinDoc_Guard_SRS_SDD.pdf`](docs/FinDoc_Guar
 | CO | Outcome | Where it's applied |
 | --- | --- | --- |
 | CO-1 | Image acquisition and processing | Quality scoring, document detection, rectification, illumination correction |
-| CO-2 | Deep learning architectures | LayoutLMv3, handwriting OCR, single-image 3D dewarping, tamper forensics |
+| CO-2 | Deep learning architectures | U-Net document segmentation, LayoutLMv3, handwriting OCR, single-image 3D dewarping, tamper forensics |
 | CO-3 | Feature detection and matching | SuperPoint + LightGlue, template alignment, duplicate search |
 | CO-4 | Motion estimation and tracking | KLT tracking, keyframe selection from video |
 | **CO-5** | **3D reconstruction** | **SfM, MVS, meshing, ARAP flattening, forensic evidence mapping** |
@@ -143,11 +166,16 @@ Each phase is a working, demoable increment released as a new minor version.
 | 1 | 0.2 | Flat-photo pipeline: quality gate, detection, rectification, OCR | ✅ Done |
 | 2 | 0.3 | Cheque understanding: templates, field recognition, amount-in-words, rules | ✅ Done |
 | 3 | 0.4 | Video + KLT tracking + keyframe selection | ✅ Done |
-| 4 | 0.5 | 3D reconstruction: SfM + MVS + mesh + ARAP flattening | ⏳ Next |
-| 5 | 0.6 | Fraud engine: tamper mapping, duplicates, signature, risk score | ⬜ |
-| 6 | 0.7 | Invoices: LayoutLMv3, GSTIN, invoice arithmetic, Excel export | ⬜ |
-| 7 | 0.8 | Product: FastAPI, PostgreSQL, workers, React review UI, Docker Compose | ⬜ |
-| 8 | 1.0 | Evaluation, ablations, demo video, term paper | ⬜ |
+| 4 | 0.5 | Learned page detection: U-Net document segmentation trained on synthetic hard backgrounds, ONNX | ✅ Done |
+| 5 | 0.6 | 3D reconstruction: SfM + MVS + mesh + ARAP flattening | ⏳ Next |
+| 6 | 0.7 | Fraud engine: tamper mapping, duplicates, signature, risk score | ⬜ |
+| 7 | 0.8 | Invoices: LayoutLMv3, GSTIN, invoice arithmetic, Excel export | ⬜ |
+| 8 | 0.9 | Product: FastAPI, PostgreSQL, workers, React review UI, Docker Compose | ⬜ |
+| 9 | 1.0 | Evaluation, ablations, demo video, term paper | ⬜ |
+
+Phase 4 was added after real phone videos showed that classical page detection depends on the
+background (it failed on a pale wooden board and on patterned cloth); 3D reconstruction moved to
+Phase 5.
 
 ## Quick start
 
@@ -164,6 +192,9 @@ findoc process data/samples/synthetic_shadow.jpg --save-dir outputs --out output
 findoc synth --kind cheque --n 20  # synthetic cheque photos with ground truth
 findoc synth --kind video --n 1 --seed 3 -o data/synthetic/video   # hand-held cheque video
 findoc process data/synthetic/video/video_0003.mp4 --save-dir outputs   # tracking + keyframes
+pip install -e ".[train]"         # PyTorch + onnx, only to train the page detector
+findoc segment train              # ~20 min on a laptop GPU; writes models/docseg.onnx
+findoc segment check photo.jpg    # what the page detector sees
 findoc templates list
 streamlit run demo/streamlit_app.py
 pytest
@@ -188,15 +219,16 @@ findoc-guard/
 │   ├── types.py         # Document, Field, CheckResult models
 │   ├── cli.py           # `findoc` command-line tool
 │   ├── preprocess/      # Phase 1  quality, detection, rectification   (CO-1)
+│   ├── segment/         # Phase 4  learned page detection: U-Net, ONNX inference (CO-2)
 │   ├── recognize/       # Phase 1-2 OCR, handwriting, MICR, amount parser
-│   ├── classify/        # Phase 6  document-type classifier
+│   ├── classify/        # Phase 7  document-type classifier
 │   ├── localize/        # Phase 2  cheque templates, SIFT + RANSAC registration (CO-3)
 │   ├── track/           # Phase 3  KLT tracking, keyframes              (CO-4)
-│   ├── recon3d/         # Phase 4  SfM, MVS, mesh, ARAP flattening      (CO-5)
-│   ├── fraud/           # Phase 2  rule checks; Phase 5 tamper, duplicates, risk score
-│   └── export/          # Phase 6  JSON, Excel, annotated images
-├── app/                 # Phase 7  FastAPI service
-├── frontend/            # Phase 7  React review UI
+│   ├── recon3d/         # Phase 5  SfM, MVS, mesh, ARAP flattening      (CO-5)
+│   ├── fraud/           # Phase 2  rule checks; Phase 6 tamper, duplicates, risk score
+│   └── export/          # Phase 7  JSON, Excel, annotated images
+├── app/                 # Phase 8  FastAPI service
+├── frontend/            # Phase 8  React review UI
 ├── data/                # Synthetic generators and samples (no real documents)
 ├── experiments/         # Evaluation configs and notebooks
 ├── docs/                # SRS/design document and diagrams

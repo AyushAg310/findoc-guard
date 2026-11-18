@@ -1,0 +1,214 @@
+{
+  "model": "CPU-trained development model (2,400 images, 7 epochs; replay bug fixed after), not in the repo",
+  "training": {
+    "input_size": 256,
+    "normalise": "x/255 - 0.5, BGR",
+    "best_val_iou": 0.9659478068351746,
+    "history": [
+      {
+        "epoch": 1,
+        "loss": 0.7381390333175659,
+        "val_iou": 0.8588404655456543,
+        "val_iou_p05": 0.45909419655799866
+      },
+      {
+        "epoch": 2,
+        "loss": 0.3505762893954913,
+        "val_iou": 0.8807361721992493,
+        "val_iou_p05": 0.5764687061309814
+      },
+      {
+        "epoch": 3,
+        "loss": 0.19862462056179842,
+        "val_iou": 0.9295624494552612,
+        "val_iou_p05": 0.7147709131240845
+      },
+      {
+        "epoch": 4,
+        "loss": 0.1305317072570324,
+        "val_iou": 0.9478298425674438,
+        "val_iou_p05": 0.7607244849205017
+      },
+      {
+        "epoch": 5,
+        "loss": 0.09579264449576537,
+        "val_iou": 0.954820454120636,
+        "val_iou_p05": 0.7746584415435791
+      },
+      {
+        "epoch": 6,
+        "loss": 0.07332705733676752,
+        "val_iou": 0.9632499814033508,
+        "val_iou_p05": 0.812262237071991
+      },
+      {
+        "epoch": 7,
+        "loss": 0.06341770224273205,
+        "val_iou": 0.9659478068351746,
+        "val_iou_p05": 0.8488703370094299
+      }
+    ],
+    "parameters": 1226305,
+    "samples": 2400,
+    "epochs": 7,
+    "device": "cpu"
+  },
+  "synthetic": {
+    "classical": {
+      "overall": {
+        "n": 320,
+        "success": 0.45,
+        "corner_err_pct": 0.559
+      },
+      "by_background": {
+        "desk": {
+          "n": 40,
+          "success": 0.975,
+          "corner_err_pct": 0.318
+        },
+        "pale_wood": {
+          "n": 40,
+          "success": 0.575,
+          "corner_err_pct": 0.41
+        },
+        "light_table": {
+          "n": 40,
+          "success": 0.05,
+          "corner_err_pct": 0.339
+        },
+        "board": {
+          "n": 40,
+          "success": 0.075,
+          "corner_err_pct": 0.27
+        },
+        "cloth": {
+          "n": 40,
+          "success": 0.675,
+          "corner_err_pct": 0.956
+        },
+        "poster": {
+          "n": 40,
+          "success": 0.25,
+          "corner_err_pct": 0.609
+        },
+        "clutter": {
+          "n": 40,
+          "success": 0.475,
+          "corner_err_pct": 0.364
+        },
+        "noise": {
+          "n": 40,
+          "success": 0.525,
+          "corner_err_pct": 0.873
+        }
+      },
+      "ms_per_image": 5.5,
+      "false_whole_on_cut_off": 0.0,
+      "cut_off_samples": 160
+    },
+    "learned": {
+      "overall": {
+        "n": 320,
+        "success": 0.9,
+        "corner_err_pct": 0.38
+      },
+      "by_background": {
+        "desk": {
+          "n": 40,
+          "success": 1.0,
+          "corner_err_pct": 0.304
+        },
+        "pale_wood": {
+          "n": 40,
+          "success": 0.875,
+          "corner_err_pct": 0.365
+        },
+        "light_table": {
+          "n": 40,
+          "success": 0.775,
+          "corner_err_pct": 0.435
+        },
+        "board": {
+          "n": 40,
+          "success": 0.875,
+          "corner_err_pct": 0.543
+        },
+        "cloth": {
+          "n": 40,
+          "success": 1.0,
+          "corner_err_pct": 0.269
+        },
+        "poster": {
+          "n": 40,
+          "success": 0.925,
+          "corner_err_pct": 0.446
+        },
+        "clutter": {
+          "n": 40,
+          "success": 0.85,
+          "corner_err_pct": 0.361
+        },
+        "noise": {
+          "n": 40,
+          "success": 0.9,
+          "corner_err_pct": 0.349
+        }
+      },
+      "ms_per_image": 58.8,
+      "false_whole_on_cut_off": 0.0,
+      "cut_off_samples": 160
+    },
+    "learned_no_refine": {
+      "overall": {
+        "n": 320,
+        "success": 0.8656,
+        "corner_err_pct": 0.482
+      },
+      "by_background": {
+        "desk": {
+          "n": 40,
+          "success": 1.0,
+          "corner_err_pct": 0.453
+        },
+        "pale_wood": {
+          "n": 40,
+          "success": 0.85,
+          "corner_err_pct": 0.461
+        },
+        "light_table": {
+          "n": 40,
+          "success": 0.725,
+          "corner_err_pct": 0.512
+        },
+        "board": {
+          "n": 40,
+          "success": 0.85,
+          "corner_err_pct": 0.585
+        },
+        "cloth": {
+          "n": 40,
+          "success": 0.975,
+          "corner_err_pct": 0.359
+        },
+        "poster": {
+          "n": 40,
+          "success": 0.825,
+          "corner_err_pct": 0.508
+        },
+        "clutter": {
+          "n": 40,
+          "success": 0.825,
+          "corner_err_pct": 0.509
+        },
+        "noise": {
+          "n": 40,
+          "success": 0.875,
+          "corner_err_pct": 0.494
+        }
+      },
+      "ms_per_image": 53.1,
+      "false_whole_on_cut_off": 0.0,
+      "cut_off_samples": 160
+    }
+  }
+}

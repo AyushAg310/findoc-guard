@@ -14,7 +14,7 @@ lying on it, the way a person waves a phone over a cheque:
 * **Ground truth** per frame: document corners in the image, whether the document is fully in
   view, and the blur length (how far the document centre moves while the shutter is open).
 
-Phase 4 reuses the camera model with a curved document instead of a flat one.
+Phase 5 reuses the camera model with a curved document instead of a flat one.
 """
 
 from __future__ import annotations

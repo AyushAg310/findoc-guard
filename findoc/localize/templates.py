@@ -3,7 +3,7 @@
 Cheques are fixed-layout documents (CTS-2010), so once we know which bank's leaf we are
 looking at and how the photo maps onto that leaf, every field's position is known. This is
 cheaper and more reliable than learning to find fields, which is why cheques use templates
-and variable-layout invoices use a learned model (Phase 6).
+and variable-layout invoices use a learned model (Phase 7).
 
 Templates live on disk as::
 

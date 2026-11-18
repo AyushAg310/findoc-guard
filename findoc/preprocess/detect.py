@@ -1,7 +1,15 @@
 """Document boundary detection (CO-1, FR-CAP-04).
 
-Finds the four corners of the page in a photo. Two classical methods are tried in order,
-then two fallbacks:
+Finds the four corners of the page in a photo.
+
+0. **learned** (Phase 4): if a trained segmentation model is available
+   (``FINDOC_SEGMENTER_MODEL``, default ``models/docseg.onnx``), a small U-Net predicts which
+   pixels are document; its mask is turned into a quadrilateral and refined on the image edges
+   (:mod:`findoc.segment.infer`). Accepted when the mask agrees with the quadrilateral
+   (IoU >= ``LEARNED_MIN_AGREEMENT``). Works on backgrounds as bright or busy as the paper.
+
+Otherwise (no model, ``FINDOC_SEGMENTATION=off``, or low agreement), the classical methods are
+tried in order, then two fallbacks:
 
 1. **edges**: Canny edge map -> close small gaps -> external contours -> the largest contour
    that simplifies (Douglas-Peucker, ``approxPolyDP``) to a convex quadrilateral.
@@ -25,6 +33,8 @@ import numpy as np
 WORK_SIDE = 800
 MIN_AREA_RATIO = 0.15  # a candidate must cover at least 15% of the frame
 FULL_FRAME_RATIO = 0.97  # a quad covering more than this is the frame itself
+LEARNED_MIN_AGREEMENT = 0.9  # mask vs. quadrilateral IoU needed to trust the learned outline
+LEARNED_MIN_AREA = 0.04  # the learned detector may find smaller documents than the classical
 
 
 @dataclass
@@ -84,7 +94,31 @@ def _largest_blob(mask: np.ndarray, min_area: float) -> np.ndarray | None:
     return cv2.boxPoints(cv2.minAreaRect(c)).astype(np.float32)
 
 
+def _segmenter():  # noqa: ANN202
+    from findoc.config import get_settings
+    from findoc.segment.infer import load_segmenter
+
+    s = get_settings()
+    if s.segmentation == "off":
+        return None
+    return load_segmenter(str(s.segmenter_model))
+
+
 def find_document(img: np.ndarray) -> Detection:
+    """Learned segmentation when a model is available and confident, else classical."""
+    seg_model = _segmenter()
+    if seg_model is not None:
+        seg = seg_model.segment(img)
+        if seg.corners is not None and seg.agreement >= LEARNED_MIN_AGREEMENT:
+            h, w = img.shape[:2]
+            corners = order_corners(seg.corners)
+            coverage = quad_area(corners) / float(h * w)
+            if LEARNED_MIN_AREA <= coverage <= FULL_FRAME_RATIO:
+                return Detection(corners=corners, method="learned", coverage=coverage)
+    return find_document_classical(img)
+
+
+def find_document_classical(img: np.ndarray) -> Detection:
     h, w = img.shape[:2]
     scale = min(1.0, WORK_SIDE / max(h, w))
     small = cv2.resize(img, (round(w * scale), round(h * scale)), interpolation=cv2.INTER_AREA)
