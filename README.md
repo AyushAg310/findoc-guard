@@ -48,12 +48,12 @@ covering a corner, and the camera panning away and back
 
 | Metric | Result |
 | --- | --- |
-| Corner error, clean / thumb / pan-away (% of frame diagonal) | 0.13% / 1.44% / 0.31% |
-| In-view frames tracked through pan-away and back | 99.7% |
-| Keyframes blurred > 3 px (selected vs. evenly spaced) | 0% vs. 20.5% |
-| Bank identified on the selected frame vs. first / random frame | 100% vs. 22% / 50% |
-| Field accuracy with real OCR (EasyOCR, RTX 3050) on selected vs. first / random frame | 94.4% vs. 19.0% / 44.4% |
-| Processing time for a 4 s clip (laptop CPU, no OCR) | ~2.9 s |
+| Corner error, clean / thumb / pan-away (% of frame diagonal) | 0.14% / 1.34% / 0.26% |
+| In-view frames tracked through pan-away and back | 99.5% |
+| Keyframes blurred > 3 px (selected vs. evenly spaced) | 0% vs. 18.5% |
+| Bank identified on the selected frame vs. first / random frame | 100% vs. 22% / 44% |
+| Field accuracy with real OCR (EasyOCR, RTX 3050, v0.4.0) on selected vs. first / random frame | 94.4% vs. 19.0% / 44.4% |
+| Processing time for a 4 s clip (laptop CPU, no OCR) | ~2.6 s |
 
 On these clips a per-frame page detector is as accurate as tracking (0.14% on clean clips), so
 tracking is not claimed to be more accurate. Its value is consistent outlines across frames for

@@ -12,6 +12,12 @@ each build phase is released as a minor version.
   and the pipeline reported "ok" on a partial, square "page". Such videos are now rejected with
   "never fits fully inside the frame" and, for cheques, advice to film in landscape.
 - The tracker no longer falls back to tracking the whole frame when no page is found.
+- Frame sharpness is measured after a light Gaussian smoothing (sigma 1 px): Laplacian variance
+  also rises with pixel noise, so a noisy blurred frame could look sharp. Under OpenCV 5.1 the
+  test clip picked a blurred best frame; rank correlation with true blur on that clip improved
+  from -0.15 to -0.82. The absolute sharpness floor is now 15 (new scale); the relative test
+  (75% of the clip median) does the selection. Tests use 960x540 clips (robust on OpenCV 4.10,
+  5.0 and 5.1).
 
 ## [0.4.1] - Clear reasons when a video is rejected
 

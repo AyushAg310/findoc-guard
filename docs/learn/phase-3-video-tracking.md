@@ -210,7 +210,10 @@ window has gradients in two directions, i.e. at corners. On a straight edge one 
   rectangle (at most 600 px wide, never upsampled). A first version measured the bounding box
   in the frame, which includes a viewpoint-dependent amount of textured desk; its sharpness
   barely correlated with true blur. On the rectified document, rank correlation with true blur
-  is about -0.94 at 1280x720 (-0.65 at 640x360, where the document is small).
+  is about -0.94 at 1280x720 (-0.65 at 640x360, where the document is small). Since v0.4.2 the
+  rectified document is first smoothed with a 1 px Gaussian: pixel noise also raises Laplacian
+  variance, and on a small clip under OpenCV 5.1 a noisy blurred frame won "best frame". With
+  smoothing the correlation on that clip went from -0.15 to -0.82.
 - `FrameTrack` / `TrackResult`: the per-frame record and the summary counters
   (`lost`, `redetections`, `reacquisitions`, `snaps`). `draw_track` overlays one frame.
 
@@ -286,26 +289,27 @@ truth, as % of the frame diagonal (0.1% = 1.5 px).
 
 | Condition | KLT error | Page detector every frame | KLT in-view frames tracked | Best-frame template id | Best-frame field IoU |
 | --- | --- | --- | --- | --- | --- |
-| clean | 0.130% | 0.137% | 100% | 100% | 0.990 |
-| thumb | 1.438% | 1.276% | 100% | 100% | 0.990 |
-| exit | 0.305% | 0.165% | 99.7% | 100% | 0.991 |
+| clean | 0.137% | 0.138% | 100% | 100% | 0.989 |
+| thumb | 1.341% | 1.274% | 100% | 100% | 0.991 |
+| exit | 0.257% | 0.167% | 99.5% | 100% | 0.988 |
 
-Time per frame: KLT 12.4 ms (on 960 px frames), page detector 5.2 ms (1280 px). Whole pipeline
-about 2.9 s per 4 s clip.
+Time per frame: KLT 10.9 ms (on 960 px frames), page detector 4.9 ms (1280 px). Whole pipeline
+about 2.6 s per 4 s clip. (Numbers from v0.4.2; v0.4.0 differed by at most 0.1 percentage points
+of error.)
 
 | Keyframes | Selected | Same number, evenly spaced |
 | --- | --- | --- |
-| Mean motion blur | 1.01 px | 5.73 px |
-| Worst motion blur | 1.87 px | 25.90 px |
-| Frames blurred more than 3 px | 0% | 20.5% |
+| Mean motion blur | 1.04 px | 5.29 px |
+| Worst motion blur | 2.05 px | 24.74 px |
+| Frames blurred more than 3 px | 0% | 18.5% |
 
-About 9.6 keyframes per clip, covering 23.7 of the 26.1 degrees of viewing angle in the clip.
+About 9.7 keyframes per clip, covering 24.0 of the 26.1 degrees of viewing angle in the clip.
 
 | Frame sent to the 2D pipeline | Blur | Template identified | Field-box IoU |
 | --- | --- | --- | --- |
-| Selected best frame | 0.43 px | 100% | 0.990 |
+| Selected best frame | 0.69 px | 100% | 0.989 |
 | First frame | 1.19 px | 22.2% | 0.988 |
-| Random frame | 8.85 px | 50.0% | 0.990 |
+| Random frame | 8.85 px | 44.4% | 0.990 |
 
 **What the numbers say (be ready to explain this honestly):**
 
@@ -320,17 +324,17 @@ About 9.6 keyframes per clip, covering 23.7 of the 26.1 degrees of viewing angle
    than on synthetic data. (b) Phase 4's Structure-from-Motion needs **point tracks**: the
    same physical point followed across frames. KLT produces exactly that; per-frame detection
    produces only four corners. (c) Tracking knows where the document is when its edges are
-   hidden or out of view (99.7% of in-view frames tracked through pan-away and back).
+   hidden or out of view (99.5% of in-view frames tracked through pan-away and back).
 3. **Thumb occlusion fools both** (about 1.3-1.4%): the thumb sits on the corner, and the
    tracker is initialised from, and snaps to, the detector. This does **not** hurt the 2D
    result (IoU 0.990), because Phase 2's SIFT registration to the template corrects the
    outline. Phase 4 can use the same trick (template-registered corners) for keyframes.
-4. **Selection matters a lot.** Keyframes avoid blur completely (0% vs 20.5%). The first frame
+4. **Selection matters a lot.** Keyframes avoid blur completely (0% vs 18.5%). The first frame
    was rejected by the coverage gate in 78% of clips (the camera starts farther away and at an
    angle), and a random frame often lands in a blur burst.
 
 With `--real-ocr` the script also reads the fields with EasyOCR on each of the three frames
-(run on the RTX 3050 laptop, `experiments/results/phase3_real_ocr.json`; a frame whose template
+(run on the RTX 3050 laptop with v0.4.0, `experiments/results/phase3_real_ocr.json`; a frame whose template
 was not identified scores 0):
 
 | Frame | Field accuracy (EasyOCR) |
@@ -345,8 +349,8 @@ clip, not per field, so finding out which fields fail on video frames is a follo
 
 ### 3.10 Tests (142 in total, 95% coverage)
 
-`tests/test_track.py` uses small, fast clips (640x360, 1.5 s, 3 sub-frames; shared by a
-module-scoped fixture):
+`tests/test_track.py` uses small, fast clips (960x540, 1.5 s, 3 sub-frames; shared by a
+module-scoped fixture; 640x360 proved too small for a reliable blur measure):
 
 - camera: focal length from FOV; `plane_homography` agrees with `project` to 1e-6.
 - synthetic video: lengths, ground truth, jerks give blur bursts, `exit_frame` really leaves
@@ -452,7 +456,7 @@ the diagonal.
 
 **Q: What happens if the document leaves the view?**
 A: With fewer than 20 reliable points it is marked lost. Each later frame is matched against
-the stored SIFT anchor view (ratio test + RANSAC, 25 inliers minimum) to re-localise it. 99.7%
+the stored SIFT anchor view (ratio test + RANSAC, 25 inliers minimum) to re-localise it. 99.5%
 of in-view frames were tracked in pan-away clips, with about one re-localisation per clip.
 
 **Q: Your per-frame detector was as accurate as the tracker. Why track at all?**
@@ -470,7 +474,7 @@ much desk was visible. Rectified, its rank correlation with true blur is about -
 **Q: How do you choose keyframes?**
 A: Usable frames are tracked, fully in view and at least 75% as sharp as the clip's median. A
 new keyframe is added once the viewpoint has changed enough since the last one, and it is the
-sharpest usable frame in a 6-frame window. Result: 0% of keyframes blurred versus 20.5% for
+sharpest usable frame in a 6-frame window. Result: 0% of keyframes blurred versus 18.5% for
 evenly spaced frames, while still covering 24 of 26 degrees of viewing angle.
 
 **Q: How do you measure viewpoint change from 2D outlines?**
@@ -482,7 +486,7 @@ similarity cannot undo.
 **Q: How do you pick the best frame?**
 A: Highest product of relative sharpness, frontalness and relative coverage. Sent to the 2D
 pipeline, it was identified 100% of the time, against 22% for the first frame (too far away and
-rejected by the coverage gate) and 50% for a random frame (often blurred). With real OCR, field
+rejected by the coverage gate) and 44% for a random frame (often blurred). With real OCR, field
 accuracy was 94.4% on the best frame, 19% on the first and 44% on a random frame.
 
 **Q: Why render synthetic videos?**

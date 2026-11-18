@@ -102,7 +102,7 @@ def best_frame(frames: list[FrameTrack]) -> int | None:
 
 def select_keyframes(
     track: TrackResult,
-    min_sharpness: float = 100.0,
+    min_sharpness: float = 15.0,
     rel_sharpness: float = 0.75,
     min_view_change: float = 0.008,
     window: int = 6,
