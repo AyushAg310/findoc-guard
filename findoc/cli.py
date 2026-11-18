@@ -183,7 +183,9 @@ def segment_train(
     samples: int = typer.Option(20000, help="Synthetic training images per epoch"),
     epochs: int = typer.Option(12),
     batch_size: int = typer.Option(16, "--batch-size"),
-    workers: int = typer.Option(2, help="Data-generation worker processes"),
+    workers: int = typer.Option(
+        -1, help="Data-generation worker processes (-1 = CPU cores minus 2, at most 8)"
+    ),
     device: str = typer.Option("auto", help="'auto', 'cuda' or 'cpu'"),
 ) -> None:
     """Train the document segmenter on synthetic data and export it to ONNX (needs PyTorch)."""

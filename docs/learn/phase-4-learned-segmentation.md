@@ -1,6 +1,6 @@
 # Phase 4 - Learned page detection: complete code explanation
 
-Version **0.5.0** · Course outcomes **CO-2** (deep learning: a convolutional segmentation
+Version **0.5.0** (patch 0.5.1) · Course outcomes **CO-2** (deep learning: a convolutional segmentation
 network), **CO-1** (edge-based refinement of its output), and support for **CO-4/CO-5** (tracking
 and 3D both start from the page outline).
 
@@ -208,51 +208,58 @@ The margin is now 1% of the image's longer side (at least 4 px).
 ### 3.8 Results (`experiments/phase4_segmentation_eval.py`)
 
 320 synthetic images (40 per background kind, 1280x720, documents never used in training) for
-accuracy, plus 160 where the document runs off the frame. Development model trained on CPU
-(2,400 images x 7 epochs; see the note below):
+accuracy, plus 160 where the document runs off the frame. Model: `findoc segment train
+--workers 8 --epochs 10` on the RTX 3050 laptop (20,000 fresh images per epoch, 55 min,
+validation IoU 0.993, 5th percentile 0.988):
 
-| Detector | Page found | Corner error | Cut-off page called whole | Time per image (2-core CPU) |
+| Detector | Page found | Corner error | Cut-off page called whole | Time per image (laptop CPU) |
 | --- | --- | --- | --- | --- |
-| Classical (Phase 1) | 45.0% | 0.559% | 0.0% | 5.5 ms |
-| Learned | 90.0% | 0.380% | 0.0% | 58.8 ms |
-| Learned, no edge refinement | 86.6% | 0.482% | 0.0% | 53.1 ms |
+| Classical (Phase 1) | 45.0% | 0.556% | 0.0% | 4.0 ms |
+| Learned | 95.9% | 0.136% | 0.0% | 33.5 ms |
+| Learned, no edge refinement | 95.9% | 0.262% | 0.0% | 27.8 ms |
 
 | Background | Classical | Learned |
 | --- | --- | --- |
 | desk | 98% | 100% |
-| pale_wood | 57% | 88% |
-| light_table | 5% | 78% |
+| pale_wood | 57% | 80% |
+| light_table | 5% | 100% |
 | board | 8% | 88% |
 | cloth | 68% | 100% |
-| poster | 25% | 92% |
-| clutter | 48% | 85% |
-| noise | 52% | 90% |
+| poster | 25% | 100% |
+| clutter | 48% | 100% |
+| noise | 52% | 100% |
 
 Real videos (no ground truth):
 
 | Video | Classical | Learned | Correct outcome |
 | --- | --- | --- | --- |
-| Whole cheque, landscape, pale wooden board | rejected | ok: 70/137 usable frames, 6 keyframes, flat page 2.34:1 | ok |
+| Whole cheque, landscape, pale wooden board | rejected | ok: 102/137 usable frames, 7 keyframes, flat page 2.28:1 (a CTS cheque is 2.21:1) | ok |
 | Sideways cheque running off the frame | rejected | rejected ("never fits") | rejected |
 | Portrait cheque on red cloth, running off the frame | rejected | rejected | rejected |
 
 **What the numbers say:**
 
-1. The learned detector doubles the success rate on hard backgrounds, and is the only one that
-   handles near-white surfaces and bright boards. On an ordinary desk both are near-perfect.
-2. Edge refinement matters: it lowers corner error from 0.48% to 0.38% and raises success by 3
-   points, because the network's 256 px outline is refined on the full-resolution image.
-3. It is about 10x slower than the classical detector, but it only runs when the tracker needs
-   a detection (start, drift checks, re-localisation), not on every frame.
-4. The first model, trained only on whole documents, called a cut-off page "whole" 30% of the
-   time; adding 20% cut-off training samples brought that to 0%, at the cost of a few points of
-   success with this small CPU budget.
+1. The learned detector more than doubles the success rate on hard backgrounds (45% -> 96%) and
+   is 4x more precise (0.56% -> 0.14% of the diagonal, about 2 px on a 1280x720 frame).
+   Near-white tables go from 5% to 100%.
+2. Edge refinement halves the corner error (0.26% -> 0.14%) without changing the success rate:
+   the network finds the page, the classical edge fit places its sides precisely. Neither part
+   alone is as good: a hybrid of learned and classical vision.
+3. The weakest cases are pale wood (80%) and bright boards (88%): paper on a surface almost as
+   light as paper. These are the next things to improve (more such samples, a larger input
+   size).
+4. It is about 8x slower than the classical detector (33 ms vs 4 ms on CPU), but it only runs
+   when the tracker needs a detection (start, drift checks, re-localisation), not every frame:
+   the whole tracked video still ran at 8.5 ms per frame.
+5. Training mattered: the CPU development model (2,400 images, 7 epochs, with a data-replay bug)
+   reached 90% success and 0.38% error; the GPU model with 20,000 fresh images per epoch reached
+   96% and 0.14%.
 
-**Note on this model.** It was trained on a 2-core CPU with 2,400 images per epoch for 7 epochs,
-and with a bug found afterwards: data workers were kept alive between epochs, so they kept
-generating epoch 0's images (2,400 distinct images in total instead of 16,800). The bug is fixed.
-The full training (`findoc segment train`: 20,000 fresh images per epoch, 12 epochs, GPU) should
-do better; its results will replace these.
+**Why training took long.** Each training image is rendered on the CPU (background, warp,
+lighting, JPEG: ~50-70 ms). With 2 worker processes an epoch of 20,000 images took ~12 minutes
+while the GPU mostly waited; with 8 workers ~5-6 minutes. Since v0.5.1 the default is "CPU cores
+minus 2, at most 8" (`default_workers`). This is a common situation in deep learning: the data
+pipeline, not the model, is the bottleneck.
 
 ### 3.9 Tests (`tests/test_segment.py`)
 
@@ -288,7 +295,7 @@ run by OpenCV equals PyTorch, and a one-epoch training run writes the model and 
 
 ## 5. Try it yourself
 
-1. Train on the GPU laptop: `findoc segment train` (see the README for the full command), then
+1. Train on the GPU laptop: `findoc segment train` (about 55 min with the default workers), then
    `findoc segment check` on a photo from your phone.
 2. Look at `models/docseg.json`: how did validation IoU change per epoch? Where did it level off?
 3. Generate training samples and look at them (`make_sample` with each background kind). Which
@@ -342,6 +349,17 @@ without this step.
 A: PyTorch is a 2+ GB dependency. The app, CI and Docker image only need OpenCV, which can run
 ONNX models. Training is the only step that needs PyTorch. OpenCV's output matches PyTorch's to
 within 1e-3.
+
+**Q: How good is it?**
+A: On 320 hard synthetic images: page found 96% (classical 45%), corner error 0.14% of the
+diagonal (classical 0.56%), and never claims a cut-off page is whole. On a real video of a
+cheque on a pale wooden board, which the classical detector rejected, it gave 102 usable frames
+and a flattened cheque of the right shape.
+
+**Q: Why did training take an hour on a GPU?**
+A: The bottleneck was generating synthetic images on the CPU, not the network: with 2 workers
+the GPU mostly waited (12 min per epoch); 8 workers halved it. The default now scales with the
+number of CPU cores.
 
 **Q: What if the model is wrong?**
 A: Three guards: the agreement check (mask vs. quadrilateral), the classical fallback, and the

@@ -3,6 +3,17 @@
 All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org/);
 each build phase is released as a minor version.
 
+## [0.5.1] - GPU-trained results; automatic training workers
+
+### Changed
+- `findoc segment train` uses CPU cores minus 2 (at most 8) data workers by default
+  (`--workers -1`). Image generation on the CPU was the bottleneck: on a 12-core laptop with an
+  RTX 3050, 2 workers gave ~12 min per epoch, 8 workers ~5-6 min.
+- Published Phase 4 results now come from the GPU-trained model (20,000 images x 10 epochs,
+  55 min, validation IoU 0.993): page found on hard backgrounds 95.9% (classical 45.0%), corner
+  error 0.136% (0.556%), cut-off pages never called whole; edge refinement halves the error. Real
+  pale-wood video: 102/137 usable frames, flattened cheque 2.28:1.
+
 ## [0.5.0] - Phase 4: learned page detection
 
 Added after real phone videos showed the classical detector depends on the background (it

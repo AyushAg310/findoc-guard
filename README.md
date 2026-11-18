@@ -42,20 +42,19 @@ detector remains as a fallback.
 
 Measured on 320 hard synthetic images (1280x720, unseen documents) plus 160 where the page runs
 off the frame ([`experiments/phase4_segmentation_eval.py`](experiments/phase4_segmentation_eval.py)),
-with a small CPU-trained development model:
+model trained in 55 min on an RTX 3050 laptop GPU (validation IoU 0.993):
 
 | Metric | Classical | Learned |
 | --- | --- | --- |
-| Page found (corners within 2% of the diagonal) | 45% | 90% |
-| ... on a near-white table / bright board / white-text poster | 5% / 8% / 25% | 78% / 88% / 92% |
-| Corner error when found (% of diagonal) | 0.56% | 0.38% |
+| Page found (corners within 2% of the diagonal) | 45% | 96% |
+| ... on a near-white table / bright board / white-text poster | 5% / 8% / 25% | 100% / 88% / 100% |
+| Corner error when found (% of diagonal) | 0.56% | 0.14% |
 | Cut-off page wrongly called whole | 0% | 0% |
 
-On the three real phone videos, the learned detector processes the one filmed correctly (whole
-cheque on a pale wooden board: 70 usable frames, 6 keyframes, rectified to the cheque's 2.3:1
-shape), which the classical detector rejected, and still rejects the two where the cheque runs
-off the frame.
-
+On three real phone videos, the learned detector processes the one filmed correctly (whole
+cheque on a pale wooden board: 102 of 137 frames usable, 7 keyframes, rectified to 2.28:1, a
+standard cheque is 2.21:1), which the classical detector rejected, and still rejects the two
+where the cheque runs off the frame.
 
 **Video (Phase 3).** Film the cheque for a few seconds instead of taking a photo. The document is
 tracked through every frame with KLT optical flow (Shi-Tomasi corners, pyramidal Lucas-Kanade,
@@ -193,7 +192,7 @@ findoc synth --kind cheque --n 20  # synthetic cheque photos with ground truth
 findoc synth --kind video --n 1 --seed 3 -o data/synthetic/video   # hand-held cheque video
 findoc process data/synthetic/video/video_0003.mp4 --save-dir outputs   # tracking + keyframes
 pip install -e ".[train]"         # PyTorch + onnx, only to train the page detector
-findoc segment train              # ~20 min on a laptop GPU; writes models/docseg.onnx
+findoc segment train              # ~55 min on a laptop GPU; writes models/docseg.onnx
 findoc segment check photo.jpg    # what the page detector sees
 findoc templates list
 streamlit run demo/streamlit_app.py

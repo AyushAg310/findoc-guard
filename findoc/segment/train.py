@@ -78,6 +78,17 @@ class TrainResult:
     seconds: float
 
 
+def default_workers() -> int:
+    """Data-generation processes: CPU cores minus 2 (for the system and the GPU driver), at most 8.
+
+    Every training image is rendered on the CPU (~50-70 ms each), so with too few workers the GPU
+    waits: on a 12-core laptop with an RTX 3050, 2 workers gave ~12 min per epoch, 8 workers ~5.
+    """
+    import os
+
+    return max(0, min(8, (os.cpu_count() or 2) - 2))
+
+
 def export_onnx(model: nn.Module, path: Path) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     model = model.cpu().eval()
@@ -102,11 +113,13 @@ def train(
     epochs: int = 12,
     batch_size: int = 16,
     lr: float = 2e-3,
-    workers: int = 2,
+    workers: int = -1,
     device: str = "auto",
     seed: int = 0,
     log=print,  # noqa: ANN001
 ) -> TrainResult:
+    if workers < 0:  # auto: data generation, not the GPU, is the bottleneck (see the guide)
+        workers = default_workers()
     torch.manual_seed(seed)
     dev = torch.device(
         "cuda"
