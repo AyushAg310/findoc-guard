@@ -90,7 +90,7 @@ class SurfaceFit:
 
 
 def fit_surface(
-    points: np.ndarray, desk: np.ndarray | None = None, smoothing: float = 1e-4
+    points: np.ndarray, desk: np.ndarray | None = None, smoothing: float = 1e-3
 ) -> SurfaceFit:
     """Robust smooth height field over (N, 3) document points.
 
