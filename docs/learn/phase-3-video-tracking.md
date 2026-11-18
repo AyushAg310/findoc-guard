@@ -1,6 +1,6 @@
 # Phase 3 - Video input and tracking: complete code explanation
 
-Version **0.4.0** (patch 0.4.1) · Course outcomes **CO-4** (motion and tracking, the core of this phase),
+Version **0.4.0** (patches 0.4.1, 0.4.2) · Course outcomes **CO-4** (motion and tracking, the core of this phase),
 **CO-3** (feature matching, used to re-find a lost document), **CO-5** groundwork (a pinhole
 camera model and the keyframes that Phase 4 reconstructs in 3D).
 
@@ -190,6 +190,13 @@ window has gradients in two directions, i.e. at corners. On a straight edge one 
   2. otherwise `Anchor.locate`: verify against the stored appearance (below) and adopt that.
 
   Measured on clean clips: without correction 0.43% corner error, with it 0.13%.
+- **Starting only on the whole document** (`_initial_corners`, v0.4.2): tracking starts at the
+  first frame where the page detector finds an outline *clear of the image border*. The second
+  real test video was portrait, with a cheque wider than the frame; the detector returned the
+  visible part, clipped at the border, and the tracker followed that partial outline (the
+  "flattened page" came out square instead of 2.2:1, and no template matched). If no frame shows
+  the whole document, nothing is tracked and the user is told to step back and, for cheques,
+  to film in landscape.
 - **Loss and re-localisation**: with fewer than `MIN_FOR_HOMOGRAPHY` = 20 points the document
   is marked lost (`corners = None`). `Anchor` stores SIFT features of the document from the
   first frame it was found. In each lost frame, `Anchor.locate` matches them against the whole
@@ -336,7 +343,7 @@ This is the clearest result of the phase: choosing the frame roughly doubles to 
 OCR gets right. It is below the 100% of Phase 2 photos; the evaluation records accuracy per
 clip, not per field, so finding out which fields fail on video frames is a follow-up.
 
-### 3.10 Tests (141 in total, 95% coverage)
+### 3.10 Tests (142 in total, 95% coverage)
 
 `tests/test_track.py` uses small, fast clips (640x360, 1.5 s, 3 sub-frames; shared by a
 module-scoped fixture):
@@ -348,7 +355,8 @@ module-scoped fixture):
   (blank frames inserted -> lost -> re-acquired), mask and drawing.
 - keyframes: `viewpoint_change` ~0 for a similarity and >0.02 for a keystone, frontalness,
   keyframes sorted and less blurred than the worst frame, empty input, rejection reasons
-  (blank page, page larger than the frame, blur), outlines on the border not counted as in view.
+  (blank page, page larger than the frame, blur), outlines on the border not counted as in view,
+  a page that only ever appears cut off is not tracked.
 - video I/O: stride, scale, second-pass reading, bad file.
 - pipeline: end to end on a video, nothing image-like in the JSON; CLI `synth --kind video`
   and `process -s` on a 1280x720 clip (template found).
@@ -485,6 +493,13 @@ based: plane-induced homography for geometry and shutter integration for blur.
 **Q: How is the video read without running out of memory?**
 A: Two passes. First, frames are streamed, subsampled to at most 180 and downscaled to 960 px
 for tracking. Second, only the best frame and keyframes are decoded again at full resolution.
+
+**Q: Did you test on real videos?**
+A: Two phone videos so far, and both exposed problems the synthetic data hid. A blank notebook
+page larger than the frame was correctly rejected but with the wrong advice (fixed in 0.4.1:
+specific reasons). A cheque filmed in portrait never fit in the frame, and the tracker followed
+the visible part as if it were the whole document (fixed in 0.4.2: tracking starts only from an
+outline clear of the image border). Systematic real-capture evaluation is planned for Phase 8.
 
 **Q: What are the limitations?**
 A: Synthetic evaluation only so far (real captures in Phase 8); a thumb over a corner biases

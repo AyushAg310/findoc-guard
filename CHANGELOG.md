@@ -3,6 +3,16 @@
 All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org/);
 each build phase is released as a minor version.
 
+## [0.4.2] - Track only the whole document
+
+### Fixed
+- Tracking now starts only at a frame where the page detector finds the whole document, with an
+  outline clear of the image border. Found with a real portrait video of a cheque wider than the
+  frame: the detector returned the visible part clipped at the border, the tracker followed it,
+  and the pipeline reported "ok" on a partial, square "page". Such videos are now rejected with
+  "never fits fully inside the frame" and, for cheques, advice to film in landscape.
+- The tracker no longer falls back to tracking the whole frame when no page is found.
+
 ## [0.4.1] - Clear reasons when a video is rejected
 
 ### Fixed

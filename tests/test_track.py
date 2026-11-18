@@ -197,6 +197,23 @@ def test_rejection_reasons_explain_the_cause() -> None:
     assert "blurred" in rejection_reasons(blurred)[-1]
 
 
+def test_partial_document_is_not_tracked() -> None:
+    """A page wider than the frame (only ever seen cut off) must not be tracked as a document."""
+    from findoc.track.stages import rejection_reasons
+
+    frames = []
+    for shift in range(0, 60, 6):
+        img = np.full((360, 640, 3), 60, np.uint8)
+        cv2.rectangle(img, (200 - shift, 80), (900, 280), (235, 235, 235), -1)  # runs off the right
+        cv2.putText(
+            img, "PAY RUPEES", (260 - shift, 180), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (30, 30, 30), 3
+        )
+        frames.append(img)
+    result = track_document(frames)
+    assert result.start_problem == "partial" and result.lost == len(frames)
+    assert "landscape" in " ".join(rejection_reasons(result))
+
+
 def test_outline_on_the_border_is_not_in_view() -> None:
     from findoc.track.klt import _coverage_and_inside
 

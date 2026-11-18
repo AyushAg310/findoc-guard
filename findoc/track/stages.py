@@ -44,12 +44,17 @@ def rejection_reasons(result: TrackResult) -> list[str]:
             "The document has too little detail to track (a blank page has nothing for optical "
             "flow to follow). Film a cheque or a page with printed text."
         )
-    if found and not any(f.in_frame for f in found):
+    if result.start_problem == "partial" or (found and not any(f.in_frame for f in found)):
         reasons.append(
             "The document never fits fully inside the frame. Hold the phone farther away so all "
             "four corners and a little background are visible."
         )
-    if not found:
+    if result.start_problem == "partial":
+        reasons.append(
+            "For a cheque, hold the phone in landscape (sideways): a cheque is about twice as wide "
+            "as it is tall, so in portrait it rarely fits."
+        )
+    elif not found:
         reasons.append(
             "No document outline was found. Use a background that contrasts with the paper."
         )

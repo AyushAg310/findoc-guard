@@ -29,6 +29,9 @@ Robustness measures:
   to the detector's corners; if the detector can't confirm (page edge hidden or out of view),
   the track is checked against the stored anchor appearance instead (see below). Tracking gives
   continuity, detection and matching give accuracy.
+* **Start**: tracking starts at the first frame where the page detector finds the whole
+  document, with an outline clear of the image border. A clipped outline would make the
+  tracker follow only part of the page.
 * **Loss and re-localisation**: if too few points survive to fit a homography, the document is
   lost for that frame. Each later frame is matched against an **anchor** (the first frame where
   the document was found, with SIFT features inside the document) using the Phase 2 recipe:
@@ -84,6 +87,9 @@ class TrackResult:
     redetections: int = 0
     reacquisitions: int = 0
     snaps: int = 0
+    # Why tracking never started, if it didn't: "partial" = the page detector only ever found
+    # outlines cut off by the image border; "not_found" = it found no page at all.
+    start_problem: str | None = None
 
     @property
     def lost(self) -> int:
@@ -182,16 +188,22 @@ def snap_to_detection(frame: np.ndarray, corners: np.ndarray) -> np.ndarray | No
     return det.corners.astype(np.float32)
 
 
-def _initial_corners(
-    gray_frames: list[np.ndarray], frames: list[np.ndarray]
-) -> tuple[int, np.ndarray]:
-    """First frame (among the first few) where the page detector finds the document."""
-    for i in range(min(15, len(frames))):
-        det = find_document(frames[i])
-        if det.method != "full_frame":
-            return i, det.corners
-    h, w = gray_frames[0].shape
-    return 0, np.array([[0, 0], [w - 1, 0], [w - 1, h - 1], [0, h - 1]], np.float32)
+def _initial_corners(frames: list[np.ndarray]) -> tuple[int | None, np.ndarray | None, str | None]:
+    """First frame where the page detector finds the **whole** document.
+
+    An outline touching the image border is rejected: the detector clips a page that runs off
+    the image to the border, so tracking it would follow only part of the document (found with a
+    real portrait video of a cheque wider than the frame). Returns (index, corners, problem).
+    """
+    partial = False
+    for i, frame in enumerate(frames):
+        det = find_document(frame)
+        if det.method == "full_frame":
+            continue
+        if _clear_of_border(det.corners, frame.shape[:2]):
+            return i, det.corners, None
+        partial = True
+    return None, None, "partial" if partial else "not_found"
 
 
 def track_document(
@@ -200,11 +212,18 @@ def track_document(
     """Track the document through ``frames`` (BGR). Returns per-frame corners and metrics."""
     grays = [cv2.cvtColor(f, cv2.COLOR_BGR2GRAY) for f in frames]
     if start_corners is None:
-        start, ref_corners = _initial_corners(grays, frames)
+        start, ref_corners, problem = _initial_corners(frames)
     else:
-        start, ref_corners = 0, start_corners.astype(np.float32)
+        start, ref_corners, problem = 0, start_corners.astype(np.float32), None
     result = TrackResult()
     shape = grays[0].shape
+    if start is None or ref_corners is None:  # the whole document is never in view
+        result.start_problem = problem
+        result.frames = [
+            FrameTrack(i, None, 0, 0.0, region_sharpness(g, None), 0.0, False)
+            for i, g in enumerate(grays)
+        ]
+        return result
 
     # Frames before the document was first found are recorded as lost.
     for i in range(start):
