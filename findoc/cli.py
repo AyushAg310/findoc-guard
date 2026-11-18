@@ -50,6 +50,10 @@ def save_artifacts(doc: Document, save_dir: Path) -> list[Path]:
         if doc.original is not None:
             written.append(save_dir / f"{stem}_best.jpg")
             save_image(written[-1], doc.original)
+        if doc.recon is not None:
+            from findoc.recon3d.export import save_recon
+
+            written += save_recon(doc.recon, save_dir, stem)
     if doc.original is not None and doc.corners is not None:
         overlay = draw_detection(doc.original, np.array(doc.corners, dtype=np.float32))
         written.append(save_dir / f"{stem}_detected.jpg")
@@ -100,6 +104,10 @@ def process_cmd(
             "Tracking: " + ", ".join(f"{k}={v}" for k, v in doc.tracking.items()), highlight=False
         )
         console.print(f"Keyframes: {[k.frame for k in doc.keyframes]}", highlight=False)
+    if doc.recon3d:
+        console.print(
+            "3D: " + ", ".join(f"{k}={v}" for k, v in doc.recon3d.items()), highlight=False
+        )
     if doc.quality:
         console.print(
             "Quality: " + ", ".join(f"{k}={v}" for k, v in doc.quality.items()), highlight=False
@@ -232,6 +240,33 @@ def segment_check(
         cv2.polylines(view, [seg.corners.astype(np.int32).reshape(-1, 1, 2)], True, (0, 255, 0), 3)
     save_image(out, view)
     console.print(f"agreement {seg.agreement:.3f}; saved {out}")
+
+
+@app.command()
+def calibrate(
+    source: Path = typer.Argument(..., exists=True, help="Video or folder of checkerboard photos"),
+    board: str = typer.Option("9x6", help="Inner corners per row x per column"),
+    step: int = typer.Option(10, help="Use every n-th video frame"),
+    save: bool = typer.Option(False, "--save", help="Write FINDOC_FOCAL_PX to .env"),
+) -> None:
+    """Measure the camera's focal length from a printed checkerboard (improves 3D)."""
+    from findoc.recon3d.calibrate import calibrate as run_calibration
+    from findoc.recon3d.calibrate import load_images, save_focal
+
+    cols, rows = (int(x) for x in board.lower().split("x"))
+    try:
+        cal = run_calibration(load_images(source, step), (cols, rows))
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        f"Focal length {cal.focal_px:.1f} px at {cal.size[0]}x{cal.size[1]} "
+        f"(horizontal field of view {cal.hfov_deg:.1f} deg); {cal.views} views, "
+        f"reprojection error {cal.rms_px:.2f} px"
+    )
+    if save:
+        console.print(f"Saved FINDOC_FOCAL_PX to {save_focal(cal.focal_px)}")
+    else:
+        console.print(f"To use it: set FINDOC_FOCAL_PX={cal.focal_px:.1f} (or rerun with --save)")
 
 
 templates_app = typer.Typer(help="Manage cheque templates.", no_args_is_help=True)

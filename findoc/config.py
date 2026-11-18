@@ -30,6 +30,12 @@ class Settings(BaseSettings):
     segmentation: str = "auto"
     segmenter_model: Path = Path("models/docseg.onnx")
 
+    # 3D reconstruction of video input (Phase 5): "auto" or "off"
+    recon3d: str = "auto"
+    # Camera focal length in pixels at the video's resolution (from `findoc calibrate`); None =
+    # estimate it from the video (less accurate: see the Phase 5 guide)
+    focal_px: float | None = None
+
     # Cheques (Phase 2)
     templates_dir: Path | None = None  # folder of custom templates; None = built-in banks
     feature_method: str = "sift"  # "sift" or "orb"

@@ -26,8 +26,8 @@ def test_load_image(sample_image: Path) -> None:
 def test_default_pipeline_stage_order() -> None:
     names = [n for n, _ in default_pipeline().stages]
     assert names == [
-        "load", "video", "track", "quality", "detect", "rectify", "enhance", "align", "fields",
-        "rules", "ocr",
+        "load", "video", "track", "quality", "detect", "recon3d", "rectify", "enhance", "align",
+        "fields", "rules", "ocr",
     ]  # fmt: skip
     assert "ocr" not in [n for n, _ in default_pipeline(ocr=False).stages]
 

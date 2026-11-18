@@ -27,8 +27,9 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from findoc.synth.camera import Intrinsics, look_at, plane_homography
+from findoc.synth.camera import Intrinsics, look_at, plane_homography, project
 from findoc.synth.cheque import ChequeTruth, render_cheque
+from findoc.synth.surface import Bend, DocSurface, render_surface
 
 
 @dataclass
@@ -150,6 +151,8 @@ def render_video(
     thumb: bool = False,
     jerks: int = 2,
     subframes: int = 5,
+    bend: Bend | None = None,
+    mesh_size: tuple[int, int] = (64, 30),
 ) -> tuple[list[np.ndarray], VideoTruth]:
     """Render frames of a camera sweep over ``document`` lying on a desk.
 
@@ -157,12 +160,21 @@ def render_video(
     ``exit_frame`` pans the camera away mid-clip so the document leaves the view; ``thumb``
     paints a thumb holding the document over one bottom corner (occludes edge and corner);
     ``jerks`` is the number of quick wrist flicks (short bursts of heavy motion blur).
+    ``bend`` makes the document a curved, developable surface (:mod:`findoc.synth.surface`),
+    rendered as a shaded mesh; ground truth then also holds the camera matrix, every frame's
+    pose and the document's 3D mesh (``truth.meta``).
     """
     w, h = size
     n = int(round(seconds * fps))
     K = Intrinsics.for_frame(w, h, hfov_deg).K  # noqa: N806
     dh, dw = document.shape[:2]
     canvas, canvas_to_world = _canvas(document, rng, margin=1.8 if exit_frame else 1.2)
+    surface = None
+    if bend is not None and bend.kind != "flat":
+        surface = DocSurface(dw, dh, bend)
+        st, world, tris = surface.mesh(*mesh_size)
+        x0, y0 = int(-canvas_to_world[0, 2] - dw / 2), int(-canvas_to_world[1, 2] - dh / 2)
+        canvas[y0 : y0 + dh, x0 : x0 + dw] = desk_texture(rng, dw, dh)  # desk under the sheet
     if thumb:
         cx0 = int(-canvas_to_world[0, 2] - dw / 2)
         cy0 = int(-canvas_to_world[1, 2] - dh / 2)
@@ -197,6 +209,10 @@ def render_video(
         [[-dw / 2, -dh / 2, 1], [dw / 2, -dh / 2, 1], [dw / 2, dh / 2, 1], [-dw / 2, dh / 2, 1]],
         float,
     )
+    if surface is not None:  # texture corners tl, tr, br, bl -> world, centred like the canvas
+        tex_corners = np.array([[0, 0], [dw - 1, 0], [dw - 1, dh - 1], [0, dh - 1]], float)
+        surface_corners = to_world(surface, tex_corners)
+        world = to_world(surface, st)
     frames: list[np.ndarray] = []
     truth = VideoTruth(fps, (w, h), [], [], [], [], meta={"hfov_deg": hfov_deg, "shutter": shutter})
     for i in range(n):
@@ -207,25 +223,48 @@ def render_video(
         )
         acc = np.zeros((h, w, 3), np.float32)
         for u in times:
-            H = plane_homography(K, pose_at(u)) @ canvas_to_world  # noqa: N806 - canvas -> image
-            acc += cv2.warpPerspective(
+            pose_u = pose_at(u)
+            H = plane_homography(K, pose_u) @ canvas_to_world  # noqa: N806 - canvas -> image
+            img = cv2.warpPerspective(
                 canvas, H, (w, h), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT
             )
+            if surface is not None:
+                img, _ = render_surface(document, st, world, tris, K, pose_u, img)
+            acc += img
         frame = acc / len(times)
         frame += rng.normal(0, 2.5, size=frame.shape).astype(np.float32)
         frames.append(np.clip(frame, 0, 255).astype(np.uint8))
 
         mid = pose_at(i + shutter / 2)
-        Hw = plane_homography(K, mid)  # noqa: N806 - world plane -> image
-        pts = (Hw @ doc_corners.T).T
-        pts = pts[:, :2] / pts[:, 2:3]
+        if surface is not None:
+            pts = project(K, mid, surface_corners)
+        else:
+            Hw = plane_homography(K, mid)  # noqa: N806 - world plane -> image
+            pts = (Hw @ doc_corners.T).T
+            pts = pts[:, :2] / pts[:, 2:3]
         truth.corners.append(pts.round(3).tolist())
         truth.in_frame.append(bool(np.all((pts >= 0) & (pts < [w - 1, h - 1]))))
         c0 = plane_homography(K, pose_at(i)) @ np.array([0, 0, 1.0])
         c1 = plane_homography(K, pose_at(i + shutter)) @ np.array([0, 0, 1.0])
         truth.blur_px.append(float(np.linalg.norm(c0[:2] / c0[2] - c1[:2] / c1[2])))
         truth.camera_centers.append(mid.center.round(3).tolist())
+        truth.meta.setdefault("poses", []).append(
+            {"R": mid.R.round(8).tolist(), "t": mid.t.round(5).tolist()}
+        )
+    truth.meta["K"] = K.round(6).tolist()
+    if surface is not None:
+        truth.meta["bend"] = asdict(bend)
+        truth.meta["lift"] = round(surface.lift(), 2)
     return frames, truth
+
+
+def to_world(surface: DocSurface, st: np.ndarray) -> np.ndarray:
+    """Texture points of a bent document -> world points, centred on the origin like the canvas
+    (the flat document spans [-w/2, w/2] x [-h/2, h/2] at Z = 0) and resting on the desk."""
+    p = surface.points(st)
+    grid_z = surface.points(surface.grid(48, 24)[0])[:, 2]
+    p[:, 2] -= grid_z.max()
+    return p
 
 
 def write_video(path: Path, frames: list[np.ndarray], fps: float) -> Path:

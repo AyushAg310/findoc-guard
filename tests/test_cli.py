@@ -26,12 +26,13 @@ def test_process_writes_json_and_images(synth_photo_path: Path, tmp_path: Path) 
     assert result.exit_code == 0, result.output
     data = json.loads(out.read_text())
     assert data["status"] == "ok"
-    assert [s["stage"] for s in data["stages"]][:7] == [
+    assert [s["stage"] for s in data["stages"]][:8] == [
         "load",
         "video",
         "track",
         "quality",
         "detect",
+        "recon3d",
         "rectify",
         "enhance",
     ]
