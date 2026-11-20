@@ -6,19 +6,21 @@
 2. **Surface fit** (``fit_surface``): a plane through the document points (PCA) gives a local
    frame (a, b along the page, height h above it). Height is modelled as a smooth function
    h(a, b), a **thin-plate spline** with smoothing: the surface with the least bending energy
-   that passes close to the points. Two passes, dropping points more than 3 robust standard
-   deviations off the first fit (mismatched features, desk points at the page edge).
+   that passes close to the points. Refitted three times, each time dropping points more than 3
+   robust standard deviations off the previous fit (mismatched features, desk points that
+   project inside the outline).
    ``planarity`` = RMS height / page diagonal: below ``PLANAR_RMS`` the page is flat and the 2D
    homography of Phase 1 is already exact.
-3. **Mesh by ray casting** (``surface_mesh``): a grid of pixels over the document in the
-   reference image; each pixel's viewing ray is intersected with the fitted surface, giving one 3D
-   vertex per pixel. The mesh therefore has a known image position for every vertex.
+3. **Mesh by ray casting** (``grid_in_quad`` + ``cast_rays``): a grid of pixels over the
+   document in the reference image; each pixel's viewing ray is intersected with the fitted
+   surface, giving one 3D vertex per pixel, so every vertex has a known image position.
 4. **ARAP flattening** (``arap_flatten``): find 2D positions (u, v) for the vertices so every
    triangle keeps its 3D shape as well as possible: "as rigid as possible" (Liu et al., 2008).
    Alternate a *local* step (for each triangle, the best rotation R_t between its flat isometric
    shape and its current 2D shape, by SVD) and a *global* step (solve one sparse linear system,
-   the cotangent Laplacian, for all vertices given the rotations). Paper is developable, so the
-   result is nearly distortion-free; ``stretch`` reports how close.
+   the cotangent Laplacian, for all vertices given the rotations), until the vertices stop
+   moving. Paper is developable, so the result is nearly distortion-free; ``stretch`` reports
+   how close.
 5. **Unwarp** (``unwarp``): rasterise the flat mesh at output resolution; for every output pixel,
    barycentric interpolation of its triangle's *image* positions gives where to sample the
    photo; one ``cv2.remap`` builds the flat page. The same two arrays (``map_x``, ``map_y``) are
@@ -208,10 +210,13 @@ def _cotangents(x: np.ndarray) -> np.ndarray:
 
 
 def arap_flatten(
-    X: np.ndarray, tris: np.ndarray, init_uv: np.ndarray, iters: int = 25
+    X: np.ndarray, tris: np.ndarray, init_uv: np.ndarray, iters: int = 200, tol: float = 1e-5
 ) -> tuple[np.ndarray, float]:
     """ARAP parameterisation. Returns (uv (N, 2), stretch = RMS relative edge-length error).
 
+    Local/global iterations run until the largest vertex move is below ``tol`` x the mesh size
+    (at most ``iters``). Starting from the projection onto the page's best-fit plane, a strongly
+    curled page needs ~100 iterations; stopping at 25 left curl2 pages visibly sheared.
     Degenerate input (non-finite vertices, e.g. rays that missed the surface) gives stretch inf.
     Zero-area triangles get zero weight.
     """
@@ -244,6 +249,7 @@ def arap_flatten(
     except RuntimeError:  # singular system: a broken mesh
         return init_uv.astype(np.float64), float("inf")
     uv = init_uv.astype(np.float64).copy()
+    size = float(np.linalg.norm(uv.max(0) - uv.min(0))) + 1e-12
     for _ in range(iters):
         # local step: best rotation per triangle (orthogonal Procrustes)
         cur = uv[tris]  # (T, 3, 2)
@@ -265,7 +271,11 @@ def arap_flatten(
             np.add.at(rhs, tris[:, a], d)
             np.add.at(rhs, tris[:, b], -d)
         rhs[0] = uv[0]
-        uv = np.column_stack([solve(rhs[:, 0]), solve(rhs[:, 1])])
+        new = np.column_stack([solve(rhs[:, 0]), solve(rhs[:, 1])])
+        moved = float(np.abs(new - uv).max())
+        uv = new
+        if moved < tol * size:
+            break
     e3 = np.concatenate(
         [np.linalg.norm(X[tris[:, a]] - X[tris[:, b]], axis=1) for a, b, _ in edges]
     )

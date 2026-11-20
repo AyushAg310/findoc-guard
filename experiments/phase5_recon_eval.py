@@ -39,32 +39,11 @@ from scipy.spatial import cKDTree
 from findoc.config import get_settings
 from findoc.pipeline import process
 from findoc.synth.camera import Pose, project
-from findoc.synth.surface import Bend, DocSurface
+from findoc.synth.surface import Bend, DocSurface, random_bend
 from findoc.synth.video import cheque_video, to_world, write_video
 
 TODAY = date(2026, 11, 17)
 KINDS = ("flat", "wave", "curl", "curl2", "fold")
-
-
-def random_bend(kind: str, rng: np.random.Generator) -> Bend:
-    angle = float(rng.choice([0.0, rng.uniform(-12, 12)]))
-    if kind == "wave":
-        return Bend(
-            "wave", angle, amplitude=rng.uniform(0.001, 0.002), wavelength=rng.uniform(550, 800)
-        )
-    if kind == "curl":
-        return Bend("curl", angle, radius=rng.uniform(600, 1100), start=rng.uniform(0.2, 0.5))
-    if kind == "curl2":
-        return Bend("curl2", angle, radius=rng.uniform(900, 1500), start=rng.uniform(0.3, 0.6))
-    if kind == "fold":
-        return Bend(
-            "fold",
-            angle,
-            fold_deg=rng.uniform(15, 40),
-            start=rng.uniform(-0.2, 0.2),
-            fold_radius=25,
-        )
-    return Bend("flat")
 
 
 def unwarp_error(flat: np.ndarray | None, texture: np.ndarray) -> tuple[float | None, float | None]:
@@ -116,15 +95,27 @@ def accuracy_3d(doc, truth, bend: Bend, texture: np.ndarray) -> float | None:  #
     obs = rec.project(ref, pts)
     _, nn = cKDTree(proj).query(obs)
     gt = world[nn]
-    mu_s, mu_d = pts.mean(0), gt.mean(0)
-    s0, d0 = pts - mu_s, gt - mu_d
-    U, S, Vt = np.linalg.svd(d0.T @ s0 / len(pts))
+    keep = np.ones(len(pts), bool)
+    for _ in range(8):  # trimmed fit, see _similarity
+        fit = _similarity(pts[keep], gt[keep])
+        err = np.linalg.norm(fit(pts) - gt, axis=1)
+        keep = err <= max(2.5 * np.median(err), 1e-9)
+    return float(np.median(err) / w * 100)
+
+
+def _similarity(src: np.ndarray, dst: np.ndarray):  # type: ignore[no-untyped-def]
+    """Least-squares similarity (Umeyama) mapping ``src`` onto ``dst``. Used trimmed: a desk
+    point that projects inside the page outline is matched to the page surface far above it,
+    and a handful of those drag a plain least-squares fit by several percent (an earlier
+    version of this metric reported 0.5-1% errors that were really ~0.2%)."""
+    mu_s, mu_d = src.mean(0), dst.mean(0)
+    s0, d0 = src - mu_s, dst - mu_d
+    U, S, Vt = np.linalg.svd(d0.T @ s0 / len(src))
     D = np.eye(3)
     D[2, 2] = np.sign(np.linalg.det(U @ Vt))
     R = U @ D @ Vt
-    sc = (S * np.diag(D)).sum() / ((s0**2).sum() / len(pts))
-    err = np.linalg.norm(sc * s0 @ R.T + mu_d - gt, axis=1)
-    return float(np.median(err) / w * 100)
+    sc = (S * np.diag(D)).sum() / ((s0**2).sum() / len(src))
+    return lambda x: sc * (x - mu_s) @ R.T + mu_d
 
 
 def run(seeds: int, seconds: float, calibrated: bool = False) -> dict:

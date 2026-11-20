@@ -308,11 +308,14 @@ def generate_videos(
     seed: int = 0,
     fraud_rate: float = 0.4,
     today: date | None = None,
+    bend: str = "flat",
     **render_kw,
 ) -> list[Path]:
     """Write ``n`` cheque videos (``video_XXXX.mp4``), per-video ``*_truth.json`` (camera and
-    corner ground truth) and ``labels.json`` (cheque field ground truth, as for photos)."""
+    corner ground truth) and ``labels.json`` (cheque field ground truth, as for photos).
+    ``bend``: ``flat`` or a kind from :func:`findoc.synth.surface.random_bend` (Phase 5)."""
     from findoc.synth.dataset import FRAUD_KINDS
+    from findoc.synth.surface import random_bend
 
     out_dir.mkdir(parents=True, exist_ok=True)
     picker = np.random.default_rng(seed + 99_991)
@@ -320,7 +323,10 @@ def generate_videos(
     paths = []
     for i in range(n):
         fraud = str(picker.choice(FRAUD_KINDS)) if picker.random() < fraud_rate else None
-        frames, truth, cheque_truth = cheque_video(seed + i, fraud, today, **render_kw)
+        kw = dict(render_kw)
+        if bend != "flat":
+            kw["bend"] = random_bend(bend, np.random.default_rng(seed + i + 7_919))
+        frames, truth, cheque_truth = cheque_video(seed + i, fraud, today, **kw)
         name = f"video_{seed + i:04d}.mp4"
         write_video(out_dir / name, frames, truth.fps)
         save_truth(out_dir / f"video_{seed + i:04d}_truth.json", truth)

@@ -77,6 +77,32 @@ def test_synth_bad_kind(tmp_path: Path) -> None:
     assert result.exit_code != 0
 
 
+def test_synth_bent_video(tmp_path: Path) -> None:
+    result = runner.invoke(
+        app,
+        [
+            "synth",
+            "--kind",
+            "video",
+            "--n",
+            "1",
+            "--seconds",
+            "1",
+            "--bend",
+            "fold",
+            "-o",
+            str(tmp_path),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    truth = json.loads(next(tmp_path.glob("*_truth.json")).read_text())
+    assert truth["meta"]["bend"]["kind"] == "fold"
+    result = runner.invoke(
+        app, ["synth", "--kind", "video", "--bend", "crumple", "-o", str(tmp_path)]
+    )
+    assert result.exit_code != 0
+
+
 def test_templates_commands(tmp_path: Path) -> None:
     result = runner.invoke(app, ["templates", "list"])
     assert result.exit_code == 0 and "ARAVALLI BANK" in result.output

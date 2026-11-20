@@ -190,3 +190,31 @@ def render_surface(
     m = covered[..., None]
     out = np.where(m, doc.astype(np.float32) * shade[..., None], out)
     return np.clip(out, 0, 255).astype(np.uint8), covered
+
+
+BEND_KINDS = ("flat", "wave", "curl", "curl2", "fold")
+
+
+def random_bend(kind: str, rng: np.random.Generator) -> Bend:
+    """A random bend of the given kind, in the ranges used by the Phase 5 evaluation: gentle
+    waves, one or both ends curled with radius 0.6-1.5 page widths, or a 15-40 degree fold."""
+    angle = float(rng.choice([0.0, rng.uniform(-12, 12)]))
+    if kind == "wave":
+        return Bend(
+            "wave", angle, amplitude=rng.uniform(0.001, 0.002), wavelength=rng.uniform(550, 800)
+        )
+    if kind == "curl":
+        return Bend("curl", angle, radius=rng.uniform(600, 1100), start=rng.uniform(0.2, 0.5))
+    if kind == "curl2":
+        return Bend("curl2", angle, radius=rng.uniform(900, 1500), start=rng.uniform(0.3, 0.6))
+    if kind == "fold":
+        return Bend(
+            "fold",
+            angle,
+            fold_deg=rng.uniform(15, 40),
+            start=rng.uniform(-0.2, 0.2),
+            fold_radius=25,
+        )
+    if kind != "flat":
+        raise ValueError(f"unknown bend {kind!r}; expected one of {BEND_KINDS}")
+    return Bend("flat")

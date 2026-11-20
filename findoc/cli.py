@@ -160,6 +160,9 @@ def synth(
         0.4, help="Cheques only: share with a fraud condition (mismatch/stale/postdated/unsigned)"
     ),
     seconds: float = typer.Option(4.0, help="Videos only: clip length"),
+    bend: str = typer.Option(
+        "flat", help="Videos only: page shape: flat, wave, curl, curl2 (both ends) or fold"
+    ),
 ) -> None:
     """Generate synthetic photos with ground truth (labels.json)."""
     out_dir = out_dir or Path("data/synthetic") / kind
@@ -172,9 +175,14 @@ def synth(
 
         paths = generate_cheques(n, out_dir, seed=seed, blur_sigma=blur, fraud_rate=fraud_rate)
     elif kind == "video":
+        from findoc.synth.surface import BEND_KINDS
         from findoc.synth.video import generate_videos
 
-        paths = generate_videos(n, out_dir, seed=seed, fraud_rate=fraud_rate, seconds=seconds)
+        if bend not in BEND_KINDS:
+            raise typer.BadParameter(f"bend must be one of {', '.join(BEND_KINDS)}")
+        paths = generate_videos(
+            n, out_dir, seed=seed, fraud_rate=fraud_rate, seconds=seconds, bend=bend
+        )
     else:
         raise typer.BadParameter("kind must be 'page', 'cheque' or 'video'")
     what = "videos" if kind == "video" else "photos"

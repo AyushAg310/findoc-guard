@@ -132,6 +132,39 @@ def test_arap_recovers_true_flat_layout() -> None:
     assert naive > 10  # just projecting onto the desk is far off
 
 
+def test_arap_converges_on_strong_curl() -> None:
+    # A page curled up at both ends ("curl2"), meshed the way the pipeline does it: a regular
+    # grid in the *image*, so the triangles are skewed in 3D. Started from the projection onto
+    # the page plane, 25 local/global iterations (the default during development) left the
+    # layout sheared; iterating until the vertices stop moving more than halves the error.
+    from scipy.interpolate import griddata
+
+    s = DocSurface(800, 400, Bend("curl2", radius=250, start=0.25))
+    st, _ = s.grid(200, 100)
+    world = s.points(st)
+    k = Intrinsics(900, 640, 360).K
+    pose = look_at(np.array([400, 700, -1400.0]), np.array([400, 200, 0.0]), np.array([0, -1, 0.0]))
+    px = project(k, pose, world)
+    corners = project(k, pose, s.points(np.array([[0, 0], [800, 0], [800, 400], [0, 400.0]])))
+    img_pts, tris = grid_in_quad(corners, 40, 20)
+    xyz = griddata(px, world, img_pts, "linear")
+    true_st = griddata(px, st, img_pts, "linear")
+    on_page = np.isfinite(xyz[:, 0])
+    xyz[~on_page] = griddata(px, world, img_pts[~on_page], "nearest")
+    c = xyz.mean(0)
+    _, _, vt = np.linalg.svd(xyz - c)
+    local = (xyz - c) @ vt.T
+
+    def layout_err(uv: np.ndarray) -> float:
+        a, b = uv[on_page] - uv[on_page].mean(0), true_st[on_page] - true_st[on_page].mean(0)
+        u, _, v = np.linalg.svd(b.T @ a)
+        return float(np.linalg.norm(a @ (u @ v).T - b, axis=1).mean())
+
+    early, _ = arap_flatten(local, tris, local[:, :2], iters=25)
+    uv, _ = arap_flatten(local, tris, local[:, :2])
+    assert layout_err(uv) < 0.6 * layout_err(early)
+
+
 def test_arap_rejects_broken_input() -> None:
     world = np.zeros((4, 3))
     world[1, 0] = np.nan

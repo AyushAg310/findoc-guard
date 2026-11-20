@@ -7,7 +7,7 @@
 [![CI](https://github.com/AyushAg310/findoc-guard/actions/workflows/ci.yml/badge.svg)](https://github.com/AyushAg310/findoc-guard/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Status](https://img.shields.io/badge/status-Phase%204%20of%209-orange)
+![Status](https://img.shields.io/badge/status-Phase%205%20of%209-orange)
 
 </div>
 
@@ -32,7 +32,32 @@ multi-view 3D reconstruction flattens folded documents while preserving forensic
 template alignment handles cheques, LayoutLMv3 handles invoices, and Indian-format validation
 feeds an explainable fraud score.
 
-## Current capability (Phase 4)
+## Current capability (Phase 5)
+
+**Folded and curled cheques flattened in 3D (Phase 5).** From a few seconds of video, the
+document's 3D shape is reconstructed (structure from motion: SIFT, essential matrix and
+homography initialisation, PnP, bundle adjustment with focal-length search), a smooth surface is
+fitted to the page, and the surface is unrolled flat with ARAP, the way paper actually unbends.
+Flat pages are recognised first and keep the exact 2D homography.
+
+<p align="center"><img src="docs/images/phase5_demo.jpg" width="760" alt="Phase 5: folded cheque in a video frame, its reconstructed 3D surface, 2D homography result vs. 3D flattening"></p>
+
+Measured on 15 synthetic hand-held videos with exact ground truth (4 s, 1280x720; error left
+after the best homography to the true flat cheque, % of cheque width;
+[`experiments/phase5_recon_eval.py`](experiments/phase5_recon_eval.py)):
+
+| Bend | 2D homography | 3D, focal estimated | 3D, calibrated camera |
+| --- | --- | --- | --- |
+| Flat | 0.244% | kept 2D (correct) | kept 2D |
+| Wave | 0.397% | 0.270% | 0.277% |
+| Curl (one end) | 0.170% | 0.166% (2 of 3 judged flat) | 0.163% |
+| Curl (both ends) | 0.376% | 0.258% | 0.276% |
+| Fold | 0.179% | **0.072%** | 0.094% |
+
+3D adds 15-55 s per clip on a laptop CPU, about a third of that once the phone is calibrated
+with a printed checkerboard (`findoc calibrate`). How the result went from losing to 2D to
+winning (a biased metric, then an ARAP solver stopped too early) is in the
+[Phase 5 guide](docs/learn/phase-5-3d-reconstruction.md#39-results-experimentsphase5_recon_evalpy).
 
 **Page detection that doesn't depend on the background (Phase 4).** Real phone videos showed the
 classical detector failing on a pale wooden board (it outlined the whole board) and on patterned
@@ -166,8 +191,8 @@ Each phase is a working, demoable increment released as a new minor version.
 | 2 | 0.3 | Cheque understanding: templates, field recognition, amount-in-words, rules | ✅ Done |
 | 3 | 0.4 | Video + KLT tracking + keyframe selection | ✅ Done |
 | 4 | 0.5 | Learned page detection: U-Net document segmentation trained on synthetic hard backgrounds, ONNX | ✅ Done |
-| 5 | 0.6 | 3D reconstruction: SfM + MVS + mesh + ARAP flattening | ⏳ Next |
-| 6 | 0.7 | Fraud engine: tamper mapping, duplicates, signature, risk score | ⬜ |
+| 5 | 0.6 | 3D reconstruction: SfM, surface fit, ARAP flattening, camera calibration | ✅ Done |
+| 6 | 0.7 | Fraud engine: tamper mapping, duplicates, signature, risk score | ⏳ Next |
 | 7 | 0.8 | Invoices: LayoutLMv3, GSTIN, invoice arithmetic, Excel export | ⬜ |
 | 8 | 0.9 | Product: FastAPI, PostgreSQL, workers, React review UI, Docker Compose | ⬜ |
 | 9 | 1.0 | Evaluation, ablations, demo video, term paper | ⬜ |
@@ -194,6 +219,9 @@ findoc process data/synthetic/video/video_0003.mp4 --save-dir outputs   # tracki
 pip install -e ".[train]"         # PyTorch + onnx, only to train the page detector
 findoc segment train              # ~55 min on a laptop GPU; writes models/docseg.onnx
 findoc segment check photo.jpg    # what the page detector sees
+findoc synth --kind video --n 1 --seed 4 --bend fold -o data/synthetic/fold   # folded cheque
+findoc process data/synthetic/fold/video_0004.mp4 --save-dir outputs   # 3D: points, mesh, flat page
+findoc calibrate board.mp4 --save # phone focal length from a printed checkerboard (faster 3D)
 findoc templates list
 streamlit run demo/streamlit_app.py
 pytest
@@ -223,7 +251,7 @@ findoc-guard/
 │   ├── classify/        # Phase 7  document-type classifier
 │   ├── localize/        # Phase 2  cheque templates, SIFT + RANSAC registration (CO-3)
 │   ├── track/           # Phase 3  KLT tracking, keyframes              (CO-4)
-│   ├── recon3d/         # Phase 5  SfM, MVS, mesh, ARAP flattening      (CO-5)
+│   ├── recon3d/         # Phase 5  SfM, surface fit, ARAP flattening, calibration (CO-5)
 │   ├── fraud/           # Phase 2  rule checks; Phase 6 tamper, duplicates, risk score
 │   └── export/          # Phase 7  JSON, Excel, annotated images
 ├── app/                 # Phase 8  FastAPI service
@@ -236,8 +264,7 @@ findoc-guard/
 
 ## Tech stack
 
-Python · OpenCV · PyTorch · Hugging Face Transformers (LayoutLMv3) · COLMAP / pycolmap ·
-Open3D · SuperPoint + LightGlue · EasyOCR / PaddleOCR · FastAPI · PostgreSQL · Celery + Redis ·
+Python · OpenCV · PyTorch · Hugging Face Transformers (LayoutLMv3) · SciPy (bundle adjustment, ARAP) · SuperPoint + LightGlue · EasyOCR / PaddleOCR · FastAPI · PostgreSQL · Celery + Redis ·
 React + three.js · Docker · GitHub Actions
 
 ## Responsible use

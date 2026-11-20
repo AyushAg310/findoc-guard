@@ -3,6 +3,34 @@
 All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org/);
 each build phase is released as a minor version.
 
+## [0.6.0] - Phase 5: 3D reconstruction and flattening
+
+### Added
+- **Bent synthetic documents** (`findoc/synth/surface.py`): developable surfaces (wave, curl,
+  curl at both ends, fold) defined by a curvature profile, rendered with exact ground truth;
+  `render_video(..., bend=...)` and `findoc synth --kind video --bend fold`.
+- **Structure from motion** (`findoc/recon3d/sfm.py`): SIFT, essential-matrix and
+  homography-decomposition initialisation, track building, PnP registration, triangulation and
+  sparse bundle adjustment (SciPy); focal-length search when the camera is not calibrated.
+- **Flattening** (`findoc/recon3d/flatten.py`, `pipeline.py`): planarity test (flat pages keep
+  the exact 2D homography), robust thin-plate-spline surface, ray-cast mesh, ARAP
+  parameterisation to convergence, resampling with a flat-page -> photo correspondence map.
+  Safety checks fall back to 2D with a reason.
+- **`recon3d` pipeline stage** for video: `doc.flattening` (`homography` or `3d`) and
+  `doc.recon3d` (statistics, reason) in the JSON; settings `FINDOC_RECON3D` (`auto`/`off`) and
+  `FINDOC_FOCAL_PX`.
+- **Camera calibration** (`findoc calibrate SOURCE --board 9x6 --save`): Zhang's method on a
+  printed checkerboard, writes the focal length to `.env`.
+- 3D outputs with `--save-dir`: point cloud and mesh (PLY), 3D preview, flat map (`.npz`).
+- `experiments/phase5_recon_eval.py`: 3D vs. 2D on 15 synthetic hand-held videos, focal
+  estimated or known. Fold error 0.179% -> 0.072% of cheque width; every bend improves; flat
+  pages correctly kept 2D.
+- Learning guide `docs/learn/phase-5-3d-reconstruction.md`.
+
+### Changed
+- SciPy is a core dependency; the unused `recon3d` extra (pycolmap, Open3D, trimesh) is removed.
+- `rectify` is skipped when the page was already flattened from 3D.
+
 ## [0.5.1] - GPU-trained results; automatic training workers
 
 ### Changed
