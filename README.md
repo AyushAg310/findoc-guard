@@ -7,7 +7,7 @@
 [![CI](https://github.com/AyushAg310/findoc-guard/actions/workflows/ci.yml/badge.svg)](https://github.com/AyushAg310/findoc-guard/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Status](https://img.shields.io/badge/status-Phase%205%20of%209-orange)
+![Status](https://img.shields.io/badge/status-Phase%206%20of%209-orange)
 
 </div>
 
@@ -32,7 +32,42 @@ multi-view 3D reconstruction flattens folded documents while preserving forensic
 template alignment handles cheques, LayoutLMv3 handles invoices, and Indian-format validation
 feeds an explainable fraud score.
 
-## Current capability (Phase 5)
+## Current capability (Phase 6)
+
+**Fraud engine (Phase 6).** Three checks that consistent-looking fraud can't hide from, and one
+explainable risk score:
+
+- **Edited photo** (`TAMPER_REGION`): a small gradient-boosted model reads JPEG compression
+  traces per 16x16 block **on the original capture**; its heatmap is then carried to the flat
+  page through the same homography or 3D correspondence map, so dewarping never touches the
+  evidence. The report names the field that was changed.
+- **Duplicate presentation** (`DUPLICATE`): the handwriting left after template subtraction is
+  matched (SIFT + RANSAC) against an index of cheques already seen.
+- **Signature** (`SIGNATURE_MISMATCH`): shape descriptors compared with the account's reference
+  signatures.
+- **Risk score**: points x severity x confidence per fired check, capped at 100, with low /
+  medium / high bands and every contribution listed.
+
+<p align="center"><img src="docs/images/phase6_demo.jpg" width="640" alt="Phase 6: forged cheque photo with the amount rewritten; tamper heatmap computed on the original and mapped onto the flat page highlights the amount, risk 89/100 high"></p>
+
+Measured on synthetic captures ([`experiments/phase6_tamper_eval.py`](experiments/phase6_tamper_eval.py),
+[`experiments/phase6_fraud_eval.py`](experiments/phase6_fraud_eval.py)):
+
+| Tamper detection, 40 clean + 40 forged photos | Pixel AUC | Cheque AUC | Edited field named |
+| --- | --- | --- | --- |
+| Model on the **original, heatmap mapped** to the flat page | **0.953** | **0.956** | **97.5%** |
+| Model trained on flat pages, run on the flat page | 0.858 | 0.923 | 90.0% |
+| Untrained JPEG ghost, original + map / flat page | 0.707 / 0.602 | 0.446 / 0.398 | 20% / 8% |
+
+| End to end | Result |
+| --- | --- |
+| Forged photos flagged / clean photos flagged | 77.5% / 0% (retype 100%, splice 69%, copy-move 62%) |
+| Duplicate: second photo of a cheque matched / false matches | 20 of 20 / 0 of 82 |
+| Signature: random / skilled forgeries caught; genuine sent to review | 100% / 87%; 13% |
+
+On 6 bent-cheque videos the mapped heatmap also wins on pixel AUC (0.77 vs. 0.72), but that's
+too few videos for a cheque-level conclusion. All forgeries and signers are synthetic; the
+[Phase 6 guide](docs/learn/phase-6-fraud-engine.md#38-results) explains the limits.
 
 **Folded and curled cheques flattened in 3D (Phase 5).** From a few seconds of video, the
 document's 3D shape is reconstructed (structure from motion: SIFT, essential matrix and
@@ -192,8 +227,8 @@ Each phase is a working, demoable increment released as a new minor version.
 | 3 | 0.4 | Video + KLT tracking + keyframe selection | ✅ Done |
 | 4 | 0.5 | Learned page detection: U-Net document segmentation trained on synthetic hard backgrounds, ONNX | ✅ Done |
 | 5 | 0.6 | 3D reconstruction: SfM, surface fit, ARAP flattening, camera calibration | ✅ Done |
-| 6 | 0.7 | Fraud engine: tamper mapping, duplicates, signature, risk score | ⏳ Next |
-| 7 | 0.8 | Invoices: LayoutLMv3, GSTIN, invoice arithmetic, Excel export | ⬜ |
+| 6 | 0.7 | Fraud engine: tamper mapping, duplicates, signature, risk score | ✅ Done |
+| 7 | 0.8 | Invoices: LayoutLMv3, GSTIN, invoice arithmetic, Excel export | ⏳ Next |
 | 8 | 0.9 | Product: FastAPI, PostgreSQL, workers, React review UI, Docker Compose | ⬜ |
 | 9 | 1.0 | Evaluation, ablations, demo video, term paper | ⬜ |
 
@@ -222,6 +257,10 @@ findoc segment check photo.jpg    # what the page detector sees
 findoc synth --kind video --n 1 --seed 4 --bend fold -o data/synthetic/fold   # folded cheque
 findoc process data/synthetic/fold/video_0004.mp4 --save-dir outputs   # 3D: points, mesh, flat page
 findoc calibrate board.mp4 --save # phone focal length from a printed checkerboard (faster 3D)
+findoc tamper train               # ~5 min on a CPU; writes models/tamper.pkl
+findoc process cheque.jpg --register            # check, then add to the duplicate index
+findoc signatures add 123456789012 ref1.jpg ref2.jpg   # reference signatures of an account
+findoc process cheque.jpg --account 123456789012 --save-dir outputs   # + signature check
 findoc templates list
 streamlit run demo/streamlit_app.py
 pytest
@@ -252,7 +291,7 @@ findoc-guard/
 │   ├── localize/        # Phase 2  cheque templates, SIFT + RANSAC registration (CO-3)
 │   ├── track/           # Phase 3  KLT tracking, keyframes              (CO-4)
 │   ├── recon3d/         # Phase 5  SfM, surface fit, ARAP flattening, calibration (CO-5)
-│   ├── fraud/           # Phase 2  rule checks; Phase 6 tamper, duplicates, risk score
+│   ├── fraud/           # Phase 2  rules; Phase 6 tamper, duplicates, signature, risk score
 │   └── export/          # Phase 7  JSON, Excel, annotated images
 ├── app/                 # Phase 8  FastAPI service
 ├── frontend/            # Phase 8  React review UI
@@ -264,7 +303,7 @@ findoc-guard/
 
 ## Tech stack
 
-Python · OpenCV · PyTorch · Hugging Face Transformers (LayoutLMv3) · SciPy (bundle adjustment, ARAP) · SuperPoint + LightGlue · EasyOCR / PaddleOCR · FastAPI · PostgreSQL · Celery + Redis ·
+Python · OpenCV · PyTorch · Hugging Face Transformers (LayoutLMv3) · SciPy (bundle adjustment, ARAP) · scikit-learn (tamper model) · SuperPoint + LightGlue · EasyOCR / PaddleOCR · FastAPI · PostgreSQL · Celery + Redis ·
 React + three.js · Docker · GitHub Actions
 
 ## Responsible use

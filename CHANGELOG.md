@@ -3,6 +3,33 @@
 All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org/);
 each build phase is released as a minor version.
 
+## [0.7.0] - Phase 6: fraud engine
+
+### Added
+- **Tamper detection** (`findoc/fraud/tamper.py`, `TAMPER_REGION`): 35 forensic features per
+  16x16 block (JPEG re-compression error curve, its shape, content, noise, and all relative to
+  the capture), a gradient-boosted classifier trained on synthetic forgeries
+  (`findoc tamper train`, ~5 min on a CPU, model git-ignored), heatmap computed on the original
+  capture and mapped to the flat page through the homography or the Phase 5 3D map, scored per
+  cheque field. Classical JPEG-ghost heatmap when no model is trained (not flagged).
+  `findoc tamper check IMAGE`; `<name>_tamper.jpg` with `--save-dir`.
+- **Synthetic forgeries** (`findoc/synth/tamper.py`): retype, splice, copy-move, with exact masks.
+- **Duplicate detection** (`findoc/fraud/duplicates.py`, `DUPLICATE`): template-subtracted
+  handwriting matched with SIFT + RANSAC against a private index; `findoc process --register`,
+  `findoc index list|clear`; MICR equality when OCR read it.
+- **Signature comparison** (`findoc/fraud/signature.py`, `SIGNATURE_MISMATCH`): HOG + ink-layout
+  descriptors against per-account references; `findoc signatures add|list`,
+  `findoc process --account`; synthetic signers and skilled forgeries (`findoc/synth/signature.py`).
+- **Risk score** (`findoc/fraud/risk.py`): points x severity x confidence, capped at 100, bands,
+  critical overrides, contributions in the JSON (`risk`) and console; `FINDOC_RISK_POINTS`.
+- Experiments `phase6_tamper_eval.py` (original + map vs. flat page) and `phase6_fraud_eval.py`
+  (duplicates, signatures); learning guide `docs/learn/phase-6-fraud-engine.md`.
+
+### Changed
+- scikit-learn is a core dependency. New settings: `FINDOC_TAMPER`, `FINDOC_TAMPER_MODEL`,
+  `FINDOC_DUPLICATE_INDEX`, `FINDOC_SIGNATURES_DIR`, `FINDOC_RISK_POINTS`.
+- Pipeline: `rules -> tamper -> duplicate -> signature -> (ocr) -> risk`.
+
 ## [0.6.0] - Phase 5: 3D reconstruction and flattening
 
 ### Added

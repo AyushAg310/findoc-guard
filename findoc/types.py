@@ -144,6 +144,10 @@ class Document(BaseModel):
     fields: list[ExtractedField] = Field(default_factory=list)
     checks: list[CheckResult] = Field(default_factory=list)
     risk_score: int | None = None
+    # Phase 6: band (low / medium / high), what forced it, and each fired check's contribution
+    risk: dict[str, Any] = Field(default_factory=dict)
+    # Tamper heatmap on the flat page ([0, 1]), computed on the original capture and mapped
+    tamper_map: np.ndarray | None = Field(default=None, exclude=True)
     stages: list[StageLog] = Field(default_factory=list)
     messages: list[str] = Field(default_factory=list)
 

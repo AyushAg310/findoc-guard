@@ -37,7 +37,12 @@ def test_process_writes_json_and_images(synth_photo_path: Path, tmp_path: Path) 
         "enhance",
     ]
     names = sorted(p.name for p in save.iterdir())
-    assert names == ["synth_detected.jpg", "synth_enhanced.png", "synth_flat.png"]
+    assert names == [
+        "synth_detected.jpg",
+        "synth_enhanced.png",
+        "synth_flat.png",
+        "synth_tamper.jpg",
+    ]
 
 
 def test_process_no_ocr_flag(synth_photo_path: Path) -> None:
