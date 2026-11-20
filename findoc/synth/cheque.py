@@ -299,8 +299,13 @@ def render_cheque(
     stale: bool = False,
     postdated: bool = False,
     unsigned: bool = False,
+    signer: object | None = None,
+    skilled_forgery: bool = False,
 ) -> tuple[np.ndarray, ChequeTruth]:
-    """Render a filled cheque. Fraud flags create the conditions Phase 2 rules must catch."""
+    """Render a filled cheque. Fraud flags create the conditions Phase 2 rules must catch.
+
+    ``signer`` (a :class:`findoc.synth.signature.Signer`): sign as this person (Phase 6);
+    ``skilled_forgery``: someone else copying that signature. Default: a random scribble."""
     today = today or date.today()
     code = bank or str(rng.choice(sorted(BANKS)))
     style = BANKS[code]
@@ -353,7 +358,10 @@ def render_cheque(
     _write(img, ifsc, specs["ifsc"].box, rng, colour=PRINT, printed=True)
     _write(img, micr, specs["micr"].box, rng, colour=(10, 10, 10), printed=True)
     if not unsigned:
-        _signature(img, specs["signature"].box, rng)
+        if signer is not None:
+            signer.draw(img, specs["signature"].box, rng, skilled=skilled_forgery)
+        else:
+            _signature(img, specs["signature"].box, rng)
 
     truth = ChequeTruth(
         bank=code,

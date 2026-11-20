@@ -1,0 +1,3482 @@
+{
+  "photos": 40,
+  "videos": 6,
+  "model": {
+    "samples": 80,
+    "val_samples": 40,
+    "blocks": 521902,
+    "image_auc": 0.9863,
+    "pixel_auc": 0.9635,
+    "detection_rate": 0.775,
+    "false_alarm_rate": 0.0,
+    "top_field_correct": 1.0,
+    "threshold": 0.771,
+    "seconds": 298.8
+  },
+  "flat_model": {
+    "view": "flat",
+    "samples": 80,
+    "val_samples": 40,
+    "blocks": 743360,
+    "image_auc": 0.9769,
+    "pixel_auc": 0.9349,
+    "detection_rate": 0.85,
+    "false_alarm_rate": 0.0,
+    "top_field_correct": 0.975,
+    "threshold": 0.793,
+    "seconds": 243.3
+  },
+  "summary": {
+    "mapping_photo": {
+      "ghost|flat": {
+        "pixel_auc": 0.6015,
+        "cheque_auc": 0.3975,
+        "top_field_correct": 0.075,
+        "per_kind_pixel_auc": {
+          "retype": 0.7091,
+          "splice": 0.5979,
+          "copymove": 0.4894
+        }
+      },
+      "ghost|original+map": {
+        "pixel_auc": 0.7074,
+        "cheque_auc": 0.4463,
+        "top_field_correct": 0.2,
+        "per_kind_pixel_auc": {
+          "retype": 0.8064,
+          "splice": 0.6797,
+          "copymove": 0.6284
+        }
+      },
+      "model_flat|flat": {
+        "pixel_auc": 0.8578,
+        "cheque_auc": 0.9225,
+        "top_field_correct": 0.9,
+        "per_kind_pixel_auc": {
+          "retype": 0.8731,
+          "splice": 0.8681,
+          "copymove": 0.8311
+        }
+      },
+      "model|flat": {
+        "pixel_auc": 0.826,
+        "cheque_auc": 0.7837,
+        "top_field_correct": 0.8,
+        "per_kind_pixel_auc": {
+          "retype": 0.8704,
+          "splice": 0.858,
+          "copymove": 0.7463
+        }
+      },
+      "model|original+map": {
+        "pixel_auc": 0.9534,
+        "cheque_auc": 0.9559,
+        "top_field_correct": 0.975,
+        "per_kind_pixel_auc": {
+          "retype": 0.9707,
+          "splice": 0.9434,
+          "copymove": 0.9449
+        }
+      }
+    },
+    "mapping_video": {
+      "ghost|flat": {
+        "pixel_auc": 0.6142,
+        "cheque_auc": 0.4444,
+        "top_field_correct": 0.5,
+        "per_kind_pixel_auc": {
+          "retype": 0.8106,
+          "splice": 0.5774,
+          "copymove": 0.4547
+        }
+      },
+      "ghost|original+map": {
+        "pixel_auc": 0.756,
+        "cheque_auc": 0.4167,
+        "top_field_correct": 0.6667,
+        "per_kind_pixel_auc": {
+          "retype": 0.8271,
+          "splice": 0.7059,
+          "copymove": 0.7349
+        }
+      },
+      "model_flat|flat": {
+        "pixel_auc": 0.5535,
+        "cheque_auc": 0.6111,
+        "top_field_correct": 0.3333,
+        "per_kind_pixel_auc": {
+          "retype": 0.3779,
+          "splice": 0.516,
+          "copymove": 0.7668
+        }
+      },
+      "model|flat": {
+        "pixel_auc": 0.7243,
+        "cheque_auc": 0.9722,
+        "top_field_correct": 1.0,
+        "per_kind_pixel_auc": {
+          "retype": 0.8568,
+          "splice": 0.4961,
+          "copymove": 0.8199
+        }
+      },
+      "model|original+map": {
+        "pixel_auc": 0.7692,
+        "cheque_auc": 0.9167,
+        "top_field_correct": 0.6667,
+        "per_kind_pixel_auc": {
+          "retype": 0.6497,
+          "splice": 0.6839,
+          "copymove": 0.9739
+        }
+      }
+    },
+    "end_to_end_photo": {
+      "forged": 40,
+      "clean": 40,
+      "detection_rate": 0.775,
+      "false_alarm_rate": 0.0,
+      "field_named_correctly": 1.0,
+      "detection_by_kind": {
+        "retype": 1.0,
+        "splice": 0.6923,
+        "copymove": 0.6154
+      },
+      "risk_bands_forged": {
+        "low": 9,
+        "medium": 2,
+        "high": 29
+      },
+      "risk_bands_clean": {
+        "low": 40,
+        "medium": 0,
+        "high": 0
+      },
+      "median_process_s": 1.5
+    }
+  },
+  "rows": [
+    {
+      "capture": "photo",
+      "seed": 900000,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.96,
+      "tamper_fired": false,
+      "tamper_top": "amount_words_1",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "date"
+        },
+        "ghost|flat": {
+          "score": 1.0,
+          "top": "amount_words_1"
+        },
+        "model|original+map": {
+          "score": 0.3399689197540283,
+          "top": "amount_words_1"
+        },
+        "model|flat": {
+          "score": 0.8612155914306641,
+          "top": "payee"
+        },
+        "model_flat|flat": {
+          "score": 0.4882473349571228,
+          "top": "amount_words_2"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900000,
+      "forged": true,
+      "kind": "retype",
+      "field": "amount_figures",
+      "process_s": 1.47,
+      "tamper_fired": true,
+      "tamper_top": "amount_figures",
+      "risk_band": "high",
+      "risk_score": 79,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.9761574800024778,
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.9544641673151826,
+          "score": 1.0,
+          "top": "amount_words_1"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.993742637649933,
+          "score": 0.8773720264434814,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "pixel_auc": 0.8610792751479004,
+          "score": 0.8751001358032227,
+          "top": "payee"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.6776607968712492,
+          "score": 0.491268128156662,
+          "top": "amount_words_1"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900001,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.32,
+      "tamper_fired": false,
+      "tamper_top": "amount_figures",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "date"
+        },
+        "ghost|flat": {
+          "score": 0.9787784814834595,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "score": 0.7587592601776123,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "score": 0.797170877456665,
+          "top": "amount_words_2"
+        },
+        "model_flat|flat": {
+          "score": 0.6511432528495789,
+          "top": "amount_words_1"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900001,
+      "forged": true,
+      "kind": "splice",
+      "field": "payee",
+      "process_s": 1.55,
+      "tamper_fired": true,
+      "tamper_top": "payee",
+      "risk_band": "high",
+      "risk_score": 82,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.6246028945208165,
+          "score": 1.0,
+          "top": "date"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.4933836230170271,
+          "score": 0.9460974931716919,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9926924664671505,
+          "score": 0.904940128326416,
+          "top": "payee"
+        },
+        "model|flat": {
+          "pixel_auc": 0.9891453788751652,
+          "score": 0.9936134815216064,
+          "top": "payee"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.9667742168515691,
+          "score": 0.9628363847732544,
+          "top": "payee"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900002,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.51,
+      "tamper_fired": false,
+      "tamper_top": "signature",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "date"
+        },
+        "ghost|flat": {
+          "score": 0.9813005924224854,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "score": 0.4687435030937195,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "score": 0.9025377631187439,
+          "top": "amount_figures"
+        },
+        "model_flat|flat": {
+          "score": 0.5168734192848206,
+          "top": "amount_figures"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900002,
+      "forged": true,
+      "kind": "copymove",
+      "field": "date",
+      "process_s": 1.57,
+      "tamper_fired": true,
+      "tamper_top": "date",
+      "risk_band": "high",
+      "risk_score": 79,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.5672770979879463,
+          "score": 0.9959608912467957,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.5285524306954974,
+          "score": 0.9838260412216187,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9611137335387812,
+          "score": 0.8762403726577759,
+          "top": "date"
+        },
+        "model|flat": {
+          "pixel_auc": 0.8678833236199834,
+          "score": 0.8927530646324158,
+          "top": "date"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.9578049820692813,
+          "score": 0.9190984964370728,
+          "top": "date"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900003,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.31,
+      "tamper_fired": false,
+      "tamper_top": "amount_words_1",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 0.9420045614242554,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "score": 1.0,
+          "top": "date"
+        },
+        "model|original+map": {
+          "score": 0.35885417461395264,
+          "top": "amount_words_1"
+        },
+        "model|flat": {
+          "score": 0.6178811192512512,
+          "top": "amount_words_1"
+        },
+        "model_flat|flat": {
+          "score": 0.21113617718219757,
+          "top": "payee"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900003,
+      "forged": true,
+      "kind": "retype",
+      "field": "amount_words_1",
+      "process_s": 1.57,
+      "tamper_fired": true,
+      "tamper_top": "amount_words_1",
+      "risk_band": "high",
+      "risk_score": 85,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.6439320811712341,
+          "score": 1.0,
+          "top": "date"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.5689408306133891,
+          "score": 1.0,
+          "top": "date"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.8971005490998629,
+          "score": 0.9466707110404968,
+          "top": "amount_words_1"
+        },
+        "model|flat": {
+          "pixel_auc": 0.8821883958004788,
+          "score": 0.9628531336784363,
+          "top": "amount_words_1"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.9058773171548183,
+          "score": 0.8035905957221985,
+          "top": "amount_words_1"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900004,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.57,
+      "tamper_fired": false,
+      "tamper_top": "amount_words_1",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "score": 0.5043612122535706,
+          "top": "amount_words_1"
+        },
+        "model|flat": {
+          "score": 0.82709139585495,
+          "top": "amount_words_1"
+        },
+        "model_flat|flat": {
+          "score": 0.3517894148826599,
+          "top": "amount_words_2"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900004,
+      "forged": true,
+      "kind": "splice",
+      "field": "amount_words_2",
+      "process_s": 1.39,
+      "tamper_fired": true,
+      "tamper_top": "amount_words_2",
+      "risk_band": "high",
+      "risk_score": 90,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.5784559212629001,
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.38279016323909365,
+          "score": 0.9901817440986633,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9972830021257424,
+          "score": 0.9984064698219299,
+          "top": "amount_words_2"
+        },
+        "model|flat": {
+          "pixel_auc": 0.9517614453056937,
+          "score": 0.9894347786903381,
+          "top": "amount_words_2"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.9936410787022517,
+          "score": 0.9676992297172546,
+          "top": "amount_words_2"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900005,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.29,
+      "tamper_fired": false,
+      "tamper_top": "amount_words_2",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "score": 0.3736090064048767,
+          "top": "amount_words_2"
+        },
+        "model|flat": {
+          "score": 0.7913734316825867,
+          "top": "payee"
+        },
+        "model_flat|flat": {
+          "score": 0.5069560408592224,
+          "top": "amount_words_2"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900005,
+      "forged": true,
+      "kind": "copymove",
+      "field": "amount_figures",
+      "process_s": 5.4,
+      "tamper_fired": false,
+      "tamper_top": "amount_figures",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.41321999680097116,
+          "score": 0.7151508927345276,
+          "top": "amount_words_1"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.39918507304449113,
+          "score": 0.7006288766860962,
+          "top": "amount_words_1"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9550721370742831,
+          "score": 0.6714653968811035,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "pixel_auc": 0.6945098001017127,
+          "score": 0.8067626953125,
+          "top": "payee"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.8900414181950915,
+          "score": 0.7687742114067078,
+          "top": "amount_figures"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900006,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 5.27,
+      "tamper_fired": false,
+      "tamper_top": "amount_figures",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "amount_words_1"
+        },
+        "ghost|flat": {
+          "score": 0.9523071646690369,
+          "top": "amount_words_1"
+        },
+        "model|original+map": {
+          "score": 0.4810652732849121,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "score": 0.8127186298370361,
+          "top": "date"
+        },
+        "model_flat|flat": {
+          "score": 0.6322089433670044,
+          "top": "payee"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900006,
+      "forged": true,
+      "kind": "retype",
+      "field": "payee",
+      "process_s": 5.31,
+      "tamper_fired": true,
+      "tamper_top": "payee",
+      "risk_band": "high",
+      "risk_score": 89,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.8742765718506402,
+          "score": 0.999516487121582,
+          "top": "amount_words_1"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.6945100565246163,
+          "score": 0.9411575794219971,
+          "top": "amount_words_1"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9939067979706606,
+          "score": 0.9883798956871033,
+          "top": "payee"
+        },
+        "model|flat": {
+          "pixel_auc": 0.8395019769604888,
+          "score": 0.7884879112243652,
+          "top": "payee"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.7057624715921951,
+          "score": 0.5449503660202026,
+          "top": "payee"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900007,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.36,
+      "tamper_fired": false,
+      "tamper_top": "payee",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "score": 0.40081462264060974,
+          "top": "payee"
+        },
+        "model|flat": {
+          "score": 0.5098392963409424,
+          "top": "amount_words_1"
+        },
+        "model_flat|flat": {
+          "score": 0.22430837154388428,
+          "top": "payee"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900007,
+      "forged": true,
+      "kind": "splice",
+      "field": "date",
+      "process_s": 1.53,
+      "tamper_fired": false,
+      "tamper_top": "date",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.8966685355718503,
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.8758136600232815,
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.6224148969375058,
+          "score": 0.4407116174697876,
+          "top": "date"
+        },
+        "model|flat": {
+          "pixel_auc": 0.4427849872941212,
+          "score": 0.4978189468383789,
+          "top": "amount_words_1"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.7171056310147822,
+          "score": 0.3050612211227417,
+          "top": "date"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900008,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.49,
+      "tamper_fired": false,
+      "tamper_top": "amount_figures",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "amount_words_1"
+        },
+        "ghost|flat": {
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "score": 0.43931204080581665,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "score": 0.568050742149353,
+          "top": "amount_words_2"
+        },
+        "model_flat|flat": {
+          "score": 0.5886247754096985,
+          "top": "amount_words_2"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900008,
+      "forged": true,
+      "kind": "copymove",
+      "field": "amount_words_1",
+      "process_s": 1.62,
+      "tamper_fired": true,
+      "tamper_top": "amount_words_1",
+      "risk_band": "high",
+      "risk_score": 62,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.43759372711151817,
+          "score": 0.9900531768798828,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.42412691329245733,
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.968860582591417,
+          "score": 0.8341125249862671,
+          "top": "amount_words_1"
+        },
+        "model|flat": {
+          "pixel_auc": 0.8601196326374222,
+          "score": 0.8418562412261963,
+          "top": "amount_words_1"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.955510308342333,
+          "score": 0.9469364881515503,
+          "top": "amount_words_1"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900009,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.36,
+      "tamper_fired": false,
+      "tamper_top": "amount_figures",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 0.9508277177810669,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "score": 0.9086798429489136,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "score": 0.32092052698135376,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "score": 0.6581928133964539,
+          "top": "amount_figures"
+        },
+        "model_flat|flat": {
+          "score": 0.2939106822013855,
+          "top": "amount_words_1"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900009,
+      "forged": true,
+      "kind": "retype",
+      "field": "amount_words_2",
+      "process_s": 1.74,
+      "tamper_fired": true,
+      "tamper_top": "amount_words_2",
+      "risk_band": "medium",
+      "risk_score": 46,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.5578666271284413,
+          "score": 0.716518759727478,
+          "top": "amount_words_1"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.533339430116971,
+          "score": 0.7178111672401428,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9375451519723277,
+          "score": 0.7990478873252869,
+          "top": "amount_words_2"
+        },
+        "model|flat": {
+          "pixel_auc": 0.7974948962632359,
+          "score": 0.6938982009887695,
+          "top": "amount_words_2"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.9721878800685564,
+          "score": 0.8160053491592407,
+          "top": "amount_words_2"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900010,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.51,
+      "tamper_fired": false,
+      "tamper_top": "amount_figures",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "payee"
+        },
+        "ghost|flat": {
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "score": 0.5458920001983643,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "score": 0.7004488706588745,
+          "top": "payee"
+        },
+        "model_flat|flat": {
+          "score": 0.4493623375892639,
+          "top": "payee"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900010,
+      "forged": true,
+      "kind": "splice",
+      "field": "amount_figures",
+      "process_s": 1.67,
+      "tamper_fired": false,
+      "tamper_top": "amount_figures",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.9189386774818201,
+          "score": 1.0,
+          "top": "payee"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.8206805838219066,
+          "score": 0.9959732890129089,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9370109952617867,
+          "score": 0.7659791707992554,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "pixel_auc": 0.7431421805374075,
+          "score": 0.7971746325492859,
+          "top": "amount_figures"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.3730868585897432,
+          "score": 0.4478321969509125,
+          "top": "payee"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900011,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.53,
+      "tamper_fired": false,
+      "tamper_top": "amount_figures",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "date"
+        },
+        "ghost|flat": {
+          "score": 0.9787309169769287,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "score": 0.18469585478305817,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "score": 0.536473274230957,
+          "top": "amount_words_1"
+        },
+        "model_flat|flat": {
+          "score": 0.2846633493900299,
+          "top": "payee"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900011,
+      "forged": true,
+      "kind": "copymove",
+      "field": "payee",
+      "process_s": 1.37,
+      "tamper_fired": true,
+      "tamper_top": "payee",
+      "risk_band": "high",
+      "risk_score": 86,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.8352786480720418,
+          "score": 1.0,
+          "top": "payee"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.6375753562648341,
+          "score": 0.96875,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.996293785187685,
+          "score": 0.961006224155426,
+          "top": "payee"
+        },
+        "model|flat": {
+          "pixel_auc": 0.797901948945373,
+          "score": 0.8468352556228638,
+          "top": "payee"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.8390214578328555,
+          "score": 0.6862913966178894,
+          "top": "payee"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900012,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.72,
+      "tamper_fired": false,
+      "tamper_top": "amount_figures",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 0.9563227295875549,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "score": 1.0,
+          "top": "date"
+        },
+        "model|original+map": {
+          "score": 0.5151016116142273,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "score": 0.6241247057914734,
+          "top": "amount_words_1"
+        },
+        "model_flat|flat": {
+          "score": 0.2003064900636673,
+          "top": "date"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900012,
+      "forged": true,
+      "kind": "retype",
+      "field": "date",
+      "process_s": 1.67,
+      "tamper_fired": true,
+      "tamper_top": "date",
+      "risk_band": "high",
+      "risk_score": 84,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.7455831975440004,
+          "score": 0.9816433787345886,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.7135044371134143,
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.927098210097087,
+          "score": 0.9302777051925659,
+          "top": "date"
+        },
+        "model|flat": {
+          "pixel_auc": 0.9001126092614669,
+          "score": 0.9728955626487732,
+          "top": "date"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.9687317092627205,
+          "score": 0.8761007189750671,
+          "top": "date"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900013,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.58,
+      "tamper_fired": false,
+      "tamper_top": "amount_figures",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 0.9935839176177979,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "score": 0.9812331199645996,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "score": 0.5363916158676147,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "score": 0.5931437611579895,
+          "top": "amount_figures"
+        },
+        "model_flat|flat": {
+          "score": 0.3121272027492523,
+          "top": "amount_words_2"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900013,
+      "forged": true,
+      "kind": "splice",
+      "field": "amount_words_1",
+      "process_s": 1.39,
+      "tamper_fired": true,
+      "tamper_top": "amount_words_1",
+      "risk_band": "medium",
+      "risk_score": 36,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.6875027316632847,
+          "score": 0.9899150729179382,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.5747397400723506,
+          "score": 0.9737264513969421,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9243630063389482,
+          "score": 0.7731783390045166,
+          "top": "amount_words_1"
+        },
+        "model|flat": {
+          "pixel_auc": 0.9194092894293323,
+          "score": 0.8772819638252258,
+          "top": "amount_words_1"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.9060930150207002,
+          "score": 0.7564619779586792,
+          "top": "amount_words_1"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900014,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.41,
+      "tamper_fired": false,
+      "tamper_top": "amount_figures",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "score": 0.6589666604995728,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "score": 0.759590744972229,
+          "top": "date"
+        },
+        "model_flat|flat": {
+          "score": 0.29910850524902344,
+          "top": "amount_words_1"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900014,
+      "forged": true,
+      "kind": "copymove",
+      "field": "amount_words_2",
+      "process_s": 1.45,
+      "tamper_fired": true,
+      "tamper_top": "amount_words_2",
+      "risk_band": "high",
+      "risk_score": 79,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.36821233548301346,
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.32778954105554925,
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.8789210417784254,
+          "score": 0.8718454837799072,
+          "top": "amount_words_2"
+        },
+        "model|flat": {
+          "pixel_auc": 0.6907027048748419,
+          "score": 0.8017792701721191,
+          "top": "amount_words_2"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.9740076002430056,
+          "score": 0.9523292183876038,
+          "top": "amount_words_2"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900015,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.87,
+      "tamper_fired": false,
+      "tamper_top": "amount_words_1",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "date"
+        },
+        "ghost|flat": {
+          "score": 0.9833559393882751,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "score": 0.4970181882381439,
+          "top": "amount_words_1"
+        },
+        "model|flat": {
+          "score": 0.734366238117218,
+          "top": "amount_words_1"
+        },
+        "model_flat|flat": {
+          "score": 0.32747718691825867,
+          "top": "payee"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900015,
+      "forged": true,
+      "kind": "retype",
+      "field": "amount_figures",
+      "process_s": 1.65,
+      "tamper_fired": true,
+      "tamper_top": "amount_figures",
+      "risk_band": "high",
+      "risk_score": 89,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.9736985081230823,
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.9586094668295451,
+          "score": 0.9470948576927185,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9990433519617556,
+          "score": 0.9835799336433411,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "pixel_auc": 0.9988119619480007,
+          "score": 0.9691572785377502,
+          "top": "amount_figures"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.9959895924511604,
+          "score": 0.8917851448059082,
+          "top": "amount_figures"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900016,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 2.89,
+      "tamper_fired": false,
+      "tamper_top": "amount_figures",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "date"
+        },
+        "ghost|flat": {
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "score": 0.5302719473838806,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "score": 0.8514010310173035,
+          "top": "amount_words_2"
+        },
+        "model_flat|flat": {
+          "score": 0.5622296333312988,
+          "top": "payee"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900016,
+      "forged": true,
+      "kind": "splice",
+      "field": "payee",
+      "process_s": 1.43,
+      "tamper_fired": true,
+      "tamper_top": "payee",
+      "risk_band": "high",
+      "risk_score": 87,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.4296726371279662,
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.41581165444882806,
+          "score": 0.9983944296836853,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9882740383026953,
+          "score": 0.9633873105049133,
+          "top": "payee"
+        },
+        "model|flat": {
+          "pixel_auc": 0.8960751158232203,
+          "score": 0.98213791847229,
+          "top": "payee"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.9773653913792508,
+          "score": 0.9532860517501831,
+          "top": "payee"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900017,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.6,
+      "tamper_fired": false,
+      "tamper_top": "amount_figures",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "date"
+        },
+        "ghost|flat": {
+          "score": 0.9851937890052795,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "score": 0.0018752525793388486,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "score": 0.7814801335334778,
+          "top": "payee"
+        },
+        "model_flat|flat": {
+          "score": 0.3494981527328491,
+          "top": "amount_words_2"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900017,
+      "forged": true,
+      "kind": "copymove",
+      "field": "date",
+      "process_s": 1.74,
+      "tamper_fired": true,
+      "tamper_top": "date",
+      "risk_band": "high",
+      "risk_score": 86,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.695953025811902,
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.49087705951388366,
+          "score": 0.9417608380317688,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9964574899350086,
+          "score": 0.9501991868019104,
+          "top": "date"
+        },
+        "model|flat": {
+          "pixel_auc": 0.7760371175168714,
+          "score": 0.8030133843421936,
+          "top": "amount_words_2"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.8862435928268555,
+          "score": 0.7725743651390076,
+          "top": "date"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900018,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.5,
+      "tamper_fired": false,
+      "tamper_top": "amount_words_2",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "score": 1.0,
+          "top": "amount_words_1"
+        },
+        "model|original+map": {
+          "score": 0.5572087168693542,
+          "top": "amount_words_2"
+        },
+        "model|flat": {
+          "score": 0.8642172813415527,
+          "top": "amount_words_2"
+        },
+        "model_flat|flat": {
+          "score": 0.5155127048492432,
+          "top": "amount_words_2"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900018,
+      "forged": true,
+      "kind": "retype",
+      "field": "amount_words_1",
+      "process_s": 1.58,
+      "tamper_fired": true,
+      "tamper_top": "amount_words_1",
+      "risk_band": "high",
+      "risk_score": 87,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.6023935356466878,
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.5794750924018972,
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9366604822584941,
+          "score": 0.9605370759963989,
+          "top": "amount_words_1"
+        },
+        "model|flat": {
+          "pixel_auc": 0.90966501176251,
+          "score": 0.9743079543113708,
+          "top": "amount_words_1"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.8548506288496311,
+          "score": 0.922735869884491,
+          "top": "amount_words_1"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900019,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.62,
+      "tamper_fired": false,
+      "tamper_top": "amount_words_1",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "score": 0.35013777017593384,
+          "top": "amount_words_1"
+        },
+        "model|flat": {
+          "score": 0.725566565990448,
+          "top": "amount_words_1"
+        },
+        "model_flat|flat": {
+          "score": 0.42733216285705566,
+          "top": "amount_words_1"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900019,
+      "forged": true,
+      "kind": "splice",
+      "field": "amount_words_2",
+      "process_s": 1.38,
+      "tamper_fired": true,
+      "tamper_top": "amount_words_2",
+      "risk_band": "high",
+      "risk_score": 90,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.5243918541303175,
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.40113618723646893,
+          "score": 0.9945778846740723,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9979003015684457,
+          "score": 0.997534990310669,
+          "top": "amount_words_2"
+        },
+        "model|flat": {
+          "pixel_auc": 0.9783301557895737,
+          "score": 0.998469889163971,
+          "top": "amount_words_2"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.9947687892314242,
+          "score": 0.9934516549110413,
+          "top": "amount_words_2"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900020,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.6,
+      "tamper_fired": false,
+      "tamper_top": "date",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 0.9827044010162354,
+          "top": "amount_words_1"
+        },
+        "ghost|flat": {
+          "score": 0.7925376296043396,
+          "top": "amount_words_1"
+        },
+        "model|original+map": {
+          "score": 0.12426473945379257,
+          "top": "date"
+        },
+        "model|flat": {
+          "score": 0.84529048204422,
+          "top": "amount_figures"
+        },
+        "model_flat|flat": {
+          "score": 0.5230955481529236,
+          "top": "date"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900020,
+      "forged": true,
+      "kind": "copymove",
+      "field": "amount_figures",
+      "process_s": 1.28,
+      "tamper_fired": false,
+      "tamper_top": "amount_figures",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.45453186185327865,
+          "score": 0.9125790596008301,
+          "top": "amount_words_1"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.4603967135792214,
+          "score": 0.7972322702407837,
+          "top": "amount_words_1"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.8262213998181283,
+          "score": 0.3432818055152893,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "pixel_auc": 0.8168885196785731,
+          "score": 0.8190121650695801,
+          "top": "date"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.21920487864686794,
+          "score": 0.5660994052886963,
+          "top": "date"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900021,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.47,
+      "tamper_fired": false,
+      "tamper_top": "amount_figures",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 0.9982841610908508,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "score": 0.9688193798065186,
+          "top": "amount_words_1"
+        },
+        "model|original+map": {
+          "score": 0.5098990201950073,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "score": 0.8098888993263245,
+          "top": "amount_figures"
+        },
+        "model_flat|flat": {
+          "score": 0.43978145718574524,
+          "top": "amount_words_1"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900021,
+      "forged": true,
+      "kind": "retype",
+      "field": "payee",
+      "process_s": 1.41,
+      "tamper_fired": true,
+      "tamper_top": "payee",
+      "risk_band": "high",
+      "risk_score": 88,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.8957440384202925,
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.6990894579470195,
+          "score": 0.9358633160591125,
+          "top": "amount_words_1"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9916332681469255,
+          "score": 0.9735472798347473,
+          "top": "payee"
+        },
+        "model|flat": {
+          "pixel_auc": 0.7646688989885233,
+          "score": 0.759549617767334,
+          "top": "amount_figures"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.7881719850810657,
+          "score": 0.4937745928764343,
+          "top": "payee"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900022,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.59,
+      "tamper_fired": false,
+      "tamper_top": "signature",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "date"
+        },
+        "ghost|flat": {
+          "score": 0.9818918108940125,
+          "top": "amount_words_1"
+        },
+        "model|original+map": {
+          "score": 0.41325274109840393,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "score": 0.862332820892334,
+          "top": "amount_figures"
+        },
+        "model_flat|flat": {
+          "score": 0.3612377643585205,
+          "top": "payee"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900022,
+      "forged": true,
+      "kind": "splice",
+      "field": "date",
+      "process_s": 1.34,
+      "tamper_fired": false,
+      "tamper_top": "signature",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.9156477054515677,
+          "score": 1.0,
+          "top": "date"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.8705725847459508,
+          "score": 0.9821239709854126,
+          "top": "amount_words_1"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.90643580047588,
+          "score": 0.41325274109840393,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "pixel_auc": 0.7196324575777931,
+          "score": 0.8615361452102661,
+          "top": "amount_figures"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.7824585564014441,
+          "score": 0.5833216905593872,
+          "top": "date"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900023,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.62,
+      "tamper_fired": false,
+      "tamper_top": "payee",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "amount_words_1"
+        },
+        "ghost|flat": {
+          "score": 0.9990140199661255,
+          "top": "amount_words_1"
+        },
+        "model|original+map": {
+          "score": 0.11973093450069427,
+          "top": "payee"
+        },
+        "model|flat": {
+          "score": 0.6763777136802673,
+          "top": "amount_figures"
+        },
+        "model_flat|flat": {
+          "score": 0.4722960591316223,
+          "top": "amount_words_2"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900023,
+      "forged": true,
+      "kind": "copymove",
+      "field": "amount_words_1",
+      "process_s": 1.38,
+      "tamper_fired": true,
+      "tamper_top": "amount_words_1",
+      "risk_band": "high",
+      "risk_score": 90,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.8010926862391222,
+          "score": 0.9907217621803284,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.4216544843573117,
+          "score": 0.9611056447029114,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9984445638189517,
+          "score": 0.9951903223991394,
+          "top": "amount_words_1"
+        },
+        "model|flat": {
+          "pixel_auc": 0.7829959852018824,
+          "score": 0.8573636412620544,
+          "top": "amount_words_1"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.9366590121979228,
+          "score": 0.8550350666046143,
+          "top": "amount_words_1"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900024,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.32,
+      "tamper_fired": false,
+      "tamper_top": "amount_figures",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "score": 0.9775609374046326,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "score": 0.27597713470458984,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "score": 0.8088366389274597,
+          "top": "amount_words_1"
+        },
+        "model_flat|flat": {
+          "score": 0.44614410400390625,
+          "top": "amount_words_1"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900024,
+      "forged": true,
+      "kind": "retype",
+      "field": "amount_words_2",
+      "process_s": 1.41,
+      "tamper_fired": true,
+      "tamper_top": "amount_words_2",
+      "risk_band": "high",
+      "risk_score": 88,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.7035570783844342,
+          "score": 1.0,
+          "top": "amount_words_2"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.5341214701131535,
+          "score": 0.9529197812080383,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.99130543227224,
+          "score": 0.9815961122512817,
+          "top": "amount_words_2"
+        },
+        "model|flat": {
+          "pixel_auc": 0.8693559429358049,
+          "score": 0.9789838194847107,
+          "top": "amount_words_2"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.9017903363711635,
+          "score": 0.8631685376167297,
+          "top": "amount_words_2"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900025,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.33,
+      "tamper_fired": false,
+      "tamper_top": "amount_words_1",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "amount_words_1"
+        },
+        "ghost|flat": {
+          "score": 1.0,
+          "top": "amount_words_1"
+        },
+        "model|original+map": {
+          "score": 0.19067130982875824,
+          "top": "amount_words_1"
+        },
+        "model|flat": {
+          "score": 0.5559836030006409,
+          "top": "amount_words_1"
+        },
+        "model_flat|flat": {
+          "score": 0.2487141638994217,
+          "top": "amount_words_2"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900025,
+      "forged": true,
+      "kind": "splice",
+      "field": "amount_figures",
+      "process_s": 1.57,
+      "tamper_fired": true,
+      "tamper_top": "amount_figures",
+      "risk_band": "high",
+      "risk_score": 84,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.7269138241478588,
+          "score": 1.0,
+          "top": "amount_words_1"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.7277586863110223,
+          "score": 1.0,
+          "top": "amount_words_1"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9808896586065052,
+          "score": 0.9262787103652954,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "pixel_auc": 0.9276495633307356,
+          "score": 0.9761412143707275,
+          "top": "amount_figures"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.9830399309122206,
+          "score": 0.9763064384460449,
+          "top": "amount_figures"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900026,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.6,
+      "tamper_fired": false,
+      "tamper_top": "amount_words_1",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "score": 0.9987145662307739,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "score": 0.2594519555568695,
+          "top": "amount_words_1"
+        },
+        "model|flat": {
+          "score": 0.6768428683280945,
+          "top": "amount_words_1"
+        },
+        "model_flat|flat": {
+          "score": 0.3603769540786743,
+          "top": "amount_words_1"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900026,
+      "forged": true,
+      "kind": "copymove",
+      "field": "payee",
+      "process_s": 1.95,
+      "tamper_fired": false,
+      "tamper_top": "payee",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.7018217005321146,
+          "score": 1.0,
+          "top": "date"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.48341056716578634,
+          "score": 0.976654052734375,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9405717866472144,
+          "score": 0.7678195834159851,
+          "top": "payee"
+        },
+        "model|flat": {
+          "pixel_auc": 0.7238112171430481,
+          "score": 0.7407777309417725,
+          "top": "payee"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.9805706988759013,
+          "score": 0.9157199859619141,
+          "top": "payee"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900027,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.32,
+      "tamper_fired": false,
+      "tamper_top": "date",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 0.9903772473335266,
+          "top": "amount_words_1"
+        },
+        "ghost|flat": {
+          "score": 0.90625,
+          "top": "amount_words_1"
+        },
+        "model|original+map": {
+          "score": 0.10373687744140625,
+          "top": "date"
+        },
+        "model|flat": {
+          "score": 0.877091109752655,
+          "top": "amount_figures"
+        },
+        "model_flat|flat": {
+          "score": 0.31619706749916077,
+          "top": "amount_figures"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900027,
+      "forged": true,
+      "kind": "retype",
+      "field": "date",
+      "process_s": 1.63,
+      "tamper_fired": true,
+      "tamper_top": "date",
+      "risk_band": "high",
+      "risk_score": 79,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.8220815526136205,
+          "score": 1.0,
+          "top": "date"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.6821510413989,
+          "score": 0.9246501326560974,
+          "top": "amount_words_1"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9789585207677793,
+          "score": 0.8777384161949158,
+          "top": "date"
+        },
+        "model|flat": {
+          "pixel_auc": 0.8574432514761452,
+          "score": 0.935407280921936,
+          "top": "date"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.9420700215766128,
+          "score": 0.7925165891647339,
+          "top": "date"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900028,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.47,
+      "tamper_fired": false,
+      "tamper_top": "amount_words_1",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "score": 0.9780403971672058,
+          "top": "date"
+        },
+        "model|original+map": {
+          "score": 0.3699204921722412,
+          "top": "amount_words_1"
+        },
+        "model|flat": {
+          "score": 0.7888723015785217,
+          "top": "amount_words_1"
+        },
+        "model_flat|flat": {
+          "score": 0.3363395631313324,
+          "top": "amount_words_2"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900028,
+      "forged": true,
+      "kind": "splice",
+      "field": "amount_words_1",
+      "process_s": 1.38,
+      "tamper_fired": true,
+      "tamper_top": "amount_words_1",
+      "risk_band": "high",
+      "risk_score": 88,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.7366193399620845,
+          "score": 0.9886654019355774,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.5936136501480493,
+          "score": 0.9870632290840149,
+          "top": "date"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9895444821822748,
+          "score": 0.9788398742675781,
+          "top": "amount_words_1"
+        },
+        "model|flat": {
+          "pixel_auc": 0.9370126877932784,
+          "score": 0.9563498497009277,
+          "top": "amount_words_1"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.9889092011343231,
+          "score": 0.9714908003807068,
+          "top": "amount_words_1"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900029,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.32,
+      "tamper_fired": false,
+      "tamper_top": "amount_figures",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "date"
+        },
+        "ghost|flat": {
+          "score": 1.0,
+          "top": "amount_words_1"
+        },
+        "model|original+map": {
+          "score": 0.5325666069984436,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "score": 0.6443831920623779,
+          "top": "date"
+        },
+        "model_flat|flat": {
+          "score": 0.39388853311538696,
+          "top": "payee"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900029,
+      "forged": true,
+      "kind": "copymove",
+      "field": "amount_words_2",
+      "process_s": 1.42,
+      "tamper_fired": true,
+      "tamper_top": "amount_words_2",
+      "risk_band": "high",
+      "risk_score": 78,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.5602700029373254,
+          "score": 1.0,
+          "top": "date"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.4443714730936011,
+          "score": 1.0,
+          "top": "amount_words_1"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9235354976609262,
+          "score": 0.8707612156867981,
+          "top": "amount_words_2"
+        },
+        "model|flat": {
+          "pixel_auc": 0.6947090623957624,
+          "score": 0.7423490285873413,
+          "top": "amount_words_2"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.9069059050198394,
+          "score": 0.8710448741912842,
+          "top": "amount_words_2"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900030,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.57,
+      "tamper_fired": false,
+      "tamper_top": "date",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 0.9981352090835571,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "score": 0.9757775664329529,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "score": 0.2344907522201538,
+          "top": "date"
+        },
+        "model|flat": {
+          "score": 0.8650587797164917,
+          "top": "amount_words_1"
+        },
+        "model_flat|flat": {
+          "score": 0.4724448621273041,
+          "top": "amount_words_2"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900030,
+      "forged": true,
+      "kind": "retype",
+      "field": "amount_figures",
+      "process_s": 1.46,
+      "tamper_fired": true,
+      "tamper_top": "amount_figures",
+      "risk_band": "high",
+      "risk_score": 74,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.9660802548219944,
+          "score": 0.9789578318595886,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.9569811653597085,
+          "score": 0.9335904121398926,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9899576417522719,
+          "score": 0.8607583045959473,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "pixel_auc": 0.9161443793689352,
+          "score": 0.9010961055755615,
+          "top": "amount_figures"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.876578582944171,
+          "score": 0.555604100227356,
+          "top": "amount_figures"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900031,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.42,
+      "tamper_fired": false,
+      "tamper_top": "payee",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 0.9641427397727966,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "score": 0.881884753704071,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "score": 0.35194718837738037,
+          "top": "payee"
+        },
+        "model|flat": {
+          "score": 0.8162800669670105,
+          "top": "amount_words_1"
+        },
+        "model_flat|flat": {
+          "score": 0.6461190581321716,
+          "top": "amount_words_2"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900031,
+      "forged": true,
+      "kind": "splice",
+      "field": "payee",
+      "process_s": 1.41,
+      "tamper_fired": false,
+      "tamper_top": "payee",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.47682504498711964,
+          "score": 0.9609304070472717,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.470718914352596,
+          "score": 0.8643333911895752,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9376026318682772,
+          "score": 0.7465663552284241,
+          "top": "payee"
+        },
+        "model|flat": {
+          "pixel_auc": 0.8979393004415905,
+          "score": 0.8562968969345093,
+          "top": "payee"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.8038226554160595,
+          "score": 0.7966403365135193,
+          "top": "payee"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900032,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.37,
+      "tamper_fired": false,
+      "tamper_top": "amount_figures",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "score": 0.5492605566978455,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "score": 0.6891459822654724,
+          "top": "payee"
+        },
+        "model_flat|flat": {
+          "score": 0.4218536615371704,
+          "top": "payee"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900032,
+      "forged": true,
+      "kind": "copymove",
+      "field": "date",
+      "process_s": 1.35,
+      "tamper_fired": false,
+      "tamper_top": "date",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.7613255647030492,
+          "score": 0.9883384704589844,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.7137287604298134,
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9036595917039025,
+          "score": 0.7528419494628906,
+          "top": "date"
+        },
+        "model|flat": {
+          "pixel_auc": 0.7610281713230755,
+          "score": 0.7787417769432068,
+          "top": "date"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.7185154369059502,
+          "score": 0.5236480236053467,
+          "top": "date"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900033,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 2.49,
+      "tamper_fired": false,
+      "tamper_top": "amount_figures",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "amount_words_1"
+        },
+        "ghost|flat": {
+          "score": 1.0,
+          "top": "amount_words_1"
+        },
+        "model|original+map": {
+          "score": 0.3893101215362549,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "score": 0.7851794958114624,
+          "top": "amount_figures"
+        },
+        "model_flat|flat": {
+          "score": 0.4541935920715332,
+          "top": "amount_figures"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900033,
+      "forged": true,
+      "kind": "retype",
+      "field": "amount_words_1",
+      "process_s": 5.49,
+      "tamper_fired": true,
+      "tamper_top": "amount_words_1",
+      "risk_band": "high",
+      "risk_score": 81,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.7095308846587317,
+          "score": 1.0,
+          "top": "date"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.5927970131181498,
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9618157744966098,
+          "score": 0.8978978395462036,
+          "top": "amount_words_1"
+        },
+        "model|flat": {
+          "pixel_auc": 0.8403967909070345,
+          "score": 0.8328713774681091,
+          "top": "amount_words_1"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.8526858424207648,
+          "score": 0.56352299451828,
+          "top": "amount_words_1"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900034,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.34,
+      "tamper_fired": false,
+      "tamper_top": "amount_words_1",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "date"
+        },
+        "ghost|flat": {
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "score": 0.6191215515136719,
+          "top": "amount_words_1"
+        },
+        "model|flat": {
+          "score": 0.820954442024231,
+          "top": "amount_words_1"
+        },
+        "model_flat|flat": {
+          "score": 0.2996237277984619,
+          "top": "amount_words_1"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900034,
+      "forged": true,
+      "kind": "splice",
+      "field": "amount_words_2",
+      "process_s": 1.4,
+      "tamper_fired": true,
+      "tamper_top": "amount_words_2",
+      "risk_band": "high",
+      "risk_score": 88,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.36041474217733876,
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.35692886174254507,
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9902348573567958,
+          "score": 0.98067706823349,
+          "top": "amount_words_2"
+        },
+        "model|flat": {
+          "pixel_auc": 0.9636242264334545,
+          "score": 0.9749389290809631,
+          "top": "amount_words_2"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.9897733128517445,
+          "score": 0.9512554407119751,
+          "top": "amount_words_2"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900035,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.36,
+      "tamper_fired": false,
+      "tamper_top": "amount_figures",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "amount_words_1"
+        },
+        "ghost|flat": {
+          "score": 0.9569496512413025,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "score": 0.14913871884346008,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "score": 0.8090136647224426,
+          "top": "amount_words_1"
+        },
+        "model_flat|flat": {
+          "score": 0.41974061727523804,
+          "top": "amount_words_2"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900035,
+      "forged": true,
+      "kind": "copymove",
+      "field": "amount_figures",
+      "process_s": 1.5,
+      "tamper_fired": true,
+      "tamper_top": "amount_figures",
+      "risk_band": "high",
+      "risk_score": 90,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.9798744465192855,
+          "score": 1.0,
+          "top": "amount_words_1"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.6290810709954409,
+          "score": 0.7663216590881348,
+          "top": "amount_words_1"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9989777458539357,
+          "score": 0.9994834065437317,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "pixel_auc": 0.4542973417034523,
+          "score": 0.7890042066574097,
+          "top": "amount_words_1"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.586673969606518,
+          "score": 0.40076684951782227,
+          "top": "amount_words_2"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900036,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.32,
+      "tamper_fired": false,
+      "tamper_top": "amount_words_1",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "score": 0.9728893637657166,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "score": 0.46108755469322205,
+          "top": "amount_words_1"
+        },
+        "model|flat": {
+          "score": 0.8090490698814392,
+          "top": "amount_words_1"
+        },
+        "model_flat|flat": {
+          "score": 0.37572142481803894,
+          "top": "amount_words_2"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900036,
+      "forged": true,
+      "kind": "retype",
+      "field": "payee",
+      "process_s": 1.46,
+      "tamper_fired": true,
+      "tamper_top": "payee",
+      "risk_band": "high",
+      "risk_score": 90,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.9105946140461002,
+          "score": 1.0,
+          "top": "date"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.7456733948781712,
+          "score": 0.9767420291900635,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9952140151111866,
+          "score": 0.9961227178573608,
+          "top": "payee"
+        },
+        "model|flat": {
+          "pixel_auc": 0.8745502087109733,
+          "score": 0.9747371077537537,
+          "top": "payee"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.917298138789003,
+          "score": 0.7774462103843689,
+          "top": "payee"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900037,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.51,
+      "tamper_fired": false,
+      "tamper_top": "signature",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "date"
+        },
+        "ghost|flat": {
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "score": 0.001048243255354464,
+          "top": "amount_words_1"
+        },
+        "model|flat": {
+          "score": 0.7744005918502808,
+          "top": "amount_words_1"
+        },
+        "model_flat|flat": {
+          "score": 0.5837225317955017,
+          "top": "payee"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900037,
+      "forged": true,
+      "kind": "splice",
+      "field": "date",
+      "process_s": 1.29,
+      "tamper_fired": true,
+      "tamper_top": "date",
+      "risk_band": "high",
+      "risk_score": 90,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.9597565961094483,
+          "score": 1.0,
+          "top": "date"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.7886293475918529,
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9990203666081604,
+          "score": 0.9976319074630737,
+          "top": "date"
+        },
+        "model|flat": {
+          "pixel_auc": 0.7874030761739161,
+          "score": 0.8939664363861084,
+          "top": "date"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.808124714101906,
+          "score": 0.7821293473243713,
+          "top": "date"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900038,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.4,
+      "tamper_fired": false,
+      "tamper_top": "amount_figures",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "payee"
+        },
+        "ghost|flat": {
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "score": 0.554864764213562,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "score": 0.8121735453605652,
+          "top": "date"
+        },
+        "model_flat|flat": {
+          "score": 0.5026239156723022,
+          "top": "amount_words_2"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900038,
+      "forged": true,
+      "kind": "copymove",
+      "field": "amount_words_1",
+      "process_s": 1.26,
+      "tamper_fired": false,
+      "tamper_top": "amount_words_1",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.5925399242158778,
+          "score": 1.0,
+          "top": "payee"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.40080366376256304,
+          "score": 0.9995607733726501,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9357682469726757,
+          "score": 0.6160095930099487,
+          "top": "amount_words_1"
+        },
+        "model|flat": {
+          "pixel_auc": 0.7808059672613792,
+          "score": 0.8635802268981934,
+          "top": "amount_words_1"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.9533195592323348,
+          "score": 0.9500946402549744,
+          "top": "amount_words_1"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900039,
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "process_s": 1.53,
+      "tamper_fired": false,
+      "tamper_top": "amount_figures",
+      "risk_band": "low",
+      "risk_score": 0,
+      "maps": {
+        "ghost|original+map": {
+          "score": 0.9716206192970276,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "score": 0.5316779613494873,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "score": 0.8623065948486328,
+          "top": "amount_words_2"
+        },
+        "model_flat|flat": {
+          "score": 0.34827467799186707,
+          "top": "amount_figures"
+        }
+      }
+    },
+    {
+      "capture": "photo",
+      "seed": 900039,
+      "forged": true,
+      "kind": "retype",
+      "field": "amount_words_2",
+      "process_s": 1.51,
+      "tamper_fired": true,
+      "tamper_top": "amount_words_2",
+      "risk_band": "high",
+      "risk_score": 90,
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.9081578371460527,
+          "score": 0.9528830647468567,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.7131244102072757,
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.995119899858272,
+          "score": 0.9939122796058655,
+          "top": "amount_words_2"
+        },
+        "model|flat": {
+          "pixel_auc": 0.8737061820110833,
+          "score": 0.9612487554550171,
+          "top": "amount_words_2"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.8641559471081302,
+          "score": 0.7920539379119873,
+          "top": "amount_words_2"
+        }
+      }
+    },
+    {
+      "capture": "video",
+      "seed": 950000,
+      "bend": "fold",
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "flattening": "homography",
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "score": 0.949224054813385,
+          "top": "amount_words_1"
+        },
+        "model|original+map": {
+          "score": 0.0372089147567749,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "score": 0.02905968576669693,
+          "top": "amount_figures"
+        },
+        "model_flat|flat": {
+          "score": 0.5690867304801941,
+          "top": "amount_words_2"
+        }
+      }
+    },
+    {
+      "capture": "video",
+      "seed": 950000,
+      "bend": "fold",
+      "forged": true,
+      "kind": "retype",
+      "field": "amount_figures",
+      "flattening": "homography",
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.9774857140809043,
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.9695245922106348,
+          "score": 0.8938333988189697,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.4908206324155061,
+          "score": 0.18689581751823425,
+          "top": "amount_words_2"
+        },
+        "model|flat": {
+          "pixel_auc": 0.8703080925863755,
+          "score": 0.21880027651786804,
+          "top": "amount_figures"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.12102283656287299,
+          "score": 0.5457882881164551,
+          "top": "amount_words_2"
+        }
+      }
+    },
+    {
+      "capture": "video",
+      "seed": 950001,
+      "bend": "curl2",
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "flattening": "3d",
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "score": 0.7977389097213745,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "score": 0.00048379311920143664,
+          "top": "amount_words_1"
+        },
+        "model|flat": {
+          "score": 0.2759178876876831,
+          "top": "amount_words_2"
+        },
+        "model_flat|flat": {
+          "score": 0.6923858523368835,
+          "top": "date"
+        }
+      }
+    },
+    {
+      "capture": "video",
+      "seed": 950001,
+      "bend": "curl2",
+      "forged": true,
+      "kind": "splice",
+      "field": "payee",
+      "flattening": "3d",
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.6879341252414302,
+          "score": 0.99468994140625,
+          "top": "payee"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.6138113155759022,
+          "score": 0.9559191465377808,
+          "top": "payee"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.860487983622184,
+          "score": 0.43680429458618164,
+          "top": "payee"
+        },
+        "model|flat": {
+          "pixel_auc": 0.5105544566112786,
+          "score": 0.396388441324234,
+          "top": "payee"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.5713158320522412,
+          "score": 0.7406596541404724,
+          "top": "date"
+        }
+      }
+    },
+    {
+      "capture": "video",
+      "seed": 950002,
+      "bend": "curl",
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "flattening": "homography",
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "payee"
+        },
+        "ghost|flat": {
+          "score": 0.28686845302581787,
+          "top": "amount_words_1"
+        },
+        "model|original+map": {
+          "score": 0.0008488482562825084,
+          "top": "amount_words_1"
+        },
+        "model|flat": {
+          "score": 0.09870901703834534,
+          "top": "amount_figures"
+        },
+        "model_flat|flat": {
+          "score": 0.5365996360778809,
+          "top": "amount_words_1"
+        }
+      }
+    },
+    {
+      "capture": "video",
+      "seed": 950002,
+      "bend": "curl",
+      "forged": true,
+      "kind": "copymove",
+      "field": "date",
+      "flattening": "homography",
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.9639110081184485,
+          "score": 1.0,
+          "top": "date"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.46800157081091165,
+          "score": 0.34785234928131104,
+          "top": "amount_words_1"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9952209762874946,
+          "score": 0.9988521337509155,
+          "top": "date"
+        },
+        "model|flat": {
+          "pixel_auc": 0.7825399442180679,
+          "score": 0.3440912961959839,
+          "top": "date"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.7172040861820481,
+          "score": 0.5933746099472046,
+          "top": "date"
+        }
+      }
+    },
+    {
+      "capture": "video",
+      "seed": 950003,
+      "bend": "fold",
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "flattening": "3d",
+      "maps": {
+        "ghost|original+map": {
+          "score": 0.9039895534515381,
+          "top": "amount_words_1"
+        },
+        "ghost|flat": {
+          "score": 0.71875,
+          "top": "amount_words_1"
+        },
+        "model|original+map": {
+          "score": 0.05004376918077469,
+          "top": "amount_words_1"
+        },
+        "model|flat": {
+          "score": 0.11442167311906815,
+          "top": "amount_figures"
+        },
+        "model_flat|flat": {
+          "score": 0.46687549352645874,
+          "top": "amount_words_2"
+        }
+      }
+    },
+    {
+      "capture": "video",
+      "seed": 950003,
+      "bend": "fold",
+      "forged": true,
+      "kind": "retype",
+      "field": "amount_words_1",
+      "flattening": "3d",
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.676793898053343,
+          "score": 0.8653236031532288,
+          "top": "amount_words_1"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.6516938037069441,
+          "score": 0.5264376401901245,
+          "top": "amount_words_1"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.8085007576916784,
+          "score": 0.36908477544784546,
+          "top": "amount_words_1"
+        },
+        "model|flat": {
+          "pixel_auc": 0.8433735890748065,
+          "score": 0.47495678067207336,
+          "top": "amount_words_1"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.6347112968621224,
+          "score": 0.4660228490829468,
+          "top": "amount_figures"
+        }
+      }
+    },
+    {
+      "capture": "video",
+      "seed": 950004,
+      "bend": "curl2",
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "flattening": "3d",
+      "maps": {
+        "ghost|original+map": {
+          "score": 0.8556804656982422,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "score": 0.8451728820800781,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "score": 0.08814793825149536,
+          "top": "payee"
+        },
+        "model|flat": {
+          "score": 0.18509873747825623,
+          "top": "amount_words_1"
+        },
+        "model_flat|flat": {
+          "score": 0.7218438386917114,
+          "top": "date"
+        }
+      }
+    },
+    {
+      "capture": "video",
+      "seed": 950004,
+      "bend": "curl2",
+      "forged": true,
+      "kind": "splice",
+      "field": "amount_words_2",
+      "flattening": "3d",
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.7238645559962702,
+          "score": 1.0,
+          "top": "amount_words_1"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.5410225715002666,
+          "score": 0.7019480466842651,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.5073900552285802,
+          "score": 0.27914923429489136,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "pixel_auc": 0.481668190191898,
+          "score": 0.4525112509727478,
+          "top": "amount_words_2"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.46061905322698704,
+          "score": 0.7056058645248413,
+          "top": "date"
+        }
+      }
+    },
+    {
+      "capture": "video",
+      "seed": 950005,
+      "bend": "curl",
+      "forged": false,
+      "kind": null,
+      "field": null,
+      "flattening": "homography",
+      "maps": {
+        "ghost|original+map": {
+          "score": 1.0,
+          "top": "amount_figures"
+        },
+        "ghost|flat": {
+          "score": 0.8879859447479248,
+          "top": "amount_figures"
+        },
+        "model|original+map": {
+          "score": 0.42512282729148865,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "score": 0.10968981683254242,
+          "top": "amount_words_1"
+        },
+        "model_flat|flat": {
+          "score": 0.6002761721611023,
+          "top": "payee"
+        }
+      }
+    },
+    {
+      "capture": "video",
+      "seed": 950005,
+      "bend": "curl",
+      "forged": true,
+      "kind": "copymove",
+      "field": "amount_figures",
+      "flattening": "homography",
+      "maps": {
+        "ghost|original+map": {
+          "pixel_auc": 0.5058690952556456,
+          "score": 0.7877469062805176,
+          "top": "amount_words_1"
+        },
+        "ghost|flat": {
+          "pixel_auc": 0.44135648816731976,
+          "score": 0.7647966742515564,
+          "top": "amount_words_1"
+        },
+        "model|original+map": {
+          "pixel_auc": 0.9525756513051175,
+          "score": 0.535293698310852,
+          "top": "amount_figures"
+        },
+        "model|flat": {
+          "pixel_auc": 0.8572049100796533,
+          "score": 0.7257700562477112,
+          "top": "amount_figures"
+        },
+        "model_flat|flat": {
+          "pixel_auc": 0.8163292616578037,
+          "score": 0.9207671284675598,
+          "top": "amount_figures"
+        }
+      }
+    }
+  ]
+}

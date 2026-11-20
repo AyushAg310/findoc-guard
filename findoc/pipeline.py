@@ -10,7 +10,7 @@ Stage roadmap (see README):
     Phase 3  track        KLT tracking and keyframe selection (video)  (done)
     Phase 4  segment      learned page detection (used inside detect and track)  (done)
     Phase 5  recon3d      SfM, surface fit, ARAP flattening (video)  (done)
-    Phase 6  fraud        tamper map, duplicates, signature, risk score
+    Phase 6  fraud        tamper map, duplicates, signature, risk score  (done)
     Phase 7  invoices     LayoutLMv3 extraction, GST checks
 """
 
@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
+from functools import partial
 from pathlib import Path
 
 from findoc.io import detect_kind, load_image
@@ -64,16 +65,26 @@ class Pipeline:
         return doc
 
 
-def default_pipeline(ocr: bool = True) -> Pipeline:
+def default_pipeline(
+    ocr: bool = True, register: bool = False, account: str | None = None
+) -> Pipeline:
     """The full pipeline for the current phase.
 
     Phase 3: load -> video -> track (video only: best frame + keyframes)
     Phase 1: -> quality -> detect -> (Phase 5: recon3d, video only) -> rectify -> enhance
     Phase 2: -> align (cheque template) -> fields -> rules
+    Phase 6: -> tamper -> duplicate -> signature
     then:    -> ocr (full-page text, for documents that aren't known cheques)
+    Phase 6: -> risk (score from every check that ran)
     """
     # Imported here so `findoc --help` stays fast and import cycles are impossible.
-    from findoc.fraud.stages import rules_stage
+    from findoc.fraud.stages import (
+        duplicate_stage,
+        risk_stage,
+        rules_stage,
+        signature_stage,
+        tamper_stage,
+    )
     from findoc.localize.stages import align_stage, make_fields_stage
     from findoc.preprocess.stages import detect_stage, enhance_stage, quality_stage, rectify_stage
     from findoc.recognize.ocr import ocr_stage
@@ -91,11 +102,19 @@ def default_pipeline(ocr: bool = True) -> Pipeline:
     pipe.add("align", align_stage)
     pipe.add("fields", make_fields_stage(use_ocr=ocr))
     pipe.add("rules", rules_stage)
+    pipe.add("tamper", tamper_stage)
+    pipe.add("duplicate", partial(duplicate_stage, register=register))
+    pipe.add("signature", partial(signature_stage, account=account))
     if ocr:
         pipe.add("ocr", ocr_stage)
+    pipe.add("risk", risk_stage)
     return pipe
 
 
-def process(source: str | Path, ocr: bool = True) -> Document:
-    """Run the default pipeline on one input file."""
-    return default_pipeline(ocr=ocr).run(Path(source))
+def process(
+    source: str | Path, ocr: bool = True, register: bool = False, account: str | None = None
+) -> Document:
+    """Run the default pipeline on one input file (Phase 6 options: ``register`` adds the cheque
+    to the duplicate index after checking it; ``account`` names the account whose reference
+    signatures to compare with when OCR doesn't read it)."""
+    return default_pipeline(ocr=ocr, register=register, account=account).run(Path(source))

@@ -32,6 +32,22 @@ def _classical_detection(monkeypatch: pytest.MonkeyPatch) -> None:
     get_settings.cache_clear()
 
 
+@pytest.fixture(autouse=True)
+def _isolated_fraud_state(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """Phase 6 state (tamper model, duplicate index, reference signatures) lives in local
+    folders; tests use empty temporary ones unless they set their own."""
+    from findoc.config import get_settings
+    from findoc.fraud.tamper import load_model
+
+    monkeypatch.setenv("FINDOC_TAMPER_MODEL", str(tmp_path / "no_model.pkl"))
+    monkeypatch.setenv("FINDOC_DUPLICATE_INDEX", str(tmp_path / "dup_index"))
+    monkeypatch.setenv("FINDOC_SIGNATURES_DIR", str(tmp_path / "signatures"))
+    get_settings.cache_clear()
+    load_model.cache_clear()
+    yield
+    load_model.cache_clear()
+
+
 @pytest.fixture
 def sample_image(tmp_path: Path) -> Path:
     """A simple 'document on a desk' photo: white page, dark text lines, grey background."""

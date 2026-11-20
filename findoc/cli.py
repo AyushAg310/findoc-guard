@@ -64,6 +64,11 @@ def save_artifacts(doc: Document, save_dir: Path) -> list[Path]:
     if doc.enhanced is not None:
         written.append(save_dir / f"{stem}_enhanced.png")
         save_image(written[-1], doc.enhanced)
+    if doc.tamper_map is not None and doc.flat is not None:
+        from findoc.fraud.viz import tamper_overlay
+
+        written.append(save_dir / f"{stem}_tamper.jpg")
+        save_image(written[-1], tamper_overlay(doc.flat, doc.tamper_map))
     if doc.registered is not None and doc.template_id:
         template = default_store(get_settings().templates_dir).get(doc.template_id)
         written.append(save_dir / f"{stem}_fields.png")
@@ -83,12 +88,18 @@ def process_cmd(
     ),
     ocr: bool = typer.Option(True, "--ocr/--no-ocr", help="Run OCR (needs the [ocr] extra)"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Debug logging"),
+    register: bool = typer.Option(
+        False, "--register", help="Add this cheque to the duplicate index after checking it"
+    ),
+    account: str | None = typer.Option(
+        None, "--account", help="Account whose reference signatures to compare with"
+    ),
 ) -> None:
     """Run the pipeline on one photo or video."""
     settings = get_settings()
     setup_logging("DEBUG" if verbose else settings.log_level)
 
-    doc = process(source, ocr=ocr)
+    doc = process(source, ocr=ocr, register=register, account=account)
     result = doc.result()
 
     table = Table(title=f"FinDoc Guard - {source.name}")
@@ -133,6 +144,10 @@ def process_cmd(
         for c in doc.checks:
             ct.add_row(c.id, "[red]FLAG[/]" if c.fired else "[green]pass[/]", c.reason)
         console.print(ct)
+    if doc.risk:
+        band = doc.risk["band"]
+        colour = {"low": "green", "medium": "yellow", "high": "red"}[band]
+        console.print(f"Risk score: [bold {colour}]{doc.risk['score']}/100 ({band})[/]")
     if doc.full_text:
         console.print("[bold]Text:[/]")
         console.print(doc.full_text, highlight=False)
@@ -303,3 +318,134 @@ def templates_export(out_dir: Path = typer.Option(Path("data/templates"), "--out
 
 if __name__ == "__main__":
     app()
+
+
+tamper_app = typer.Typer(help="Tamper detection model (Phase 6).", no_args_is_help=True)
+app.add_typer(tamper_app, name="tamper")
+
+
+@tamper_app.command("train")
+def tamper_train(
+    out: Path = typer.Option(Path("models/tamper.pkl"), "--out", "-o", help="Model file to write"),
+    samples: int = typer.Option(80, help="Clean + forged training cheque pairs"),
+    val_samples: int = typer.Option(40, "--val-samples", help="Validation pairs"),
+    workers: int = typer.Option(-1, help="Processes rendering captures; -1 = CPU cores - 1"),
+    seed: int = typer.Option(0),
+) -> None:
+    """Train the tamper classifier on synthetic clean and forged cheques (CPU, minutes)."""
+    from findoc.fraud.tamper_train import train
+
+    model = train(out, samples, val_samples, seed, workers, log=console.print)
+    m = model.meta
+    console.print(
+        f"Saved {out}: forged cheques caught {m['detection_rate']:.0%}, clean cheques flagged "
+        f"{m['false_alarm_rate']:.0%} (threshold {m['threshold']}), AUC {m['image_auc']}, "
+        f"edited field named correctly {m['top_field_correct']:.0%}; {m['seconds']:.0f} s"
+    )
+
+
+@tamper_app.command("check")
+def tamper_check(
+    image: Path = typer.Argument(..., exists=True, dir_okay=False),
+    out: Path = typer.Option(Path("outputs/tamper_check.jpg"), "--out", "-o"),
+) -> None:
+    """Tamper heatmap of a whole image (no page detection): what the detector sees."""
+    from findoc.config import get_settings
+    from findoc.fraud.tamper import classical_heatmap, load_model, upsample
+    from findoc.fraud.viz import tamper_overlay
+    from findoc.io import load_image
+
+    img = load_image(image)
+    page = np.ones(img.shape[:2], bool)
+    model = load_model(get_settings().tamper_model)
+    grid = model.block_probability(img, page) if model else classical_heatmap(img, page)
+    heat = upsample(grid, img.shape[:2])
+    save_image(out, tamper_overlay(img, heat))
+    kind = "model" if model else "classical JPEG ghost (no model trained)"
+    console.print(f"{kind}: hottest 1% of blocks {np.percentile(grid, 99):.2f}; saved {out}")
+
+
+index_app = typer.Typer(help="Duplicate-cheque index (Phase 6).", no_args_is_help=True)
+app.add_typer(index_app, name="index")
+
+
+@index_app.command("list")
+def index_list() -> None:
+    """List the cheques in the duplicate index."""
+    from findoc.config import get_settings
+    from findoc.fraud.duplicates import DuplicateIndex
+
+    idx = DuplicateIndex(get_settings().duplicate_index)
+    t = Table(title=f"Duplicate index ({idx.root}): {len(idx)} cheques")
+    for col in ("Entry", "Source", "Bank", "MICR"):
+        t.add_column(col)
+    for e in idx.entries:
+        t.add_row(e.id, e.source, e.template_id, e.micr or "")
+    console.print(t)
+
+
+@index_app.command("clear")
+def index_clear(
+    yes: bool = typer.Option(False, "--yes", help="Don't ask for confirmation"),
+) -> None:
+    """Delete every entry of the duplicate index."""
+    import shutil
+
+    from findoc.config import get_settings
+
+    root = get_settings().duplicate_index
+    if not root.exists():
+        console.print("The index is already empty.")
+        return
+    if not yes and not typer.confirm(f"Delete the duplicate index in {root}?"):
+        raise typer.Exit(1)
+    shutil.rmtree(root)
+    console.print(f"Deleted {root}")
+
+
+signatures_app = typer.Typer(
+    help="Reference signatures per account (Phase 6).", no_args_is_help=True
+)
+app.add_typer(signatures_app, name="signatures")
+
+
+@signatures_app.command("add")
+def signatures_add(
+    account: str = typer.Argument(..., help="Account number"),
+    cheques: list[Path] = typer.Argument(..., exists=True, dir_okay=False, help="Cheque photos"),
+) -> None:
+    """Store the signature of each cheque photo as a reference for ACCOUNT."""
+    from findoc.config import get_settings
+    from findoc.fraud.signature import SignatureStore, signature_image
+    from findoc.localize.templates import default_store
+    from findoc.pipeline import default_pipeline
+
+    s = get_settings()
+    store = SignatureStore(s.signatures_dir)
+    pipe = default_pipeline(ocr=False)
+    pipe.stages = [st for st in pipe.stages if st[0] not in {"tamper", "duplicate", "signature",
+                                                              "rules", "risk"}]  # fmt: skip
+    for path in cheques:
+        doc = pipe.run(path)
+        if doc.registered is None or doc.template_id is None:
+            console.print(f"[yellow]{path.name}: no cheque template matched; skipped[/]")
+            continue
+        sig = signature_image(doc.registered, default_store(s.templates_dir).get(doc.template_id))
+        if sig is None:
+            console.print(f"[yellow]{path.name}: no signature found; skipped[/]")
+            continue
+        console.print(f"{path.name}: saved {store.add(account, sig)}")
+
+
+@signatures_app.command("list")
+def signatures_list() -> None:
+    """Accounts with reference signatures."""
+    from findoc.config import get_settings
+    from findoc.fraud.signature import SignatureStore
+
+    store = SignatureStore(get_settings().signatures_dir)
+    accounts = store.accounts()
+    if not accounts:
+        console.print(f"No reference signatures in {store.root}")
+    for acc, n in accounts.items():
+        console.print(f"{acc}: {n} reference(s)")

@@ -46,9 +46,18 @@ class Settings(BaseSettings):
     keyframe_min_view_change: float = 0.008  # projective shape change between keyframes
     keyframe_max: int = 25
 
-    # Risk score bands (Phase 5)
+    # Risk score (Phase 6): bands, and per-check points overriding findoc.fraud.risk.POINTS,
+    # e.g. FINDOC_RISK_POINTS='{"DATE_POSTDATED": 40}'
+    # Tamper detection (Phase 6): "auto" or "off"; model from `findoc tamper train`
+    tamper: str = "auto"
+    # Duplicate index (Phase 6): folder of indexed cheques (private: derived from real cheques)
+    duplicate_index: Path = Path("data/index")
+    # Reference signatures per account (Phase 6; private)
+    signatures_dir: Path = Path("data/signatures")
+    tamper_model: Path = Path("models/tamper.pkl")
     risk_medium: int = 30
     risk_high: int = 70
+    risk_points: dict[str, float] = Field(default_factory=dict)
 
 
 @lru_cache

@@ -1,0 +1,477 @@
+{
+  "duplicates": {
+    "cheques": 20,
+    "detection_rate": 1.0,
+    "false_matches": 0,
+    "comparisons_with_other_cheques": 82,
+    "inliers_same_cheque": {
+      "min": 232,
+      "median": 262.0
+    },
+    "inliers_other_cheques": {
+      "max": 90,
+      "median": 43.0
+    }
+  },
+  "signatures": {
+    "signers": 30,
+    "threshold_from_calibration": 0.3909,
+    "auc_genuine_vs_skilled": 0.92,
+    "skilled_detected": 0.8667,
+    "auc_genuine_vs_random": 1.0,
+    "random_detected": 1.0,
+    "genuine_rejected": 0.1333,
+    "rows": [
+      {
+        "signer": 0,
+        "kind": "genuine",
+        "distance": 0.0893
+      },
+      {
+        "signer": 0,
+        "kind": "skilled",
+        "distance": 0.4431
+      },
+      {
+        "signer": 0,
+        "kind": "random",
+        "distance": 1.5397
+      },
+      {
+        "signer": 1,
+        "kind": "genuine",
+        "distance": 0.3048
+      },
+      {
+        "signer": 1,
+        "kind": "skilled",
+        "distance": 0.9727
+      },
+      {
+        "signer": 1,
+        "kind": "random",
+        "distance": 1.2744
+      },
+      {
+        "signer": 2,
+        "kind": "genuine",
+        "distance": 0.3348
+      },
+      {
+        "signer": 2,
+        "kind": "skilled",
+        "distance": 0.5959
+      },
+      {
+        "signer": 2,
+        "kind": "random",
+        "distance": 1.1814
+      },
+      {
+        "signer": 3,
+        "kind": "genuine",
+        "distance": 0.1431
+      },
+      {
+        "signer": 3,
+        "kind": "skilled",
+        "distance": 0.3533
+      },
+      {
+        "signer": 3,
+        "kind": "random",
+        "distance": 1.0048
+      },
+      {
+        "signer": 4,
+        "kind": "genuine",
+        "distance": 0.3065
+      },
+      {
+        "signer": 4,
+        "kind": "skilled",
+        "distance": 0.6484
+      },
+      {
+        "signer": 4,
+        "kind": "random",
+        "distance": 1.0397
+      },
+      {
+        "signer": 5,
+        "kind": "genuine",
+        "distance": 0.1666
+      },
+      {
+        "signer": 5,
+        "kind": "skilled",
+        "distance": 0.3007
+      },
+      {
+        "signer": 5,
+        "kind": "random",
+        "distance": 1.0432
+      },
+      {
+        "signer": 6,
+        "kind": "genuine",
+        "distance": 0.2339
+      },
+      {
+        "signer": 6,
+        "kind": "skilled",
+        "distance": 0.5964
+      },
+      {
+        "signer": 6,
+        "kind": "random",
+        "distance": 1.132
+      },
+      {
+        "signer": 7,
+        "kind": "genuine",
+        "distance": 0.2504
+      },
+      {
+        "signer": 7,
+        "kind": "skilled",
+        "distance": 0.5794
+      },
+      {
+        "signer": 7,
+        "kind": "random",
+        "distance": 1.1159
+      },
+      {
+        "signer": 8,
+        "kind": "genuine",
+        "distance": 0.1701
+      },
+      {
+        "signer": 8,
+        "kind": "skilled",
+        "distance": 0.4457
+      },
+      {
+        "signer": 8,
+        "kind": "random",
+        "distance": 0.97
+      },
+      {
+        "signer": 9,
+        "kind": "genuine",
+        "distance": 0.2123
+      },
+      {
+        "signer": 9,
+        "kind": "skilled",
+        "distance": 0.3869
+      },
+      {
+        "signer": 9,
+        "kind": "random",
+        "distance": 1.3212
+      },
+      {
+        "signer": 10,
+        "kind": "genuine",
+        "distance": 0.445
+      },
+      {
+        "signer": 10,
+        "kind": "skilled",
+        "distance": 1.0266
+      },
+      {
+        "signer": 10,
+        "kind": "random",
+        "distance": 1.3341
+      },
+      {
+        "signer": 11,
+        "kind": "genuine",
+        "distance": 0.1594
+      },
+      {
+        "signer": 11,
+        "kind": "skilled",
+        "distance": 0.3974
+      },
+      {
+        "signer": 11,
+        "kind": "random",
+        "distance": 1.3556
+      },
+      {
+        "signer": 12,
+        "kind": "genuine",
+        "distance": 0.2396
+      },
+      {
+        "signer": 12,
+        "kind": "skilled",
+        "distance": 0.803
+      },
+      {
+        "signer": 12,
+        "kind": "random",
+        "distance": 1.0577
+      },
+      {
+        "signer": 13,
+        "kind": "genuine",
+        "distance": 0.2196
+      },
+      {
+        "signer": 13,
+        "kind": "skilled",
+        "distance": 0.4521
+      },
+      {
+        "signer": 13,
+        "kind": "random",
+        "distance": 1.3047
+      },
+      {
+        "signer": 14,
+        "kind": "genuine",
+        "distance": 0.3677
+      },
+      {
+        "signer": 14,
+        "kind": "skilled",
+        "distance": 0.7545
+      },
+      {
+        "signer": 14,
+        "kind": "random",
+        "distance": 1.0968
+      },
+      {
+        "signer": 15,
+        "kind": "genuine",
+        "distance": 0.2567
+      },
+      {
+        "signer": 15,
+        "kind": "skilled",
+        "distance": 0.7886
+      },
+      {
+        "signer": 15,
+        "kind": "random",
+        "distance": 1.2401
+      },
+      {
+        "signer": 16,
+        "kind": "genuine",
+        "distance": 0.1773
+      },
+      {
+        "signer": 16,
+        "kind": "skilled",
+        "distance": 0.4353
+      },
+      {
+        "signer": 16,
+        "kind": "random",
+        "distance": 1.3142
+      },
+      {
+        "signer": 17,
+        "kind": "genuine",
+        "distance": 0.4132
+      },
+      {
+        "signer": 17,
+        "kind": "skilled",
+        "distance": 0.9425
+      },
+      {
+        "signer": 17,
+        "kind": "random",
+        "distance": 1.2781
+      },
+      {
+        "signer": 18,
+        "kind": "genuine",
+        "distance": 0.3653
+      },
+      {
+        "signer": 18,
+        "kind": "skilled",
+        "distance": 0.6743
+      },
+      {
+        "signer": 18,
+        "kind": "random",
+        "distance": 1.2749
+      },
+      {
+        "signer": 19,
+        "kind": "genuine",
+        "distance": 0.3154
+      },
+      {
+        "signer": 19,
+        "kind": "skilled",
+        "distance": 0.4648
+      },
+      {
+        "signer": 19,
+        "kind": "random",
+        "distance": 1.2487
+      },
+      {
+        "signer": 20,
+        "kind": "genuine",
+        "distance": 0.3554
+      },
+      {
+        "signer": 20,
+        "kind": "skilled",
+        "distance": 0.7483
+      },
+      {
+        "signer": 20,
+        "kind": "random",
+        "distance": 1.2145
+      },
+      {
+        "signer": 21,
+        "kind": "genuine",
+        "distance": 0.2835
+      },
+      {
+        "signer": 21,
+        "kind": "skilled",
+        "distance": 0.7075
+      },
+      {
+        "signer": 21,
+        "kind": "random",
+        "distance": 1.3484
+      },
+      {
+        "signer": 22,
+        "kind": "genuine",
+        "distance": 0.2571
+      },
+      {
+        "signer": 22,
+        "kind": "skilled",
+        "distance": 0.6299
+      },
+      {
+        "signer": 22,
+        "kind": "random",
+        "distance": 1.397
+      },
+      {
+        "signer": 23,
+        "kind": "genuine",
+        "distance": 0.3011
+      },
+      {
+        "signer": 23,
+        "kind": "skilled",
+        "distance": 0.3702
+      },
+      {
+        "signer": 23,
+        "kind": "random",
+        "distance": 1.1662
+      },
+      {
+        "signer": 24,
+        "kind": "genuine",
+        "distance": 0.1938
+      },
+      {
+        "signer": 24,
+        "kind": "skilled",
+        "distance": 0.4035
+      },
+      {
+        "signer": 24,
+        "kind": "random",
+        "distance": 1.2772
+      },
+      {
+        "signer": 25,
+        "kind": "genuine",
+        "distance": 0.2999
+      },
+      {
+        "signer": 25,
+        "kind": "skilled",
+        "distance": 0.6026
+      },
+      {
+        "signer": 25,
+        "kind": "random",
+        "distance": 1.2331
+      },
+      {
+        "signer": 26,
+        "kind": "genuine",
+        "distance": 0.4489
+      },
+      {
+        "signer": 26,
+        "kind": "skilled",
+        "distance": 0.7817
+      },
+      {
+        "signer": 26,
+        "kind": "random",
+        "distance": 1.4531
+      },
+      {
+        "signer": 27,
+        "kind": "genuine",
+        "distance": 0.3581
+      },
+      {
+        "signer": 27,
+        "kind": "skilled",
+        "distance": 0.5002
+      },
+      {
+        "signer": 27,
+        "kind": "random",
+        "distance": 1.1189
+      },
+      {
+        "signer": 28,
+        "kind": "genuine",
+        "distance": 0.2049
+      },
+      {
+        "signer": 28,
+        "kind": "skilled",
+        "distance": 0.6317
+      },
+      {
+        "signer": 28,
+        "kind": "random",
+        "distance": 1.2269
+      },
+      {
+        "signer": 29,
+        "kind": "genuine",
+        "distance": 0.0879
+      },
+      {
+        "signer": 29,
+        "kind": "skilled",
+        "distance": 0.1845
+      },
+      {
+        "signer": 29,
+        "kind": "random",
+        "distance": 1.2064
+      }
+    ]
+  }
+}
