@@ -26,12 +26,13 @@ def test_process_writes_json_and_images(synth_photo_path: Path, tmp_path: Path) 
     assert result.exit_code == 0, result.output
     data = json.loads(out.read_text())
     assert data["status"] == "ok"
-    assert [s["stage"] for s in data["stages"]][:7] == [
+    assert [s["stage"] for s in data["stages"]][:8] == [
         "load",
         "video",
         "track",
         "quality",
         "detect",
+        "recon3d",
         "rectify",
         "enhance",
     ]
@@ -73,6 +74,32 @@ def test_synth_cheques_and_process(tmp_path: Path) -> None:
 
 def test_synth_bad_kind(tmp_path: Path) -> None:
     result = runner.invoke(app, ["synth", "--kind", "invoice", "--out", str(tmp_path)])
+    assert result.exit_code != 0
+
+
+def test_synth_bent_video(tmp_path: Path) -> None:
+    result = runner.invoke(
+        app,
+        [
+            "synth",
+            "--kind",
+            "video",
+            "--n",
+            "1",
+            "--seconds",
+            "1",
+            "--bend",
+            "fold",
+            "-o",
+            str(tmp_path),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    truth = json.loads(next(tmp_path.glob("*_truth.json")).read_text())
+    assert truth["meta"]["bend"]["kind"] == "fold"
+    result = runner.invoke(
+        app, ["synth", "--kind", "video", "--bend", "crumple", "-o", str(tmp_path)]
+    )
     assert result.exit_code != 0
 
 

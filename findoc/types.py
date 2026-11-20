@@ -131,6 +131,13 @@ class Document(BaseModel):
     keyframe_images: list[np.ndarray] = Field(default_factory=list, exclude=True)
     best_frame: int | None = None
 
+    # 3D (Phase 5): how the flat page was made ("homography" or "3d"), reconstruction summary,
+    # and the correspondence map flat page -> best frame (map_x, map_y), kept out of the JSON
+    flattening: str = "homography"
+    recon3d: dict[str, Any] = Field(default_factory=dict)
+    flat_map: tuple[np.ndarray, np.ndarray] | None = Field(default=None, exclude=True)
+    recon: Any = Field(default=None, exclude=True)
+
     quality: dict[str, float] = Field(default_factory=dict)
     words: list[OcrWord] = Field(default_factory=list)
     full_text: str = ""

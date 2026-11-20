@@ -62,6 +62,8 @@ def detect_stage(doc: Document) -> Document:
 def rectify_stage(doc: Document) -> Document:
     if not _require_image(doc) or doc.corners is None:
         return doc
+    if doc.flattening == "3d" and doc.flat is not None:  # already flattened from 3D (Phase 5)
+        return doc
     flat, homography = warp_document(doc.original, np.array(doc.corners, dtype=np.float32))
     doc.flat = flat
     doc.homography = homography.round(8).tolist()
