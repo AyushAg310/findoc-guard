@@ -7,7 +7,7 @@
 [![CI](https://github.com/AyushAg310/findoc-guard/actions/workflows/ci.yml/badge.svg)](https://github.com/AyushAg310/findoc-guard/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Status](https://img.shields.io/badge/status-Phase%206%20of%209-orange)
+![Status](https://img.shields.io/badge/status-Phase%207%20of%209-orange)
 
 </div>
 
@@ -32,7 +32,33 @@ multi-view 3D reconstruction flattens folded documents while preserving forensic
 template alignment handles cheques, LayoutLMv3 handles invoices, and Indian-format validation
 feeds an explainable fraud score.
 
-## Current capability (Phase 6)
+## Current capability (Phase 7)
+
+**GST invoices (Phase 7).** An invoice photo is classified (cheque / invoice / receipt / other),
+read, and its fields and line items are extracted: vendor, buyer, both GSTINs, invoice number,
+date, the item table (description, HSN, quantity, rate, amount), subtotal, CGST/SGST or IGST,
+and total. Then it's checked:
+
+- **GSTIN**: format, state code and the official mod-36 check character;
+- **arithmetic**: lines, subtotal, GST rate, CGST = SGST, total. It uses the invoice's own
+  redundancy (sum of lines, amount in words) to tell an OCR misread from a wrong number;
+- **tax type**: CGST + SGST within a state, IGST between states.
+
+Extraction runs either rule-based (keyword anchors and table geometry, no training) or with
+**LayoutLMv3** fine-tuned on synthetic Indian invoices (text + layout + image). Results export to
+Excel (`findoc export`).
+
+| Rule-based extraction, 90 synthetic invoices | Header field F1 | Line-item cells |
+| --- | --- | --- |
+| OCR without errors / 1% / 3% character errors | 1.00 / 0.92 / 0.83 | 1.00 / 0.87 / 0.63 |
+
+| Invoice checks (40 per kind), OCR errors 0% / 1% | Result |
+| --- | --- |
+| Clean invoices sent to review | 0% / 15% |
+| Wrong total, wrong line, wrong tax type caught | 100% / 88-98% |
+
+The [Phase 7 guide](docs/learn/phase-7-invoices.md#38-results-experimentsresultsphase7json) has
+the 3% numbers, how the false alarms were brought down, and the GPU steps for LayoutLMv3.
 
 **Fraud engine (Phase 6).** Three checks that consistent-looking fraud can't hide from, and one
 explainable risk score:
@@ -228,8 +254,8 @@ Each phase is a working, demoable increment released as a new minor version.
 | 4 | 0.5 | Learned page detection: U-Net document segmentation trained on synthetic hard backgrounds, ONNX | ✅ Done |
 | 5 | 0.6 | 3D reconstruction: SfM, surface fit, ARAP flattening, camera calibration | ✅ Done |
 | 6 | 0.7 | Fraud engine: tamper mapping, duplicates, signature, risk score | ✅ Done |
-| 7 | 0.8 | Invoices: LayoutLMv3, GSTIN, invoice arithmetic, Excel export | ⏳ Next |
-| 8 | 0.9 | Product: FastAPI, PostgreSQL, workers, React review UI, Docker Compose | ⬜ |
+| 7 | 0.8 | Invoices: classifier, rules + LayoutLMv3 extraction, GSTIN, invoice arithmetic, Excel export | ✅ Done |
+| 8 | 0.9 | Product: FastAPI, PostgreSQL, workers, React review UI, Docker Compose | ⏳ Next |
 | 9 | 1.0 | Evaluation, ablations, demo video, term paper | ⬜ |
 
 Phase 4 was added after real phone videos showed that classical page detection depends on the
@@ -258,6 +284,10 @@ findoc synth --kind video --n 1 --seed 4 --bend fold -o data/synthetic/fold   # 
 findoc process data/synthetic/fold/video_0004.mp4 --save-dir outputs   # 3D: points, mesh, flat page
 findoc calibrate board.mp4 --save # phone focal length from a printed checkerboard (faster 3D)
 findoc tamper train               # ~5 min on a CPU; writes models/tamper.pkl
+findoc classify train             # ~2 min on a CPU; cheque / invoice / receipt / other
+findoc synth --kind invoice --n 5 # GST invoice photos with ground truth
+pip install -e ".[layout]" && findoc invoice train   # LayoutLMv3 on a GPU (~15-25 min)
+findoc process invoice.jpg --out outputs/inv.json && findoc export outputs/*.json --out invoices.xlsx
 findoc process cheque.jpg --register            # check, then add to the duplicate index
 findoc signatures add 123456789012 ref1.jpg ref2.jpg   # reference signatures of an account
 findoc process cheque.jpg --account 123456789012 --save-dir outputs   # + signature check
@@ -287,12 +317,12 @@ findoc-guard/
 │   ├── preprocess/      # Phase 1  quality, detection, rectification   (CO-1)
 │   ├── segment/         # Phase 4  learned page detection: U-Net, ONNX inference (CO-2)
 │   ├── recognize/       # Phase 1-2 OCR, handwriting, MICR, amount parser
-│   ├── classify/        # Phase 7  document-type classifier
+│   ├── classify/        # Phase 7  document-type classifier (cheque/invoice/receipt/other)
 │   ├── localize/        # Phase 2  cheque templates, SIFT + RANSAC registration (CO-3)
 │   ├── track/           # Phase 3  KLT tracking, keyframes              (CO-4)
 │   ├── recon3d/         # Phase 5  SfM, surface fit, ARAP flattening, calibration (CO-5)
 │   ├── fraud/           # Phase 2  rules; Phase 6 tamper, duplicates, signature, risk score
-│   └── export/          # Phase 7  JSON, Excel, annotated images
+│   └── export/          # Phase 7  Excel export
 ├── app/                 # Phase 8  FastAPI service
 ├── frontend/            # Phase 8  React review UI
 ├── data/                # Synthetic generators and samples (no real documents)

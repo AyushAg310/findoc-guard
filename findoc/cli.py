@@ -128,7 +128,12 @@ def process_cmd(
     for msg in doc.messages:
         console.print(f"  - {msg}")
     if doc.fields:
-        ft = Table(title=f"Cheque fields ({doc.template_id})")
+        title = (
+            f"Cheque fields ({doc.template_id})"
+            if doc.template_id
+            else f"{doc.doc_type.value.title()} fields"
+        )
+        ft = Table(title=title)
         for col in ("Field", "Read", "Validated", "Conf"):
             ft.add_column(col)
         for f in doc.fields:
@@ -137,6 +142,21 @@ def process_cmd(
                 f.name, f.value, f.normalized if ok else "[red]invalid[/]", f"{f.confidence:.2f}"
             )
         console.print(ft)
+    if doc.line_items:
+        lt = Table(title="Line items")
+        for col in ("#", "Description", "HSN", "Qty", "Rate", "Amount"):
+            lt.add_column(col)
+        for it in doc.line_items:
+            n = it.get("normalized", {})
+            lt.add_row(
+                str(it["row"]),
+                it.get("desc", ""),
+                n.get("hsn") or "",
+                n.get("qty") or "",
+                n.get("rate") or "",
+                n.get("amount") or "",
+            )
+        console.print(lt)
     if doc.checks:
         ct = Table(title="Checks")
         for col in ("Check", "Result", "Reason"):
@@ -168,7 +188,9 @@ def process_cmd(
 def synth(
     n: int = typer.Option(10, "--n", help="Number of photos or videos"),
     out_dir: Path | None = typer.Option(None, "--out", "-o", help="Default: data/synthetic/<kind>"),
-    kind: str = typer.Option("page", help="'page' (generic document), 'cheque' or 'video'"),
+    kind: str = typer.Option(
+        "page", help="'page' (generic document), 'cheque', 'video' or 'invoice' (GST)"
+    ),
     seed: int = typer.Option(0, help="Random seed (same seed = same photos)"),
     blur: float = typer.Option(0.0, help="Gaussian blur sigma, to simulate camera shake"),
     fraud_rate: float = typer.Option(
@@ -189,6 +211,10 @@ def synth(
         from findoc.synth.dataset import generate_cheques
 
         paths = generate_cheques(n, out_dir, seed=seed, blur_sigma=blur, fraud_rate=fraud_rate)
+    elif kind == "invoice":
+        from findoc.synth.invoice import generate_invoices
+
+        paths = generate_invoices(n, out_dir, seed=seed, fraud_rate=fraud_rate, blur_sigma=blur)
     elif kind == "video":
         from findoc.synth.surface import BEND_KINDS
         from findoc.synth.video import generate_videos
@@ -199,7 +225,7 @@ def synth(
             n, out_dir, seed=seed, fraud_rate=fraud_rate, seconds=seconds, bend=bend
         )
     else:
-        raise typer.BadParameter("kind must be 'page', 'cheque' or 'video'")
+        raise typer.BadParameter("kind must be 'page', 'cheque', 'video' or 'invoice'")
     what = "videos" if kind == "video" else "photos"
     console.print(f"Wrote {len(paths)} {what} and labels.json to {out_dir}")
 
@@ -423,8 +449,11 @@ def signatures_add(
     s = get_settings()
     store = SignatureStore(s.signatures_dir)
     pipe = default_pipeline(ocr=False)
-    pipe.stages = [st for st in pipe.stages if st[0] not in {"tamper", "duplicate", "signature",
-                                                              "rules", "risk"}]  # fmt: skip
+    pipe.stages = [
+        st
+        for st in pipe.stages
+        if st[0] not in {"tamper", "duplicate", "signature", "rules", "risk"}
+    ]
     for path in cheques:
         doc = pipe.run(path)
         if doc.registered is None or doc.template_id is None:
@@ -449,3 +478,74 @@ def signatures_list() -> None:
         console.print(f"No reference signatures in {store.root}")
     for acc, n in accounts.items():
         console.print(f"{acc}: {n} reference(s)")
+
+
+@app.command("export")
+def export_cmd(
+    results: list[Path] = typer.Argument(
+        ..., exists=True, dir_okay=False, help="Result JSON files from `findoc process --out`"
+    ),
+    out: Path = typer.Option(Path("outputs/export.xlsx"), "--out", "-o", help="Workbook to write"),
+) -> None:
+    """Export processed documents to an Excel workbook (documents, fields, line items, checks)."""
+    from findoc.export.excel import load_results, write_workbook
+
+    path = write_workbook(load_results(results), out)
+    console.print(f"Wrote {path} ({len(results)} documents)")
+
+
+classify_app = typer.Typer(help="Document-type classifier (Phase 7).", no_args_is_help=True)
+app.add_typer(classify_app, name="classify")
+
+
+@classify_app.command("train")
+def classify_train(
+    out: Path = typer.Option(Path("models/doctype.pkl"), "--out", "-o"),
+    per_class: int = typer.Option(150, "--per-class", help="Training pages per class"),
+    workers: int = typer.Option(-1, help="Processes rendering pages; -1 = CPU cores - 1"),
+) -> None:
+    """Train the cheque / invoice / receipt / other classifier on synthetic pages (CPU)."""
+    from findoc.classify.doctype import train
+
+    m = train(out, per_class=per_class, workers=workers, log=console.print)
+    console.print(
+        f"Saved {out}: validation accuracy {m.meta['accuracy']:.1%} "
+        f"({m.meta['val_per_class']} pages per class); {m.meta['seconds']:.0f} s"
+    )
+
+
+invoice_app = typer.Typer(help="Invoice field extraction (Phase 7).", no_args_is_help=True)
+app.add_typer(invoice_app, name="invoice")
+
+
+@invoice_app.command("train")
+def invoice_train(
+    out: Path = typer.Option(Path("models/invoice_layoutlmv3"), "--out", "-o"),
+    base: str = typer.Option(
+        "microsoft/layoutlmv3-base",
+        help="Pre-trained model to fine-tune ('tiny' = offline test model)",
+    ),
+    samples: int = typer.Option(1500, help="Synthetic invoices per epoch"),
+    epochs: int = typer.Option(5),
+    batch_size: int = typer.Option(4, "--batch-size"),
+    device: str = typer.Option("auto", help="'auto', 'cuda' or 'cpu'"),
+) -> None:
+    """Fine-tune LayoutLMv3 to tag invoice fields (needs the [layout] extra; GPU recommended)."""
+    try:
+        from findoc.recognize.layout import train
+    except ImportError as exc:
+        raise typer.BadParameter(f'{exc}. Install with: pip install -e ".[layout]"') from exc
+    rec = train(
+        out,
+        base,
+        samples=samples,
+        epochs=epochs,
+        batch_size=batch_size,
+        device=device,
+        log=console.print,
+    )
+    b = rec["best"]
+    console.print(
+        f"Saved {out}: field F1 {b['f1']}, line-item cells {b['item_cell_accuracy']} "
+        f"(epoch {b['epoch']}, {rec['device']})"
+    )

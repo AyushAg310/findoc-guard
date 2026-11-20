@@ -19,7 +19,7 @@ AMBIGUOUS_MARGIN = 1.3  # best template must beat the runner-up by 30% to be una
 def align_stage(doc: Document) -> Document:
     """Is this a known cheque leaf? If so, warp it into the template's coordinate frame."""
     img = doc.enhanced if doc.enhanced is not None else doc.flat
-    if img is None:
+    if img is None or doc.doc_type in (DocType.INVOICE, DocType.RECEIPT):  # classified (Phase 7)
         return doc
     s = get_settings()
     store = default_store(s.templates_dir)

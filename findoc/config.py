@@ -40,6 +40,12 @@ class Settings(BaseSettings):
     templates_dir: Path | None = None  # folder of custom templates; None = built-in banks
     feature_method: str = "sift"  # "sift" or "orb"
 
+    # Invoices (Phase 7): document-type model, LayoutLMv3 model folder, which extractor to use
+    # ("auto" = LayoutLMv3 when its model folder exists, else rules; "rules"; "layoutlmv3")
+    doctype_model: Path = Path("models/doctype.pkl")
+    invoice_model: Path = Path("models/invoice_layoutlmv3")
+    invoice_extractor: str = "auto"
+
     # Video (Phase 3)
     video_max_frames: int = 180  # frames kept for tracking (evenly subsampled)
     video_track_side: int = 960  # longest side of frames used for tracking

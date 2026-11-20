@@ -38,6 +38,10 @@ POINTS: dict[str, float] = {
     "IFSC_INVALID": 25,
     "ACCOUNT_INVALID": 25,
     "MICR_INVALID": 20,
+    "INVOICE_MATH": 80,
+    "GSTIN_INVALID": 60,
+    "TAX_TYPE_MISMATCH": 60,
+    "INVOICE_UNVERIFIED": 30,
 }
 DEFAULT_POINTS = 30.0  # a check without its own entry
 # check id -> minimum confidence at which it forces the "high" band by itself

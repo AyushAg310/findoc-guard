@@ -142,6 +142,8 @@ class Document(BaseModel):
     words: list[OcrWord] = Field(default_factory=list)
     full_text: str = ""
     fields: list[ExtractedField] = Field(default_factory=list)
+    # Invoice line items (Phase 7): raw text per column plus their normalised values
+    line_items: list[dict[str, Any]] = Field(default_factory=list)
     checks: list[CheckResult] = Field(default_factory=list)
     risk_score: int | None = None
     # Phase 6: band (low / medium / high), what forced it, and each fired check's contribution

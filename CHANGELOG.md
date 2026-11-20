@@ -3,6 +3,32 @@
 All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org/);
 each build phase is released as a minor version.
 
+## [0.8.0] - Phase 7: invoices
+
+### Added
+- **Synthetic GST invoices** (`findoc/synth/invoice.py`, `findoc synth --kind invoice`): three
+  layouts, varied wording, valid GSTINs, CGST + SGST or IGST, word boxes with field labels,
+  planted errors (wrong total, wrong line amount, wrong tax type, invalid GSTIN); simulated OCR.
+  Synthetic receipts (`findoc/synth/receipt.py`).
+- **GSTIN validation** (`findoc/recognize/gstin.py`): format, state code, mod-36 check character,
+  positional OCR repair, single-confusion "probably misread" detection.
+- **Invoice extraction** (`findoc/recognize/invoice.py`): rule-based (keyword anchors, GSTIN
+  pattern, vendor by size, table columns from the header), shared assembly and normalisation,
+  amount in words; **LayoutLMv3** token classification (`findoc/recognize/layout.py`,
+  `findoc invoice train`, `[layout]` extra) with an offline `tiny` model for tests.
+- **Invoice checks** (`findoc/fraud/invoice_rules.py`): `INVOICE_MATH` (misread-aware, using the
+  invoice's redundancy), `GSTIN_INVALID`, `TAX_TYPE_MISMATCH`, `INVOICE_UNVERIFIED`; risk points.
+- **Document-type classifier** (`findoc/classify/doctype.py`, `findoc classify train`): cheque /
+  invoice / receipt / other from 641 page features with gradient-boosted trees.
+- **Excel export** (`findoc/export/excel.py`, `findoc export`): documents, fields, line items,
+  checks.
+- `experiments/phase7_invoice_eval.py`; learning guide `docs/learn/phase-7-invoices.md`.
+
+### Changed
+- Pipeline: `enhance -> classify -> align ...`, and `ocr -> invoice -> risk`; template matching is
+  skipped for pages classified as invoices or receipts.
+- openpyxl is a core dependency; new `[layout]` extra (PyTorch, transformers).
+
 ## [0.7.0] - Phase 6: fraud engine
 
 ### Added
