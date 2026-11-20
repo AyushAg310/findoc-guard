@@ -78,7 +78,7 @@ def test_synth_cheques_and_process(tmp_path: Path) -> None:
 
 
 def test_synth_bad_kind(tmp_path: Path) -> None:
-    result = runner.invoke(app, ["synth", "--kind", "invoice", "--out", str(tmp_path)])
+    result = runner.invoke(app, ["synth", "--kind", "spreadsheet", "--out", str(tmp_path)])
     assert result.exit_code != 0
 
 

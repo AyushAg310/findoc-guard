@@ -13,8 +13,8 @@ line yourself.
 | [Phase 4 - Learned page detection](phase-4-learned-segmentation.md) | Hard synthetic backgrounds, U-Net segmentation, BCE + Dice training, ONNX export and OpenCV DNN inference, mask-to-quad, edge refinement, evaluation | 0.5.0 |
 | [Phase 5 - 3D reconstruction](phase-5-3d-reconstruction.md) | Developable surfaces, incremental SfM, bundle adjustment, focal search, planarity test, surface fit, ARAP flattening, correspondence map, camera calibration, evaluation | 0.6.0 |
 | [Phase 6 - Fraud engine](phase-6-fraud-engine.md) | JPEG forensics, learned tamper model, heatmap mapping through the correspondence map, duplicate index, signature comparison, explainable risk score | 0.7.0 |
-| Phase 7 - Invoices | LayoutLMv3, GSTIN checksum, invoice arithmetic | coming next |
-| Phase 8 - Product | FastAPI, PostgreSQL, Celery, React UI | |
+| [Phase 7 - Invoices](phase-7-invoices.md) | Synthetic GST invoices, GSTIN check digit, rule-based and LayoutLMv3 extraction, misread-aware invoice checks, document-type classifier, Excel export | 0.8.0 |
+| Phase 8 - Product | FastAPI, PostgreSQL, Celery, React UI | coming next |
 | Phase 9 - Evaluation | Metrics, ablations, results | |
 
 > **Phase numbers changed in v0.5.0.** Learned page detection was inserted as Phase 4, so 3D

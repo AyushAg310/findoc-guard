@@ -34,18 +34,25 @@ def _classical_detection(monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.fixture(autouse=True)
 def _isolated_fraud_state(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    """Phase 6 state (tamper model, duplicate index, reference signatures) lives in local
-    folders; tests use empty temporary ones unless they set their own."""
+    """Phase 6-7 state (tamper and document-type models, LayoutLMv3 folder, duplicate index,
+    reference signatures) lives in local folders; tests use empty temporary ones unless they
+    set their own."""
     from findoc.config import get_settings
     from findoc.fraud.tamper import load_model
 
     monkeypatch.setenv("FINDOC_TAMPER_MODEL", str(tmp_path / "no_model.pkl"))
+    monkeypatch.setenv("FINDOC_DOCTYPE_MODEL", str(tmp_path / "no_doctype.pkl"))
+    monkeypatch.setenv("FINDOC_INVOICE_MODEL", str(tmp_path / "no_invoice_model"))
     monkeypatch.setenv("FINDOC_DUPLICATE_INDEX", str(tmp_path / "dup_index"))
     monkeypatch.setenv("FINDOC_SIGNATURES_DIR", str(tmp_path / "signatures"))
+    from findoc.classify import doctype
+
     get_settings.cache_clear()
     load_model.cache_clear()
+    doctype.load_model.cache_clear()
     yield
     load_model.cache_clear()
+    doctype.load_model.cache_clear()
 
 
 @pytest.fixture

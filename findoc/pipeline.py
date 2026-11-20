@@ -11,7 +11,7 @@ Stage roadmap (see README):
     Phase 4  segment      learned page detection (used inside detect and track)  (done)
     Phase 5  recon3d      SfM, surface fit, ARAP flattening (video)  (done)
     Phase 6  fraud        tamper map, duplicates, signature, risk score  (done)
-    Phase 7  invoices     LayoutLMv3 extraction, GST checks
+    Phase 7  invoices     classifier, rules + LayoutLMv3 extraction, GST checks  (done)
 """
 
 from __future__ import annotations
@@ -73,11 +73,14 @@ def default_pipeline(
     Phase 3: load -> video -> track (video only: best frame + keyframes)
     Phase 1: -> quality -> detect -> (Phase 5: recon3d, video only) -> rectify -> enhance
     Phase 2: -> align (cheque template) -> fields -> rules
+    Phase 7: (after enhance) -> classify
     Phase 6: -> tamper -> duplicate -> signature
     then:    -> ocr (full-page text, for documents that aren't known cheques)
+    Phase 7: -> invoice (fields, line items, invoice checks)
     Phase 6: -> risk (score from every check that ran)
     """
     # Imported here so `findoc --help` stays fast and import cycles are impossible.
+    from findoc.classify.stages import classify_stage
     from findoc.fraud.stages import (
         duplicate_stage,
         risk_stage,
@@ -87,6 +90,7 @@ def default_pipeline(
     )
     from findoc.localize.stages import align_stage, make_fields_stage
     from findoc.preprocess.stages import detect_stage, enhance_stage, quality_stage, rectify_stage
+    from findoc.recognize.invoice_stage import invoice_stage
     from findoc.recognize.ocr import ocr_stage
     from findoc.recon3d.stages import recon3d_stage
     from findoc.track.stages import track_stage, video_load_stage
@@ -99,6 +103,7 @@ def default_pipeline(
     pipe.add("recon3d", recon3d_stage)
     pipe.add("rectify", rectify_stage)
     pipe.add("enhance", enhance_stage)
+    pipe.add("classify", classify_stage)
     pipe.add("align", align_stage)
     pipe.add("fields", make_fields_stage(use_ocr=ocr))
     pipe.add("rules", rules_stage)
@@ -107,6 +112,7 @@ def default_pipeline(
     pipe.add("signature", partial(signature_stage, account=account))
     if ocr:
         pipe.add("ocr", ocr_stage)
+        pipe.add("invoice", invoice_stage)
     pipe.add("risk", risk_stage)
     return pipe
 
