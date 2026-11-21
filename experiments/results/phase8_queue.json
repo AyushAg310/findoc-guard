@@ -1,0 +1,39 @@
+{
+  "cpu_cores": 2,
+  "runs": [
+    {
+      "workers": 1,
+      "documents": 500,
+      "seconds": 750.1,
+      "per_minute": 40.0,
+      "jobs_per_worker": [
+        500
+      ],
+      "statuses": {
+        "processed": 500
+      },
+      "attempts": {
+        "1": 500
+      },
+      "exactly_once": true
+    },
+    {
+      "workers": 2,
+      "documents": 500,
+      "seconds": 380.8,
+      "per_minute": 78.8,
+      "jobs_per_worker": [
+        244,
+        256
+      ],
+      "statuses": {
+        "processed": 500
+      },
+      "attempts": {
+        "1": 500
+      },
+      "exactly_once": true,
+      "speedup": 1.97
+    }
+  ]
+}

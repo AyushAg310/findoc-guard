@@ -62,7 +62,7 @@ audit trail. Results export to Excel or JSON.
 | --- | --- |
 | Cheque photo, upload to decision-ready | 2.3-2.6 s (target: 20 s on CPU) |
 | Invoice photo | ~15 s (almost all full-page OCR) |
-| Queue, 2 workers vs 1 (2-core sandbox, 24 cheques) | 1.73× faster |
+| 500 queued cheques, 1 / 2 workers (2-core machine, OCR off) | 12.5 / 6.3 min: 40 / 79 per minute, 1.97× |
 | Lost or repeated jobs | none: every document processed exactly once |
 
 ## Earlier phases

@@ -366,9 +366,19 @@ table):
 NFR-PER-01 asks for a single photo in at most 20 s on a CPU. Cheques take 2-3 s; invoices take
 15 s, almost all of it full-page OCR.
 
-**Queue** (`experiments/results/phase8_queue.json`): see the table in the README. On every
-run each document was processed exactly once: one attempt, one "processed" audit entry, none
-failed. More workers help until the CPU cores run out.
+**Queue** (`experiments/results/phase8_queue.json`): 500 synthetic cheques queued in
+PostgreSQL and drained by worker processes (OCR off, 2-core machine):
+
+| Workers | Time | Per minute | Speed-up | Jobs per worker | Every document exactly once |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 750 s | 40.0 | 1.00 | 500 | yes (500 attempts, 500 audit entries) |
+| 2 | 381 s | 78.8 | **1.97** | 244 / 256 | yes |
+
+Two workers are almost exactly twice as fast. The claim costs a few milliseconds against
+1.5 s of CV per cheque, so the queue isn't the bottleneck; the CPU cores are. NFR-SCL-01 asks
+for linear scaling up to 4 GPU workers. This machine has 2 cores, so run the same script with
+`--workers 1 2 4` on a bigger one to test 4. NFR-SCL-02 (500 queued without failure) is met:
+no job failed, was lost or ran twice.
 
 **Tests:** 15 API tests and 4 UI tests. The API tests pass on SQLite and on PostgreSQL 16. Core
 coverage stays above 90%.
