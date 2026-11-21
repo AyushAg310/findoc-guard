@@ -48,14 +48,17 @@ Extraction runs either rule-based (keyword anchors and table geometry, no traini
 **LayoutLMv3** fine-tuned on synthetic Indian invoices (text + layout + image). Results export to
 Excel (`findoc export`).
 
-| Rule-based extraction, 90 synthetic invoices | Header field F1 | Line-item cells |
+| Extraction, 90 synthetic invoices, OCR errors 0% / 1% / 3% | Header field F1 | Line-item cells |
 | --- | --- | --- |
-| OCR without errors / 1% / 3% character errors | 1.00 / 0.92 / 0.83 | 1.00 / 0.87 / 0.63 |
+| Rules | 1.00 / 0.92 / 0.82 | 1.00 / 0.88 / 0.63 |
+| LayoutLMv3 (fine-tuned on an RTX 3050, ~50 ms per invoice) | 1.00 / 0.95 / **0.86** | 1.00 / 0.98 / **0.93** |
+| Real EasyOCR on 30 invoice photos, LayoutLMv3 | 0.87 | 0.95 |
 
 | Invoice checks (40 per kind), OCR errors 0% / 1% | Result |
 | --- | --- |
 | Clean invoices sent to review | 0% / 15% |
 | Wrong total, wrong line, wrong tax type caught | 100% / 88-98% |
+| Invalid GSTIN sent to review | 90% / 90% |
 
 The [Phase 7 guide](docs/learn/phase-7-invoices.md#38-results-experimentsresultsphase7json) has
 the 3% numbers, how the false alarms were brought down, and the GPU steps for LayoutLMv3.
@@ -286,7 +289,7 @@ findoc calibrate board.mp4 --save # phone focal length from a printed checkerboa
 findoc tamper train               # ~5 min on a CPU; writes models/tamper.pkl
 findoc classify train             # ~2 min on a CPU; cheque / invoice / receipt / other
 findoc synth --kind invoice --n 5 # GST invoice photos with ground truth
-pip install -e ".[layout]" && findoc invoice train   # LayoutLMv3 on a GPU (~15-25 min)
+pip install -e ".[layout]" && findoc invoice train   # LayoutLMv3 on a GPU (~21 min, 2 epochs)
 findoc process invoice.jpg --out outputs/inv.json && findoc export outputs/*.json --out invoices.xlsx
 findoc process cheque.jpg --register            # check, then add to the duplicate index
 findoc signatures add 123456789012 ref1.jpg ref2.jpg   # reference signatures of an account

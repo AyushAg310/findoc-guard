@@ -180,32 +180,77 @@ def classifier(path: Path, per_class: int) -> dict | None:
 
 
 def real_ocr(n: int) -> dict:
-    """Photos through the whole pipeline with EasyOCR (needs the [ocr] extra; GPU advised)."""
+    """Photos through the whole pipeline with EasyOCR (needs the [ocr] extra; GPU advised).
+    Saves per-invoice details (checks with confidence, risk band, GSTINs and total as read vs.
+    true) so errors can be traced."""
     from findoc.io import save_image
     from findoc.pipeline import process
+    from findoc.recognize import gstin as gst
 
     agg = np.zeros(5)
-    flags = {"clean": [0, 0], "fraud": [0, 0]}
+    rows = []
     with tempfile.TemporaryDirectory() as d:
         for i in range(n):
             kind = None if i % 2 == 0 else FRAUDS[(i // 2) % len(FRAUDS)]
             photo, truth, _, _ = invoice_photo(800_000 + i, kind)
             path = Path(d) / f"inv{i}.jpg"
             save_image(path, photo)
+            t0 = time.perf_counter()
             doc = process(path, ocr=True)
+            fields = {f.name: f for f in doc.fields}
             pred = {
-                "fields": {f.name: f.normalized for f in doc.fields},
+                "fields": {k: f.normalized for k, f in fields.items()},
                 "items": [it.get("normalized", {}) for it in doc.line_items],
             }
-            agg += counts(pred, truth_normalized(truth))
-            fired = {c.id for c in doc.checks if c.fired} - {"INVOICE_UNVERIFIED"}
-            key = "fraud" if kind else "clean"
-            flags[key][0] += bool(fired & {"INVOICE_MATH", "TAX_TYPE_MISMATCH", "GSTIN_INVALID"})
-            flags[key][1] += 1
-            print(f"invoice {i} ({kind or 'clean'}): {sorted(fired)}", flush=True)
+            tn = truth_normalized(truth)
+            agg += counts(pred, tn)
+            fired = [c for c in doc.checks if c.fired and c.id != "INVOICE_UNVERIFIED"]
+            row = {
+                "invoice": i,
+                "planted": kind,
+                "seconds": round(time.perf_counter() - t0, 1),
+                "method": next((f.method for f in doc.fields), None),
+                "risk_band": doc.risk.get("band"),
+                "risk_score": doc.risk_score,
+                "checks": [
+                    {"id": c.id, "confidence": c.confidence, "reason": c.reason} for c in fired
+                ],
+            }
+            for g in ("vendor_gstin", "buyer_gstin"):
+                read = fields[g].value if g in fields else None
+                row[g] = {
+                    "true": tn["fields"][g],
+                    "read": read,
+                    "normalized": pred["fields"].get(g),
+                    "valid": bool(read and gst.validate(read)[0]),
+                }
+            row["total"] = {"true": tn["fields"]["total"], "read": pred["fields"].get("total")}
+            rows.append(row)
+            print(
+                f"invoice {i} ({kind or 'clean'}): risk {row['risk_band']}, "
+                f"{[(c['id'], c['confidence']) for c in row['checks']]}",
+                flush=True,
+            )
+
+    def rate(sel, pred_fn) -> float:  # noqa: ANN001
+        sub = [r for r in rows if sel(r)]
+        return round(sum(pred_fn(r) for r in sub) / max(1, len(sub)), 3)
+
+    review = lambda r: r["risk_band"] in ("medium", "high")  # noqa: E731
+    gst_ok = [
+        r[g]["normalized"] == r[g]["true"] for r in rows for g in ("vendor_gstin", "buyer_gstin")
+    ]
     return summary(agg) | {
-        k: round(v[0] / max(v[1], 1), 3)
-        for k, v in (("flagged_fraud", flags["fraud"]), ("flagged_clean", flags["clean"]))
+        "extractor": rows[0]["method"] if rows else None,
+        "sent_to_review_clean": rate(lambda r: r["planted"] is None, review),
+        "sent_to_review_planted": rate(lambda r: r["planted"] is not None, review),
+        "right_check_planted": rate(
+            lambda r: r["planted"] is not None,
+            lambda r: EXPECTED[r["planted"]] in {c["id"] for c in r["checks"]},
+        ),
+        "gstin_read_exactly": round(float(np.mean(gst_ok)), 3),
+        "median_seconds": float(np.median([r["seconds"] for r in rows])),
+        "rows": rows,
     }
 
 

@@ -57,8 +57,10 @@ LayoutLMv3.
 4. **invoice**: runs if the page was classified as an invoice, or (without a classifier) if the
    text has at least two invoice cues ("Tax Invoice", GSTIN, HSN, CGST, IGST). Extraction uses
    LayoutLMv3 when `models/invoice_layoutlmv3/` exists, otherwise the rules
-   (`FINDOC_INVOICE_EXTRACTOR=auto|rules|layoutlmv3`). Fields go to `doc.fields`, rows to
-   `doc.line_items`, and the checks to `doc.checks`.
+   (`FINDOC_INVOICE_EXTRACTOR=auto|rules|layoutlmv3`). A GSTIN that fails its check
+   character gets a **second look**: its crop is enlarged and read again with only 0-9/A-Z
+   allowed, and a valid reading close to the first replaces it (a message says so). Fields go
+   to `doc.fields`, rows to `doc.line_items`, and the checks to `doc.checks`.
 5. **risk** (Phase 6) scores all checks; the console shows the fields, a line-items table and
    the checks; `--out result.json` saves everything.
 
@@ -79,9 +81,16 @@ variant in base 36): map the first 14 characters to 0-35 (`0-9A-Z`), multiply th
 
 - `validate`: format (regex), known state code, check character; returns the reason.
 - `clean`: removes separators, then fixes OCR letter/digit confusions **by position** (the
-  format says positions 1-2 are digits, 3-7 letters, ...).
-- `misread_fixes`: valid GSTINs one commonly confused character away; the invoice check uses it
-  to say "probably misread" instead of "invalid".
+  format says positions 1-2 are digits, 3-7 letters, ...). Two more since v0.8.2, both from
+  the real-OCR run: the 14th character is always Z (EasyOCR read "1Z" as "12"), and a
+  digit-like letter in the entity number is the digit (I -> 1; letters there only start
+  after a business's ninth registration in a state).
+- `misread_fixes`: valid GSTINs one known OCR confusion away; the invoice check uses it to say
+  "probably misread" (confidence 0.3, which keeps the invoice out of review on its own)
+  instead of "invalid". `CONFUSABLE` lists only what EasyOCR was seen to do (it printed O for
+  Q, D or 0; 0 for 9; 2 for 7; 5 for 3). Every pair you add makes more real forgeries look
+  like misreads: the first, symmetric table excused 27% of planted invalid GSTINs, this one
+  8%.
 - `make`, `state_of`: build valid numbers (synthetic data), name the state.
 
 Verified on published example numbers (`27AAPFU0939F1ZV`, `29AAGCB7383J1Z4`).
@@ -210,29 +219,64 @@ trees (150 pages per class, ~2 minutes) and validates on 50 other pages per clas
 
 ### 3.8 Results (`experiments/results/phase7.json`)
 
-**Extraction** (rules; 90 synthetic invoices, 30 per layout; simulated OCR):
+**Extraction** (90 synthetic invoices, 30 per layout; simulated OCR; laptop run, RTX 3050):
 
-| OCR character errors | Header precision | Recall | **F1** | Line-item cells | Time |
-| --- | --- | --- | --- | --- | --- |
-| 0% | 1.000 | 1.000 | **1.000** | 1.000 | 1.3 ms |
-| 1% | 0.950 | 0.889 | **0.919** | 0.875 | 1.2 ms |
-| 3% | 0.888 | 0.785 | **0.833** | 0.630 | 1.1 ms |
+| OCR character errors | Extractor | Header precision | Recall | **F1** | Line-item cells | Time |
+| --- | --- | --- | --- | --- | --- | --- |
+| 0% | rules | 1.000 | 1.000 | **1.000** | 1.000 | 1.5 ms |
+| 0% | LayoutLMv3 | 1.000 | 1.000 | **1.000** | 1.000 | 51 ms |
+| 1% | rules | 0.953 | 0.893 | **0.922** | 0.878 | 1.3 ms |
+| 1% | LayoutLMv3 | 0.955 | 0.937 | **0.946** | 0.981 | 49 ms |
+| 3% | rules | 0.880 | 0.770 | **0.821** | 0.630 | 1.3 ms |
+| 3% | LayoutLMv3 | 0.887 | 0.840 | **0.863** | 0.929 | 49 ms |
 
-The SRS target is a field F1 of at least 0.85. It is met with clean or slightly noisy text, and
-missed at 3% character errors, where one wrong character makes a whole field wrong under exact
-matching. Line items suffer most: a row has five numbers.
+The SRS target is a field F1 of at least 0.85. The rules meet it on clean or slightly noisy
+text and miss it at 3% character errors, where one wrong character makes a whole field wrong
+under exact matching. **LayoutLMv3 meets it at 3% too**, and the difference is largest on line
+items (0.93 vs 0.63): the rules find columns by header position and lose a row when a number
+is split or merged, while LayoutLMv3 labels each token from its text, position and the image
+together, so a garbled token in the right place is still the amount.
+
+**Training** (`models/invoice_layoutlmv3/training.json`, 1,500 synthetic invoices, fp16):
+about 10.5 minutes per epoch. Validation F1 was 0.980 (line items 0.995) after epoch 1 and
+exactly the same after epochs 2-5, while the training loss fell from 0.65 to 0.001. The
+remaining errors are in the noisy validation text itself, which more training on clean labels
+can't fix, so epochs 2-5 were wasted: the default is now 2.
 
 **Checks** (40 invoices per kind; "review" = the risk score's band is medium or high):
 
 | OCR errors | Clean invoices sent to review | Wrong total | Wrong line | Wrong tax type | Invalid GSTIN |
 | --- | --- | --- | --- | --- | --- |
-| 0% | **0%** | 100% | 100% | 100% | 100% flagged (62% to review) |
-| 1% | 15% | 98% | 88% | 90% | 92% flagged (65% to review) |
-| 3% | 35% | 68% | 78% | 82% | 90% flagged (57% to review) |
+| 0% | **0%** | 100% | 100% | 100% | 100% flagged (90% to review) |
+| 1% | 15% | 98% | 88% | 90% | 92% flagged (90% to review) |
+| 3% | 35% | 68% | 78% | 85% | 90% flagged (85% to review) |
 
-Some invalid GSTINs get only a low-confidence flag: the planted change is often one commonly
-confused character away from a valid number, so the check cannot tell a forged character from a
-misread one and says so in the reason.
+The invalid GSTINs that don't reach review get only a low-confidence flag: the forged
+character happens to be one known OCR confusion away from a valid number, so the check can't
+tell forgery from misreading and says so in the reason. Before v0.8.2 this happened to a third
+of them (62% to review at 0%), because the confusion table was too generous.
+
+**Real OCR** (`--real-ocr`: 30 photographed invoices, EasyOCR, whole pipeline). Laptop run
+with LayoutLMv3 (v0.8.1): header F1 **0.868**, line-item cells **0.951**, and `INVOICE_MATH`
+raised no false alarm on a clean invoice while catching every wrong total and wrong line. But
+`GSTIN_INVALID` fired on 13 of the 15 clean invoices. Reading the GSTINs back against the truth
+showed they were misreads, and systematic ones:
+
+| What EasyOCR printed | What was on the paper | Seen |
+| --- | --- | --- |
+| `...1Z2` / `...I22Z` | `...1Z7` / `...I2ZZ` (14th character is always Z) | 4 |
+| `O` | `Q` (or `D`) in the PAN | 6 |
+| `0` | `9` | 3 |
+| `I` | `1` (entity number) | 2 |
+
+v0.8.2 answers this in three layers (repair by position, a second read of the crop at 2-3x
+with only 0-9/A-Z allowed, and a confusion table built from this list). Rerun on CPU with the
+rules extractor (`phase7_real_ocr_rules.json`): GSTINs read exactly 73%, and **no clean invoice
+got a full GSTIN alarm** (3 of 15 got the low-confidence "probably misread" flag, which doesn't
+send them to review). On 20 fresh photos not used to build the table: 6 misreads, 5 correctly
+explained (the suggested fix was the true number every time), 1 clean invoice with a full alarm
+(two errors in one number). The rules extractor's line items fall to 0.49 on real OCR, and its
+arithmetic alarms send 40% of clean invoices to review, so use LayoutLMv3 for real photos.
 
 **Classifier**: 100% on 200 fresh synthetic pages (50 per class). The synthetic classes look very
 different, so this shows the features work, not real-world accuracy; real photos of other
@@ -252,13 +296,21 @@ documents will be harder.
 3. **Not every remaining error can be told from fraud by arithmetic.** A line with two misread
    digits looks like a changed amount. OCR confidence per word would help, which the real-OCR
    run measures.
-4. **Code you can't run here still needs a test.** The tiny offline LayoutLMv3 exercises the full
+4. **Simulated OCR errors aren't real OCR errors.** The simulator confuses characters at
+   random; EasyOCR makes the same few mistakes again and again (O for Q, "1Z" as "12"). The
+   GSTIN check looked fine on simulated text and failed on 13 of 15 real photos. Look at the
+   actual misreads before designing the fix, and keep the "misread" excuse as narrow as the
+   evidence: every confusion you allow is also a way for a forgery to pass.
+5. **More epochs aren't free.** Log the validation score every epoch; here it stopped moving
+   after the first, and four more epochs cost 42 minutes.
+6. **Code you can't run here still needs a test.** The tiny offline LayoutLMv3 exercises the full
    training path, so the GPU run should only need the weights.
 
 ### 3.9 Tests (`tests/test_invoice.py`)
 
-21 tests (the LayoutLMv3 one is skipped when transformers isn't installed, as in CI):
-- GSTIN examples and OCR repair;
+23 tests (the LayoutLMv3 one is skipped when transformers isn't installed, as in CI):
+- GSTIN examples and OCR repair, including the position repairs and the second look (with a
+  stand-in OCR engine);
 - every layout, and each planted error breaking exactly what it should;
 - dataset generation and receipt shape;
 - normalisation, phrase splitting, and assembling the true labels back into exactly the truth;
@@ -293,11 +345,13 @@ documents will be harder.
 2. `findoc classify train` (~2 min), then `findoc process` one of the invoices with OCR: which
    fields and checks come out? Export with `findoc export`.
 3. **GPU**: `pip install -e ".[layout]"` then `findoc invoice train` (downloads layoutlmv3-base
-   once; ~15-25 min on an RTX 3050). Then
+   once; 2 epochs, ~21 min on an RTX 3050). Then
    `python experiments/phase7_invoice_eval.py --layout models/invoice_layoutlmv3` to compare it
    with the rules at 0/1/3% character errors.
 4. **Real OCR**: `python experiments/phase7_invoice_eval.py --real-ocr --n 30` runs photographed
-   invoices through EasyOCR and the whole pipeline.
+   invoices through EasyOCR and the whole pipeline. The JSON has one row per invoice: each
+   GSTIN and the total as read and as printed, and every check with its confidence. Find an
+   invoice sent to review and explain why from its row.
 5. Change one digit of a printed total in an invoice photo and process it: which check fires,
    and does the reason mention the amount in words?
 6. In `invoice_rules.py`, turn off the misread handling (report every disagreement) and re-run

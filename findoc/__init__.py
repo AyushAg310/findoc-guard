@@ -1,5 +1,5 @@
 """FinDoc Guard: 3D-aware cheque and invoice processing with explainable fraud detection."""
 
-__version__ = "0.8.1"
+__version__ = "0.8.2"
 
 __all__ = ["__version__"]

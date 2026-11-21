@@ -312,7 +312,7 @@ def train(
     base: str = "microsoft/layoutlmv3-base",
     samples: int = 1500,
     val_samples: int = 60,
-    epochs: int = 5,
+    epochs: int = 2,
     batch_size: int = 4,
     lr: float | None = None,
     device: str = "auto",

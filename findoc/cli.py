@@ -526,7 +526,7 @@ def invoice_train(
         help="Pre-trained model to fine-tune ('tiny' = offline test model)",
     ),
     samples: int = typer.Option(1500, help="Synthetic invoices per epoch"),
-    epochs: int = typer.Option(5),
+    epochs: int = typer.Option(2, help="Validation F1 plateaued after epoch 1 on an RTX 3050"),
     batch_size: int = typer.Option(4, "--batch-size"),
     device: str = typer.Option("auto", help="'auto', 'cuda' or 'cpu'"),
     workers: int = typer.Option(-1, help="Processes rendering invoices; -1 = CPU cores - 2"),

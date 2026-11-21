@@ -3,6 +3,28 @@
 All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org/);
 each build phase is released as a minor version.
 
+## [0.8.2] - GSTINs under real OCR
+
+### Fixed
+- `GSTIN_INVALID` fired on 13 of 15 clean invoices read by EasyOCR (laptop run). Most were OCR
+  misreads, not invalid numbers:
+  - `gstin.clean` now repairs by position also in the last three characters: the 14th is always
+    Z (EasyOCR read "1Z" as "12"), and a letter that looks like a digit in the entity number
+    is the digit (I -> 1);
+  - **second look**: a GSTIN that still fails is re-read from its own enlarged crop with only
+    0-9 / A-Z allowed (`invoice_stage.second_look_gstins`); a valid re-reading close to the
+    first replaces it;
+  - the "probably misread" table (`gstin.CONFUSABLE`) now lists the confusions EasyOCR actually
+    makes (O for Q/D/0, 0 for 9/O, 2 for 7, 5 for 3, Z for 2). The old symmetric table also
+    passed 27% of genuinely invalid GSTINs off as misreads; the new one 8%.
+
+### Changed
+- `findoc invoice train` defaults to 2 epochs (validation F1 was the same from epoch 1 to 5 on
+  the laptop run, ~10.5 min per epoch on an RTX 3050).
+- `experiments/phase7_invoice_eval.py --real-ocr` saves per-invoice details (checks with
+  confidence, risk band, GSTINs and total as read and true) and reports review rates.
+- Results: LayoutLMv3 numbers from the laptop run in `experiments/results/phase7.json`.
+
 ## [0.8.1] - Faster LayoutLMv3 training
 
 ### Changed

@@ -1,15 +1,27 @@
-"""Phase 7 pipeline stage: invoice fields, line items and invoice checks (after OCR)."""
+"""Phase 7 pipeline stage: invoice fields, line items and invoice checks (after OCR).
+
+**Second look at GSTINs.** A GSTIN that fails its check character after the page-wide OCR is
+read again from its own crop, enlarged, with only 0-9 and A-Z allowed (no detection step, so
+nothing else on the line interferes). If that reading is a valid GSTIN close to the first
+one, it replaces it: the first reading was an OCR error. A printed GSTIN that really is
+invalid stays invalid however often it is read, so this does not hide the fraud.
+"""
 
 from __future__ import annotations
 
 import re
+from difflib import SequenceMatcher
 from functools import lru_cache
 from pathlib import Path
 
+import cv2
+import numpy as np
+
 from findoc.config import get_settings
 from findoc.fraud.invoice_rules import run_invoice_rules
+from findoc.recognize import gstin as gst
 from findoc.recognize.invoice import Invoice, RuleExtractor, amount_in_words_text
-from findoc.types import DocType, Document, ExtractedField
+from findoc.types import BBox, DocType, Document, ExtractedField, OcrWord
 
 INVOICE_CUES = re.compile(r"tax\s*invoice|gstin|\bhsn\b|\bcgst\b|\bigst\b")
 
@@ -40,6 +52,77 @@ def extract_invoice(doc: Document) -> Invoice:
     return RuleExtractor().extract(doc.words)
 
 
+GSTIN_FIELDS = ("vendor_gstin", "buyer_gstin")
+ALNUM = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+
+def _alnum(text: str) -> str:
+    return re.sub(r"[^0-9A-Z]", "", text.upper())
+
+
+def word_containing(words: list[OcrWord], value: str) -> OcrWord | None:
+    """The OCR word (line) the extracted value came from: exact containment first, else the
+    most similar word (the extractor may have repaired a few characters)."""
+    target = _alnum(value)
+    if not target:
+        return None
+    best, best_ratio = None, 0.75
+    for w in words:
+        t = _alnum(w.text)
+        if target in t:
+            return w
+        ratio = SequenceMatcher(None, target, t[-len(target) :]).ratio()
+        if ratio > best_ratio:
+            best, best_ratio = w, ratio
+    return best
+
+
+def reread_gstin(engine: object, img: np.ndarray, box: BBox, first: str) -> str | None:
+    """Read the GSTIN in ``box`` again at 2x and 3x; return a valid GSTIN that differs from
+    the first reading in at most 4 places, or None."""
+    h = box.y1 - box.y0
+    y0, y1 = int(max(0, box.y0 - 0.15 * h)), int(min(img.shape[0], box.y1 + 0.15 * h))
+    x0, x1 = int(max(0, box.x0 - 4)), int(min(img.shape[1], box.x1 + 4))
+    crop = img[y0:y1, x0:x1]
+    if crop.size == 0:
+        return None
+    first = gst.clean(_alnum(first))
+    for scale in (2, 3):
+        big = cv2.resize(crop, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
+        text, _ = engine.read_line(big, allowlist=ALNUM)  # type: ignore[attr-defined]
+        t = _alnum(text)
+        if len(t) < 15:
+            continue
+        valid, _ = gst.validate(t[-15:])
+        if valid and (
+            len(first) != 15 or sum(a != b for a, b in zip(valid, first, strict=False)) <= 4
+        ):
+            return valid
+    return None
+
+
+def second_look_gstins(doc: Document, inv: Invoice) -> None:
+    """Re-read each GSTIN that fails validation (see the module docstring)."""
+    todo = [k for k in GSTIN_FIELDS if inv.fields.get(k) and not gst.validate(inv.fields[k])[0]]
+    img = doc.enhanced if doc.enhanced is not None else doc.flat
+    if not todo or img is None:
+        return
+    from findoc.recognize.ocr import OcrUnavailableError, load_engine
+
+    try:
+        engine, _ = load_engine()
+    except OcrUnavailableError:
+        return
+    for k in todo:
+        word = word_containing(doc.words, inv.fields[k])
+        if word is None:
+            continue
+        new = reread_gstin(engine, img, word.bbox, inv.fields[k])
+        if new:
+            doc.messages.append(f"{k}: '{inv.fields[k]}' re-read as {new} (valid)")
+            inv.fields[k] = new
+
+
 def invoice_stage(doc: Document) -> Document:
     if doc.doc_type is DocType.CHEQUE or not doc.words:
         return doc
@@ -48,6 +131,7 @@ def invoice_stage(doc: Document) -> Document:
             return doc
         doc.doc_type = DocType.INVOICE
     inv = extract_invoice(doc)
+    second_look_gstins(doc, inv)
     words_total = amount_in_words_text(doc.words)
     if words_total and "amount_words" not in inv.fields:
         inv.fields["amount_words"] = words_total

@@ -302,3 +302,42 @@ def test_layoutlmv3_tiny_train_and_extract(tmp_path: Path) -> None:
     img, ws, _, _ = synthetic_sample(3)
     inv = LayoutExtractor(tmp_path / "lm").extract(ws, img)
     assert inv.method == "layoutlmv3"
+
+
+def test_gstin_position_repairs() -> None:
+    g = gst.make("19", "JOYFS6682F", "1")  # 19JOYFS6682F1Z?
+    assert gst.validate(g[:13] + "2" + g[14])[0] == g  # "1Z" read as "12": 14th is always Z
+    assert gst.validate(g[:12] + "I" + g[13:])[0] == g  # entity 1 read as I
+    q = gst.make("33", "BQPFV7973X", "1")
+    o = q[:3] + "O" + q[4:]  # EasyOCR reads Q as O
+    assert gst.validate(o)[0] is None and gst.misread_fixes(o) == [q]
+
+
+def test_gstin_second_look() -> None:
+    import numpy as np
+
+    from findoc.recognize.invoice_stage import reread_gstin, word_containing
+    from findoc.types import BBox, OcrWord
+
+    true = gst.make("29", "ORJPV2195L", "1")
+    first = true[:5] + "O" + true[6:]  # one wrong letter, invalid
+    words = [
+        OcrWord(text="Bill To:", confidence=0.9, bbox=BBox(x0=0, y0=0, x1=50, y1=10)),
+        OcrWord(text=f"GSTIN: {first}", confidence=0.6, bbox=BBox(x0=0, y0=20, x1=200, y1=40)),
+    ]
+    w = word_containing(words, first)
+    assert w is words[1]
+
+    class Engine:
+        def __init__(self, text: str) -> None:
+            self.text = text
+
+        def read_line(self, img: np.ndarray, allowlist: str | None = None) -> tuple[str, float]:
+            assert allowlist and img.shape[0] > 40  # enlarged crop
+            return self.text, 0.9
+
+    img = np.full((100, 300, 3), 255, np.uint8)
+    assert reread_gstin(Engine(f"GSTIN {true}"), img, w.bbox, first) == true
+    assert reread_gstin(Engine(first), img, w.bbox, first) is None  # same misread: stays
+    other = gst.make("07", "ABCDE1234F", "1")  # valid but a different number: not taken
+    assert reread_gstin(Engine(other), img, w.bbox, first) is None

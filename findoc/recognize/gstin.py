@@ -36,8 +36,13 @@ STATES = {
 }  # fmt: skip
 # OCR confusions to undo where the format says a digit or a letter must be
 _TO_DIGIT = str.maketrans({"O": "0", "D": "0", "Q": "0", "I": "1", "L": "1", "S": "5", "B": "8",
-                           "Z": "2", "G": "6"})  # fmt: skip
+                           "Z": "2", "G": "6", "A": "4"})  # fmt: skip
 _TO_LETTER = str.maketrans({"0": "O", "1": "I", "5": "S", "8": "B", "2": "Z", "6": "G", "4": "A"})
+# entity number: 1-9 for a business's first nine registrations in a state, letters only after
+# that (rare), so a letter that looks like a digit was almost certainly the digit
+_ENTITY = str.maketrans({"I": "1", "L": "1", "Z": "2", "S": "5"})
+# the 14th character is always Z; EasyOCR often reads "1Z" as "12" (real-OCR evaluation)
+_FIXED_Z = str.maketrans({"2": "Z", "7": "Z"})
 
 
 def check_char(first14: str) -> str:
@@ -50,8 +55,9 @@ def check_char(first14: str) -> str:
 
 
 def clean(text: str) -> str:
-    """Upper case, separators removed, and OCR confusions fixed position by position (digits
-    where the format requires digits, letters where it requires letters)."""
+    """Upper case, separators removed, and OCR confusions fixed position by position: digits
+    where the format requires digits, letters where it requires letters, a digit for a
+    digit-like letter in the entity number, and Z in the 14th place (always Z)."""
     t = re.sub(r"[^0-9A-Za-z]", "", text).upper()
     if len(t) != 15:
         return t
@@ -60,7 +66,9 @@ def clean(text: str) -> str:
         t[2:7].translate(_TO_LETTER),
         t[7:11].translate(_TO_DIGIT),
         t[11].translate(_TO_LETTER),
-        t[12:],
+        t[12].translate(_ENTITY),
+        t[13].translate(_FIXED_Z),
+        t[14],
     ]
     return "".join(parts)
 
@@ -78,38 +86,21 @@ def validate(text: str) -> tuple[str | None, str]:
     return g, "valid"
 
 
-# characters OCR commonly confuses, in both directions (digits with digits, letters with
-# letters, and across, which matters where the format allows both: entity and check)
+# What EasyOCR printed -> what the paper probably said, for the confusions it actually made on
+# GSTINs in the real-OCR evaluation (Phase 7 guide, section 3.8). Kept deliberately short: the
+# longer symmetric table used before also "explained" 27% of genuinely invalid (fraudulent)
+# GSTINs as misreads; this one explains 8% of them and all the misreads observed.
 CONFUSABLE = {
-    "0": "O8Q",
-    "O": "0QD",
-    "Q": "O0",
-    "D": "0O",
-    "1": "7IL",
-    "7": "1",
-    "I": "1L",
-    "L": "1I",
-    "3": "8",
-    "8": "3B0",
-    "B": "8",
-    "5": "6S",
-    "6": "5G",
-    "S": "5",
-    "G": "6C",
-    "C": "G",
-    "2": "Z",
+    "O": "QD0",  # Q and D lose their tail / straight side at low resolution
+    "0": "9O",
+    "2": "7",
+    "5": "3",
     "Z": "2",
-    "E": "F",
-    "F": "E",
-    "M": "N",
-    "N": "M",
-    "U": "V",
-    "V": "U",
 }
 
 
 def misread_fixes(text: str) -> list[str]:
-    """Valid GSTINs one common OCR confusion away from ``text`` (empty if ``text`` is valid or
+    """Valid GSTINs one known OCR confusion away from ``text`` (empty if ``text`` is valid or
     no single confusion explains it)."""
     g = clean(text)
     if len(g) != 15 or validate(g)[0]:
