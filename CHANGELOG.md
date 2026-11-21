@@ -3,6 +3,20 @@
 All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org/);
 each build phase is released as a minor version.
 
+## [0.8.3] - Two more EasyOCR habits
+
+### Fixed
+- `gstin.clean`: Q in a digit place is now read as 9 (EasyOCR printed Q for 9 in all 8 cases on
+  the laptop run, never for 0), and a stray "@" for a leading 0 ("@7...", "@OQ...") is
+  repaired. Before, invoice 7's forged GSTIN came out unreadable, so the check never ran.
+  Replayed on the laptop run: GSTINs read exactly 47 -> 51 of 60; clean invoices with a full
+  GSTIN alarm 2 -> 1 of 15; forged GSTINs with a full alarm 2 -> 3 of 3.
+
+### Results
+- `experiments/results/phase7_real_ocr.json`: v0.8.2 on the laptop with LayoutLMv3. Header F1
+  0.928, line items 0.951; clean invoices sent to review 13% (2 of 15); planted errors sent to
+  review 93% (14 of 15).
+
 ## [0.8.2] - GSTINs under real OCR
 
 ### Fixed

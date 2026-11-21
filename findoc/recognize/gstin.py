@@ -35,7 +35,8 @@ STATES = {
     "37": "Andhra Pradesh", "38": "Ladakh", "97": "Other Territory", "99": "Centre Jurisdiction",
 }  # fmt: skip
 # OCR confusions to undo where the format says a digit or a letter must be
-_TO_DIGIT = str.maketrans({"O": "0", "D": "0", "Q": "0", "I": "1", "L": "1", "S": "5", "B": "8",
+# Q -> 9: in digit places EasyOCR printed Q for 9 every time it printed Q (8 of 8, laptop run)
+_TO_DIGIT = str.maketrans({"O": "0", "D": "0", "Q": "9", "I": "1", "L": "1", "S": "5", "B": "8",
                            "Z": "2", "G": "6", "A": "4"})  # fmt: skip
 _TO_LETTER = str.maketrans({"0": "O", "1": "I", "5": "S", "8": "B", "2": "Z", "6": "G", "4": "A"})
 # entity number: 1-9 for a business's first nine registrations in a state, letters only after
@@ -58,7 +59,12 @@ def clean(text: str) -> str:
     """Upper case, separators removed, and OCR confusions fixed position by position: digits
     where the format requires digits, letters where it requires letters, a digit for a
     digit-like letter in the entity number, and Z in the 14th place (always Z)."""
-    t = re.sub(r"[^0-9A-Za-z]", "", text).upper()
+    raw = text.strip().upper()
+    t = re.sub(r"[^0-9A-Z]", "", raw)
+    if "@" in raw:  # EasyOCR reads a leading 0 as "@" ("@7..."), or as "@O" ("@OQ..." = "09...")
+        t = re.sub(r"[^0-9A-Z]", "", raw.replace("@", "0"))
+        if len(t) == 16:
+            t = re.sub(r"[^0-9A-Z]", "", raw.replace("@", ""))
     if len(t) != 15:
         return t
     parts = [

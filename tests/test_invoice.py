@@ -313,6 +313,12 @@ def test_gstin_position_repairs() -> None:
     assert gst.validate(o)[0] is None and gst.misread_fixes(o) == [q]
 
 
+def test_gstin_easyocr_habits() -> None:
+    g = gst.make("09", "EXVTM3989P", "1")
+    assert gst.validate("@OQEXVTM398QP1ZM")[0] == g  # "@O" for 0, Q for 9 in digit places
+    assert gst.validate("@" + g[1:])[0] == g  # "@" for a leading 0
+
+
 def test_gstin_second_look() -> None:
     import numpy as np
 

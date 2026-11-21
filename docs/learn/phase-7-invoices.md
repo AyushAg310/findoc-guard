@@ -268,6 +268,8 @@ showed they were misreads, and systematic ones:
 | `O` | `Q` (or `D`) in the PAN | 6 |
 | `0` | `9` | 3 |
 | `I` | `1` (entity number) | 2 |
+| `Q` in a digit place | `9` (v0.8.3: 8 of 8 on the second laptop run) | 8 |
+| `@` | a leading `0` (v0.8.3) | 3 |
 
 v0.8.2 answers this in three layers (repair by position, a second read of the crop at 2-3x
 with only 0-9/A-Z allowed, and a confusion table built from this list). Rerun on CPU with the
@@ -277,6 +279,20 @@ send them to review). On 20 fresh photos not used to build the table: 6 misreads
 explained (the suggested fix was the true number every time), 1 clean invoice with a full alarm
 (two errors in one number). The rules extractor's line items fall to 0.49 on real OCR, and its
 arithmetic alarms send 40% of clean invoices to review, so use LayoutLMv3 for real photos.
+
+**v0.8.2 on the laptop with LayoutLMv3** (`phase7_real_ocr.json`, 4 s per invoice on the GPU):
+
+| | Result |
+| --- | --- |
+| Header field F1 / line-item cells | **0.928** / **0.951** |
+| GSTINs read exactly | 78% (83% with the v0.8.3 repairs, replayed on the same reads) |
+| Clean invoices sent to review | **13%** (2 of 15; 1 of 15 after v0.8.3) |
+| Planted errors sent to review, right check fired | **93%** (14 of 15) |
+| Wrong total / wrong line / wrong tax type / invalid GSTIN | 4/4, 4/4, 4/4, 2/3 (3/3 after v0.8.3) |
+
+The one clean invoice left (invoice 0) has two misread characters in one GSTIN; telling that
+from a forged number would need a second confusion, which would excuse many more forgeries.
+Better OCR, or the reviewer, is the right answer there.
 
 **Classifier**: 100% on 200 fresh synthetic pages (50 per class). The synthetic classes look very
 different, so this shows the features work, not real-world accuracy; real photos of other

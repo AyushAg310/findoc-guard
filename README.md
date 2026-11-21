@@ -52,13 +52,14 @@ Excel (`findoc export`).
 | --- | --- | --- |
 | Rules | 1.00 / 0.92 / 0.82 | 1.00 / 0.88 / 0.63 |
 | LayoutLMv3 (fine-tuned on an RTX 3050, ~50 ms per invoice) | 1.00 / 0.95 / **0.86** | 1.00 / 0.98 / **0.93** |
-| Real EasyOCR on 30 invoice photos, LayoutLMv3 | 0.87 | 0.95 |
+| Real EasyOCR on 30 invoice photos, LayoutLMv3 | 0.93 | 0.95 |
 
 | Invoice checks (40 per kind), OCR errors 0% / 1% | Result |
 | --- | --- |
 | Clean invoices sent to review | 0% / 15% |
 | Wrong total, wrong line, wrong tax type caught | 100% / 88-98% |
 | Invalid GSTIN sent to review | 90% / 90% |
+| Real EasyOCR, 30 photos: clean sent to review / planted errors caught | 13% / 93% |
 
 The [Phase 7 guide](docs/learn/phase-7-invoices.md#38-results-experimentsresultsphase7json) has
 the 3% numbers, how the false alarms were brought down, and the GPU steps for LayoutLMv3.

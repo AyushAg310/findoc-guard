@@ -1,0 +1,904 @@
+{
+  "real_ocr": {
+    "precision": 0.9395,
+    "recall": 0.9167,
+    "f1": 0.9279,
+    "item_cell_accuracy": 0.9507,
+    "extractor": "layoutlmv3",
+    "sent_to_review_clean": 0.133,
+    "sent_to_review_planted": 0.933,
+    "right_check_planted": 0.933,
+    "gstin_read_exactly": 0.783,
+    "median_seconds": 4.15,
+    "rows": [
+      {
+        "invoice": 0,
+        "planted": null,
+        "seconds": 16.3,
+        "method": "layoutlmv3",
+        "risk_band": "medium",
+        "risk_score": 38,
+        "checks": [
+          {
+            "id": "GSTIN_INVALID",
+            "confidence": 0.9,
+            "reason": "Buyer GSTIN 06OXWFA6742V1ZE: '06OXWFA6742V1ZE': check character is E, should be L."
+          }
+        ],
+        "vendor_gstin": {
+          "true": "08QBWCA0321M3ZV",
+          "read": null,
+          "normalized": null,
+          "valid": false
+        },
+        "buyer_gstin": {
+          "true": "06QXWFA6747V1ZE",
+          "read": "O6OXWFA674ZVIZE",
+          "normalized": "06OXWFA6742V1ZE",
+          "valid": false
+        },
+        "total": {
+          "true": "1665614.48",
+          "read": "1665614.48"
+        }
+      },
+      {
+        "invoice": 1,
+        "planted": "total",
+        "seconds": 3.0,
+        "method": "layoutlmv3",
+        "risk_band": "medium",
+        "risk_score": 38,
+        "checks": [
+          {
+            "id": "INVOICE_MATH",
+            "confidence": 0.85,
+            "reason": "Invoice arithmetic does not add up: subtotal + tax = 616,004.26, total says 619,586.26 (the amount in words agrees with the printed total)."
+          }
+        ],
+        "vendor_gstin": {
+          "true": "33CPNTQ2858F3ZA",
+          "read": "33CPNTQ2858F3ZA",
+          "normalized": "33CPNTQ2858F3ZA",
+          "valid": true
+        },
+        "buyer_gstin": {
+          "true": "33TPTHY5853B1ZD",
+          "read": "33TPTHY5853B1ZD",
+          "normalized": "33TPTHY5853B1ZD",
+          "valid": true
+        },
+        "total": {
+          "true": "619586.26",
+          "read": "619586.26"
+        }
+      },
+      {
+        "invoice": 2,
+        "planted": null,
+        "seconds": 5.2,
+        "method": "layoutlmv3",
+        "risk_band": "low",
+        "risk_score": 0,
+        "checks": [],
+        "vendor_gstin": {
+          "true": "09DJRHO1778V1Z3",
+          "read": "09DJRHO1778V1Z3",
+          "normalized": "09DJRHO1778V1Z3",
+          "valid": true
+        },
+        "buyer_gstin": {
+          "true": "33BQPFV7973X1ZM",
+          "read": "33BQPFV7973X1ZM",
+          "normalized": "33BQPFV7973X1ZM",
+          "valid": true
+        },
+        "total": {
+          "true": "3115474.35",
+          "read": "3115474.35"
+        }
+      },
+      {
+        "invoice": 3,
+        "planted": "lineitem",
+        "seconds": 3.4,
+        "method": "layoutlmv3",
+        "risk_band": "medium",
+        "risk_score": 68,
+        "checks": [
+          {
+            "id": "INVOICE_MATH",
+            "confidence": 0.85,
+            "reason": "Invoice arithmetic does not add up: line 7: 55 x 14808.50 = 814,467.50, not 895,914.25."
+          }
+        ],
+        "vendor_gstin": {
+          "true": "07RGHTX6227G1ZD",
+          "read": "07RGHTX6227G1ZD",
+          "normalized": "07RGHTX6227G1ZD",
+          "valid": true
+        },
+        "buyer_gstin": {
+          "true": "33JHZHV8322M1ZK",
+          "read": "33JHZHV8322M1ZK",
+          "normalized": "33JHZHV8322M1ZK",
+          "valid": true
+        },
+        "total": {
+          "true": "2896418.88",
+          "read": "2896418.88"
+        }
+      },
+      {
+        "invoice": 4,
+        "planted": null,
+        "seconds": 4.7,
+        "method": "layoutlmv3",
+        "risk_band": "low",
+        "risk_score": 0,
+        "checks": [],
+        "vendor_gstin": {
+          "true": "06SDCTL4864K1ZL",
+          "read": "O6SDCTL4864KIZL",
+          "normalized": "06SDCTL4864K1ZL",
+          "valid": true
+        },
+        "buyer_gstin": {
+          "true": "06RWUCX8405Y1Z3",
+          "read": "O6RWUCX8405Y1Z3",
+          "normalized": "06RWUCX8405Y1Z3",
+          "valid": true
+        },
+        "total": {
+          "true": "2308720.16",
+          "read": "2308720.16"
+        }
+      },
+      {
+        "invoice": 5,
+        "planted": "taxsplit",
+        "seconds": 4.4,
+        "method": "layoutlmv3",
+        "risk_band": "high",
+        "risk_score": 70,
+        "checks": [
+          {
+            "id": "GSTIN_INVALID",
+            "confidence": 0.9,
+            "reason": "Vendor GSTIN 19VYAFA1022V2ZW: '19VYAFA1022V2ZW': check character is W, should be B."
+          },
+          {
+            "id": "TAX_TYPE_MISMATCH",
+            "confidence": 0.9,
+            "reason": "Supply both in West Bengal: CGST + SGST expected, IGST charged (wrong tax type)."
+          }
+        ],
+        "vendor_gstin": {
+          "true": "19VYAFA1077V2ZW",
+          "read": "19VYAFA1OZZVZZW",
+          "normalized": "19VYAFA1022V2ZW",
+          "valid": false
+        },
+        "buyer_gstin": {
+          "true": "19OMGCS5468W1ZX",
+          "read": "19OMGCS5468W1ZX",
+          "normalized": "19OMGCS5468W1ZX",
+          "valid": true
+        },
+        "total": {
+          "true": "2324945.92",
+          "read": "2324945.92"
+        }
+      },
+      {
+        "invoice": 6,
+        "planted": null,
+        "seconds": 4.6,
+        "method": "layoutlmv3",
+        "risk_band": "low",
+        "risk_score": 0,
+        "checks": [],
+        "vendor_gstin": {
+          "true": "24YYWFE4889E1ZU",
+          "read": "24YYWFE4889EIZU",
+          "normalized": "24YYWFE4889E1ZU",
+          "valid": true
+        },
+        "buyer_gstin": {
+          "true": "24SKRPB4313Y1ZZ",
+          "read": "24SKRPB4313YIZZ",
+          "normalized": "24SKRPB4313Y1ZZ",
+          "valid": true
+        },
+        "total": {
+          "true": "4589950.72",
+          "read": "4589950.72"
+        }
+      },
+      {
+        "invoice": 7,
+        "planted": "gstin",
+        "seconds": 4.9,
+        "method": "layoutlmv3",
+        "risk_band": "low",
+        "risk_score": 0,
+        "checks": [],
+        "vendor_gstin": {
+          "true": "07AQUCA4401Q2Z0",
+          "read": "@7AQUCA440102Z0",
+          "normalized": null,
+          "valid": false
+        },
+        "buyer_gstin": {
+          "true": "07GYZPQ8607I1ZB",
+          "read": "O7GYZPQ8607I1ZB",
+          "normalized": "07GYZPQ8607I1ZB",
+          "valid": true
+        },
+        "total": {
+          "true": "2021243.84",
+          "read": "2021243.84"
+        }
+      },
+      {
+        "invoice": 8,
+        "planted": null,
+        "seconds": 3.3,
+        "method": "layoutlmv3",
+        "risk_band": "low",
+        "risk_score": 13,
+        "checks": [
+          {
+            "id": "GSTIN_INVALID",
+            "confidence": 0.3,
+            "reason": "Vendor GSTIN 07AEDPI0000R2ZH: '07AEDPI0000R2ZH': check character is H, should be Q; one misread character away from 97AEDPI0000R2ZH (valid), so probably an OCR error: check the printed number."
+          }
+        ],
+        "vendor_gstin": {
+          "true": "07AEDPI9099R2ZH",
+          "read": "O7AEDPIQOQQRZZH",
+          "normalized": "07AEDPI0000R2ZH",
+          "valid": false
+        },
+        "buyer_gstin": {
+          "true": "08ANQPP2583A1ZT",
+          "read": "08ANQPP2583A1ZT",
+          "normalized": "08ANQPP2583A1ZT",
+          "valid": true
+        },
+        "total": {
+          "true": "1044931.20",
+          "read": "1044931.20"
+        }
+      },
+      {
+        "invoice": 9,
+        "planted": "total",
+        "seconds": 4.6,
+        "method": "layoutlmv3",
+        "risk_band": "medium",
+        "risk_score": 36,
+        "checks": [
+          {
+            "id": "INVOICE_MATH",
+            "confidence": 0.85,
+            "reason": "Invoice arithmetic does not add up: subtotal + tax = 1,883,314.72, total says 1,889,044.72 (the amount in words agrees with the printed total)."
+          }
+        ],
+        "vendor_gstin": {
+          "true": "33BKAFQ3218H1Z1",
+          "read": "33BKAFQ3218H1Z1",
+          "normalized": "33BKAFQ3218H1Z1",
+          "valid": true
+        },
+        "buyer_gstin": {
+          "true": "08SCFCT4483U1ZO",
+          "read": "O8SCFCT4483U1ZO",
+          "normalized": "08SCFCT4483U1ZO",
+          "valid": true
+        },
+        "total": {
+          "true": "1889044.72",
+          "read": "1889044.72"
+        }
+      },
+      {
+        "invoice": 10,
+        "planted": null,
+        "seconds": 2.9,
+        "method": "layoutlmv3",
+        "risk_band": "low",
+        "risk_score": 0,
+        "checks": [],
+        "vendor_gstin": {
+          "true": "24RENHX9352H3ZS",
+          "read": "24RENHX9352H3ZS",
+          "normalized": "24RENHX9352H3ZS",
+          "valid": true
+        },
+        "buyer_gstin": {
+          "true": "19CBMCN2463Y1Z2",
+          "read": "19CBMCN2463Y1Z2",
+          "normalized": "19CBMCN2463Y1Z2",
+          "valid": true
+        },
+        "total": {
+          "true": "1369838.40",
+          "read": "1369838.40"
+        }
+      },
+      {
+        "invoice": 11,
+        "planted": "lineitem",
+        "seconds": 4.6,
+        "method": "layoutlmv3",
+        "risk_band": "medium",
+        "risk_score": 68,
+        "checks": [
+          {
+            "id": "INVOICE_MATH",
+            "confidence": 0.85,
+            "reason": "Invoice arithmetic does not add up: line 2: 10 x 6663.00 = 66,630.00, not 666,300.00."
+          }
+        ],
+        "vendor_gstin": {
+          "true": "27BYBHW2715M3ZE",
+          "read": "GSTIN:27BYBHW271SM3ZE",
+          "normalized": null,
+          "valid": false
+        },
+        "buyer_gstin": {
+          "true": "27UDZCZ2812L1ZR",
+          "read": "27UDZCZ2812L1ZR",
+          "normalized": "27UDZCZ2812L1ZR",
+          "valid": true
+        },
+        "total": {
+          "true": "2200033.92",
+          "read": "2200033.92"
+        }
+      },
+      {
+        "invoice": 12,
+        "planted": null,
+        "seconds": 3.1,
+        "method": "layoutlmv3",
+        "risk_band": "low",
+        "risk_score": 0,
+        "checks": [],
+        "vendor_gstin": {
+          "true": "23SVOTM0043K1ZW",
+          "read": "23SVOTMOO43KIZW",
+          "normalized": "23SVOTM0043K1ZW",
+          "valid": true
+        },
+        "buyer_gstin": {
+          "true": "07BDCCU5742P1ZL",
+          "read": "07BDCCU5742P1ZL",
+          "normalized": "07BDCCU5742P1ZL",
+          "valid": true
+        },
+        "total": {
+          "true": "1749741.00",
+          "read": "1749741.00"
+        }
+      },
+      {
+        "invoice": 13,
+        "planted": "taxsplit",
+        "seconds": 2.8,
+        "method": "layoutlmv3",
+        "risk_band": "medium",
+        "risk_score": 45,
+        "checks": [
+          {
+            "id": "GSTIN_INVALID",
+            "confidence": 0.3,
+            "reason": "Vendor GSTIN 23LFETA7324O1ZW: '23LFETA7324O1ZW': check character is W, should be 0; one misread character away from 23LFETA7324Q1ZW (valid), so probably an OCR error: check the printed number."
+          },
+          {
+            "id": "TAX_TYPE_MISMATCH",
+            "confidence": 0.9,
+            "reason": "Supply Madhya Pradesh to Rajasthan: IGST expected, CGST + SGST charged (wrong tax type)."
+          }
+        ],
+        "vendor_gstin": {
+          "true": "23LFETA7324Q1ZW",
+          "read": "23LFETA732401ZW",
+          "normalized": "23LFETA7324O1ZW",
+          "valid": false
+        },
+        "buyer_gstin": {
+          "true": "08BZMTO2593H1ZL",
+          "read": "O8BZMTO2593H1ZL",
+          "normalized": "08BZMTO2593H1ZL",
+          "valid": true
+        },
+        "total": {
+          "true": "829373.48",
+          "read": "829373.48"
+        }
+      },
+      {
+        "invoice": 14,
+        "planted": null,
+        "seconds": 4.4,
+        "method": "layoutlmv3",
+        "risk_band": "low",
+        "risk_score": 0,
+        "checks": [],
+        "vendor_gstin": {
+          "true": "19KHWCH3560W1ZI",
+          "read": "19KHWCH3S6OWIZI",
+          "normalized": "19KHWCH3560W1ZI",
+          "valid": true
+        },
+        "buyer_gstin": {
+          "true": "19JOYFS6682F1Z7",
+          "read": "19JOYFS6682F127",
+          "normalized": "19JOYFS6682F1Z7",
+          "valid": true
+        },
+        "total": {
+          "true": "3407711.36",
+          "read": "3407711.36"
+        }
+      },
+      {
+        "invoice": 15,
+        "planted": "gstin",
+        "seconds": 3.3,
+        "method": "layoutlmv3",
+        "risk_band": "medium",
+        "risk_score": 38,
+        "checks": [
+          {
+            "id": "GSTIN_INVALID",
+            "confidence": 0.9,
+            "reason": "Vendor GSTIN 00QEQTG7930Y1ZP: '00QEQTG7930Y1ZP': unknown state code 00."
+          }
+        ],
+        "vendor_gstin": {
+          "true": "09QEQTG7930Y1ZP",
+          "read": "OQQEQTG7930Y1ZP",
+          "normalized": "00QEQTG7930Y1ZP",
+          "valid": false
+        },
+        "buyer_gstin": {
+          "true": "24DTHHR3669X1ZS",
+          "read": "24DTHHR3669X1ZS",
+          "normalized": "24DTHHR3669X1ZS",
+          "valid": true
+        },
+        "total": {
+          "true": "1982581.76",
+          "read": "1982581.76"
+        }
+      },
+      {
+        "invoice": 16,
+        "planted": null,
+        "seconds": 4.4,
+        "method": "layoutlmv3",
+        "risk_band": "low",
+        "risk_score": 0,
+        "checks": [],
+        "vendor_gstin": {
+          "true": "07WTQPB9308H2ZV",
+          "read": "07WTQPB9308H2ZV",
+          "normalized": "07WTQPB9308H2ZV",
+          "valid": true
+        },
+        "buyer_gstin": {
+          "true": "06WLLPP6511D1ZM",
+          "read": "O6WLLPP6S1IDIZM",
+          "normalized": "06WLLPP6511D1ZM",
+          "valid": true
+        },
+        "total": {
+          "true": "3347102.08",
+          "read": "3347102.08"
+        }
+      },
+      {
+        "invoice": 17,
+        "planted": "total",
+        "seconds": 2.9,
+        "method": "layoutlmv3",
+        "risk_band": "high",
+        "risk_score": 83,
+        "checks": [
+          {
+            "id": "GSTIN_INVALID",
+            "confidence": 0.3,
+            "reason": "Buyer GSTIN 20UYMFO0840F1ZB: '20UYMFO0840F1ZB': check character is B, should be T; one misread character away from 29UYMFO0840F1ZB (valid), so probably an OCR error: check the printed number."
+          },
+          {
+            "id": "INVOICE_MATH",
+            "confidence": 0.85,
+            "reason": "Invoice arithmetic does not add up: subtotal + tax = 594,052.72, total says 597,595.72 (the amount in words agrees with the printed total)."
+          },
+          {
+            "id": "TAX_TYPE_MISMATCH",
+            "confidence": 0.9,
+            "reason": "Supply Karnataka to Jharkhand: IGST expected, CGST + SGST charged (wrong tax type)."
+          }
+        ],
+        "vendor_gstin": {
+          "true": "29ZVOHF2469W3Z1",
+          "read": "29ZVOHF2469W3Z1",
+          "normalized": "29ZVOHF2469W3Z1",
+          "valid": true
+        },
+        "buyer_gstin": {
+          "true": "29UYMFO0840F1ZB",
+          "read": "2QUYMFOO84OFIZB",
+          "normalized": "20UYMFO0840F1ZB",
+          "valid": false
+        },
+        "total": {
+          "true": "597595.72",
+          "read": "597595.72"
+        }
+      },
+      {
+        "invoice": 18,
+        "planted": null,
+        "seconds": 4.4,
+        "method": "layoutlmv3",
+        "risk_band": "low",
+        "risk_score": 0,
+        "checks": [],
+        "vendor_gstin": {
+          "true": "06MKOCU2497H1ZW",
+          "read": "O6MKOCU2497HIZW",
+          "normalized": "06MKOCU2497H1ZW",
+          "valid": true
+        },
+        "buyer_gstin": {
+          "true": "06QUUFR8433H1Z3",
+          "read": "O6QUUFR8433H1Z3",
+          "normalized": "06QUUFR8433H1Z3",
+          "valid": true
+        },
+        "total": {
+          "true": "1551458.16",
+          "read": "1551458.16"
+        }
+      },
+      {
+        "invoice": 19,
+        "planted": "lineitem",
+        "seconds": 4.0,
+        "method": "layoutlmv3",
+        "risk_band": "medium",
+        "risk_score": 68,
+        "checks": [
+          {
+            "id": "INVOICE_MATH",
+            "confidence": 0.85,
+            "reason": "Invoice arithmetic does not add up: line 3: 17 x 17320.50 = 294,448.50, not 265,003.65."
+          }
+        ],
+        "vendor_gstin": {
+          "true": "33EXUHC6252G1ZS",
+          "read": "33EXUHC625261ZS",
+          "normalized": "33EXUHC6252G1ZS",
+          "valid": true
+        },
+        "buyer_gstin": {
+          "true": "33QLZHI8176E1ZM",
+          "read": "33QLZHI8176E1ZM",
+          "normalized": "33QLZHI8176E1ZM",
+          "valid": true
+        },
+        "total": {
+          "true": "1332034.65",
+          "read": "1332034.65"
+        }
+      },
+      {
+        "invoice": 20,
+        "planted": null,
+        "seconds": 4.5,
+        "method": "layoutlmv3",
+        "risk_band": "low",
+        "risk_score": 0,
+        "checks": [],
+        "vendor_gstin": {
+          "true": "06ZCJPL4707M3ZL",
+          "read": "06ZCJPL4707M3ZL",
+          "normalized": "06ZCJPL4707M3ZL",
+          "valid": true
+        },
+        "buyer_gstin": {
+          "true": "06SQEFT3668T1ZV",
+          "read": "O6SQEFT3668T1ZV",
+          "normalized": "06SQEFT3668T1ZV",
+          "valid": true
+        },
+        "total": {
+          "true": "3288529.92",
+          "read": "3288529.92"
+        }
+      },
+      {
+        "invoice": 21,
+        "planted": "taxsplit",
+        "seconds": 4.8,
+        "method": "layoutlmv3",
+        "risk_band": "medium",
+        "risk_score": 32,
+        "checks": [
+          {
+            "id": "TAX_TYPE_MISMATCH",
+            "confidence": 0.9,
+            "reason": "Supply Delhi to Maharashtra: IGST expected, CGST + SGST charged (wrong tax type)."
+          }
+        ],
+        "vendor_gstin": {
+          "true": "07CENCK0385G2Z2",
+          "read": "07CENCKO3856272",
+          "normalized": "07CENCK0385G2Z2",
+          "valid": true
+        },
+        "buyer_gstin": {
+          "true": "27VWLPO3443D1ZX",
+          "read": "27VWLPO3443D1ZX",
+          "normalized": "27VWLPO3443D1ZX",
+          "valid": true
+        },
+        "total": {
+          "true": "4802083.84",
+          "read": "4802083.84"
+        }
+      },
+      {
+        "invoice": 22,
+        "planted": null,
+        "seconds": 4.3,
+        "method": "layoutlmv3",
+        "risk_band": "low",
+        "risk_score": 0,
+        "checks": [],
+        "vendor_gstin": {
+          "true": "08WNCHC7417T3ZB",
+          "read": "08WNCHC7417T3ZB",
+          "normalized": "08WNCHC7417T3ZB",
+          "valid": true
+        },
+        "buyer_gstin": {
+          "true": "08EFQFF2568H1ZM",
+          "read": "O8EFQFF2S68H1ZM",
+          "normalized": "08EFQFF2568H1ZM",
+          "valid": true
+        },
+        "total": {
+          "true": "1908595.84",
+          "read": "1908595.84"
+        }
+      },
+      {
+        "invoice": 23,
+        "planted": "gstin",
+        "seconds": 3.5,
+        "method": "layoutlmv3",
+        "risk_band": "high",
+        "risk_score": 70,
+        "checks": [
+          {
+            "id": "GSTIN_INVALID",
+            "confidence": 0.9,
+            "reason": "Vendor GSTIN 02XJTPY9002R1ZK: '02XJTPY9002R1ZK': check character is K, should be N."
+          },
+          {
+            "id": "TAX_TYPE_MISMATCH",
+            "confidence": 0.9,
+            "reason": "Supply Himachal Pradesh to Delhi: IGST expected, CGST + SGST charged (wrong tax type)."
+          }
+        ],
+        "vendor_gstin": {
+          "true": "07XJTPY9902R1ZK",
+          "read": "OZXJTPY9QO2RIZK",
+          "normalized": "02XJTPY9002R1ZK",
+          "valid": false
+        },
+        "buyer_gstin": {
+          "true": "07ZLUHV5887T1Z1",
+          "read": "07ZLUHV5887T1Z1",
+          "normalized": "07ZLUHV5887T1Z1",
+          "valid": true
+        },
+        "total": {
+          "true": "1995053.76",
+          "read": "1995053.76"
+        }
+      },
+      {
+        "invoice": 24,
+        "planted": null,
+        "seconds": 3.5,
+        "method": "layoutlmv3",
+        "risk_band": "low",
+        "risk_score": 0,
+        "checks": [],
+        "vendor_gstin": {
+          "true": "27DYXFX7903N3ZJ",
+          "read": "27DYXFX7903N3ZJ",
+          "normalized": "27DYXFX7903N3ZJ",
+          "valid": true
+        },
+        "buyer_gstin": {
+          "true": "29WLJCD8632G1Z3",
+          "read": "29WLJCD86326123",
+          "normalized": "29WLJCD8632G1Z3",
+          "valid": true
+        },
+        "total": {
+          "true": "3503569.86",
+          "read": "3503569.86"
+        }
+      },
+      {
+        "invoice": 25,
+        "planted": "total",
+        "seconds": 2.8,
+        "method": "layoutlmv3",
+        "risk_band": "medium",
+        "risk_score": 36,
+        "checks": [
+          {
+            "id": "INVOICE_MATH",
+            "confidence": 0.85,
+            "reason": "Invoice arithmetic does not add up: subtotal + tax = 687,723.52, total says 690,143.52 (the amount in words agrees with the printed total)."
+          }
+        ],
+        "vendor_gstin": {
+          "true": "24CLBFV2688Y2ZB",
+          "read": "24CLBFV2688Y2ZB",
+          "normalized": "24CLBFV2688Y2ZB",
+          "valid": true
+        },
+        "buyer_gstin": {
+          "true": "24QAUCJ9380Q1ZX",
+          "read": "24QAUCJ938OQ1ZX",
+          "normalized": "24QAUCJ9380Q1ZX",
+          "valid": true
+        },
+        "total": {
+          "true": "690143.52",
+          "read": "690143.52"
+        }
+      },
+      {
+        "invoice": 26,
+        "planted": null,
+        "seconds": 3.0,
+        "method": "layoutlmv3",
+        "risk_band": "low",
+        "risk_score": 13,
+        "checks": [
+          {
+            "id": "GSTIN_INVALID",
+            "confidence": 0.3,
+            "reason": "Vendor GSTIN 08MCVFR1250E5ZM: '08MCVFR1250E5ZM': check character is M, should be K; one misread character away from 08MCVFR1250E3ZM (valid), so probably an OCR error: check the printed number."
+          }
+        ],
+        "vendor_gstin": {
+          "true": "08MCVFR1250E3ZM",
+          "read": "O8MCVFR1ZSOESZM",
+          "normalized": "08MCVFR1250E5ZM",
+          "valid": false
+        },
+        "buyer_gstin": {
+          "true": "08MHFFP0441Y1ZS",
+          "read": "O8MHFFPO441Y1ZS",
+          "normalized": "08MHFFP0441Y1ZS",
+          "valid": true
+        },
+        "total": {
+          "true": "289581.44",
+          "read": "289581.44"
+        }
+      },
+      {
+        "invoice": 27,
+        "planted": "lineitem",
+        "seconds": 3.0,
+        "method": "layoutlmv3",
+        "risk_band": "medium",
+        "risk_score": 68,
+        "checks": [
+          {
+            "id": "INVOICE_MATH",
+            "confidence": 0.85,
+            "reason": "Invoice arithmetic does not add up: line 3: 22 x 7839.00 = 172,458.00, not 189,703.80."
+          }
+        ],
+        "vendor_gstin": {
+          "true": "19CKBPG3955A3ZE",
+          "read": "19CKBPG395SA3ZE",
+          "normalized": "19CKBPG3955A3ZE",
+          "valid": true
+        },
+        "buyer_gstin": {
+          "true": "19MQYTH2200N1ZV",
+          "read": "19MQYTH2ZOONIZV",
+          "normalized": "19MQYTH2200N1ZV",
+          "valid": true
+        },
+        "total": {
+          "true": "499049.04",
+          "read": "499049.04"
+        }
+      },
+      {
+        "invoice": 28,
+        "planted": null,
+        "seconds": 3.1,
+        "method": "layoutlmv3",
+        "risk_band": "medium",
+        "risk_score": 50,
+        "checks": [
+          {
+            "id": "GSTIN_INVALID",
+            "confidence": 0.3,
+            "reason": "Vendor GSTIN 33LROCN2568R2Z9: '33LROCN2568R2Z9': check character is 9, should be B; one misread character away from 33LRQCN2568R2Z9 (valid), so probably an OCR error: check the printed number."
+          },
+          {
+            "id": "GSTIN_INVALID",
+            "confidence": 0.9,
+            "reason": "Buyer GSTIN 00EXVTM3980P1ZM: '00EXVTM3980P1ZM': unknown state code 00."
+          }
+        ],
+        "vendor_gstin": {
+          "true": "33LRQCN2568R2Z9",
+          "read": "33LROCN2568R2Z9",
+          "normalized": "33LROCN2568R2Z9",
+          "valid": false
+        },
+        "buyer_gstin": {
+          "true": "09EXVTM3989P1ZM",
+          "read": "@OQEXVTM398QP1ZM",
+          "normalized": "00EXVTM3980P1ZM",
+          "valid": false
+        },
+        "total": {
+          "true": "3228305.95",
+          "read": "3228305.95"
+        }
+      },
+      {
+        "invoice": 29,
+        "planted": "taxsplit",
+        "seconds": 4.5,
+        "method": "layoutlmv3",
+        "risk_band": "medium",
+        "risk_score": 32,
+        "checks": [
+          {
+            "id": "TAX_TYPE_MISMATCH",
+            "confidence": 0.9,
+            "reason": "Supply Tamil Nadu to Rajasthan: IGST expected, CGST + SGST charged (wrong tax type)."
+          }
+        ],
+        "vendor_gstin": {
+          "true": "33QEBTG6493R1ZB",
+          "read": "33QEBTG6493RIZB",
+          "normalized": "33QEBTG6493R1ZB",
+          "valid": true
+        },
+        "buyer_gstin": {
+          "true": "08LUDTQ1922Y1Z6",
+          "read": "O8LUDTQ1922Y126",
+          "normalized": "08LUDTQ1922Y1Z6",
+          "valid": true
+        },
+        "total": {
+          "true": "4262850.90",
+          "read": "4262850.90"
+        }
+      }
+    ]
+  }
+}
