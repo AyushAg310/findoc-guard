@@ -285,7 +285,9 @@ def test_upload_process_and_view(api: TestClient, users: dict, cheque_jpg: bytes
     d = api.get(f"/api/v1/documents/{doc_id}", headers=sub).json()
     assert d["status"] in ("processed", "needs_review"), d["error"]
     assert d["doc_type"] == "cheque" and d["page_frame"] == "template" and d["progress"] == 1.0
-    assert {"page", "flat", "original", "annotated"} <= set(d["images"])
+    assert {"page", "flat", "original", "annotated", "overlay"} <= set(d["images"])
+    ov = api.get(f"/api/v1/documents/{doc_id}/image?variant=overlay", headers=sub).content
+    assert cv2.imdecode(np.frombuffer(ov, np.uint8), cv2.IMREAD_UNCHANGED).shape[2] == 4
     assert [s["stage"] for s in d["stages"]][:2] == ["load", "video"]
     img = api.get(f"/api/v1/documents/{doc_id}/image?variant=page", headers=sub)
     assert img.status_code == 200 and img.content[:4] == b"\x89PNG"
@@ -519,3 +521,64 @@ def test_serves_built_frontend(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, 
     assert c.get("/assets/app.js").text == "console.log(1)"
     assert "review ui" in c.get("/../../etc/passwd").text  # no escaping the folder
     assert c.get("/api/v1/nothing").status_code == 404
+
+
+def test_templates(api: TestClient, users: dict, tmp_path: Path) -> None:
+    import json
+
+    from findoc.localize.templates import builtin_store
+
+    adm, rev = users["admin"], users["reviewer"]
+    listed = api.get("/api/v1/templates", headers=rev).json()
+    assert len(listed) == 12 and all(t["builtin"] for t in listed)
+    assert api.get("/api/v1/templates/standard-layout", headers=rev).status_code == 403
+    layout = api.get("/api/v1/templates/standard-layout", headers=adm).json()
+    assert {f["name"] for f in layout} >= {"payee", "date", "micr"}
+    img = api.get("/api/v1/templates/ARVL/image", headers=rev)
+    assert img.status_code == 200 and img.headers["content-type"] == "image/jpeg"
+
+    blank = builtin_store().get("KVRY").reference
+    blank = cv2.resize(blank, (1218, 552))  # any size: scaled to the standard width
+    files = {"image": ("leaf.png", png_bytes(blank))}
+    form = {
+        "name": "My Test Bank",
+        "code": "mtbk",
+        "fields": json.dumps([{"name": f["name"], "box": f["box"]} for f in layout]),
+    }
+    assert api.post("/api/v1/templates", headers=rev, data=form, files=files).status_code == 403
+    bad = form | {"fields": json.dumps([{"name": "payee", "box": [0, 0, 1, 1]}])}
+    r = api.post("/api/v1/templates", headers=adm, data=bad, files=files)
+    assert r.status_code == 422 and "Missing" in r.json()["detail"]
+    r = api.post("/api/v1/templates", headers=adm, data=form | {"code": "ARVL"}, files=files)
+    assert r.status_code == 409
+    tall = {"image": ("tall.png", png_bytes(np.full((800, 400, 3), 255, np.uint8)))}
+    assert api.post("/api/v1/templates", headers=adm, data=form, files=tall).status_code == 422
+    r = api.post("/api/v1/templates", headers=adm, data=form, files=files)
+    assert r.status_code == 201 and r.json()["id"] == "MTBK" and r.json()["size"][0] == 1624
+    listed = api.get("/api/v1/templates", headers=rev).json()
+    assert len(listed) == 13 and listed[0]["id"] == "MTBK" and not listed[0]["builtin"]
+    assert api.delete("/api/v1/templates/ARVL", headers=adm).status_code == 409
+    assert api.delete("/api/v1/templates/MTBK", headers=adm).status_code == 204
+    assert len(api.get("/api/v1/templates", headers=rev).json()) == 12
+
+
+def test_bulk_decisions_and_stats(api: TestClient, users: dict, cheque_jpg: bytes) -> None:
+    rev = users["reviewer"]
+    a = upload(api, users["submitter"], cheque_jpg)
+    b = upload(api, users["submitter"], cheque_jpg)
+    put_result(a, "processed")
+    body = {"ids": [a, b, "nope"], "decision": "approved"}
+    r = api.post("/api/v1/documents/bulk-decision", headers=rev, json=body).json()
+    assert r["done"] == [a] and r["skipped"] == {b: "is queued", "nope": "not found"}
+    assert (
+        api.post(
+            "/api/v1/documents/bulk-decision", headers=users["submitter"], json=body
+        ).status_code
+        == 403
+    )
+    body = {"ids": [b], "decision": "rejected"}
+    assert api.post("/api/v1/documents/bulk-decision", headers=rev, json=body).status_code == 422
+    s = api.get("/api/v1/documents/stats", headers=rev).json()
+    assert len(s["daily"]) == 14 and s["daily"][-1]["received"] == 2
+    assert s["daily"][-1]["decided"] == 1 and s["by_check"] == {"AMOUNT_MISMATCH": 1}
+    assert sum(s["risk_histogram"]) == 1 and s["risk_histogram"][7] == 1

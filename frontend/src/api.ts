@@ -73,6 +73,24 @@ export interface Stats {
   by_type: Record<string, number>;
   average_risk: number | null;
   open_reviews: number;
+  daily: { date: string; received: number; decided: number; flagged: number }[];
+  by_check: Record<string, number>;
+  median_seconds: number | null;
+  risk_histogram: number[];
+}
+
+export interface TemplateField {
+  name: string;
+  kind?: string;
+  box: [number, number, number, number]; // x0, y0, x1, y1 as fractions of the leaf
+}
+
+export interface ChequeTemplate {
+  id: string;
+  name: string;
+  builtin: boolean;
+  size: [number, number];
+  fields: TemplateField[];
 }
 
 export interface AuditEntry {
@@ -147,6 +165,12 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
 const json = (body: unknown) => JSON.stringify(body);
 
+async function blobUrl(path: string): Promise<string> {
+  const res = await fetch(path, { headers: session.token ? { Authorization: `Bearer ${session.token}` } : {} });
+  if (!res.ok) throw new ApiError(res.status, "Image not available");
+  return URL.createObjectURL(await res.blob());
+}
+
 export const api = {
   async login(email: string, password: string) {
     const body = new URLSearchParams({ username: email, password });
@@ -174,16 +198,58 @@ export const api = {
     request<DocDetail>(`/api/v1/documents/${id}/fields`, { method: "PATCH", body: json({ fields }) }),
   decide: (id: string, decision: string, comment: string) =>
     request<DocDetail>(`/api/v1/documents/${id}/decision`, { method: "POST", body: json({ decision, comment }) }),
+  bulkDecide: (ids: string[], decision: string, comment = "") =>
+    request<{ done: string[]; skipped: Record<string, string> }>("/api/v1/documents/bulk-decision", {
+      method: "POST",
+      body: json({ ids, decision, comment }),
+    }),
   retry: (id: string) => request<DocSummary>(`/api/v1/documents/${id}/retry`, { method: "POST" }),
 
   /** Images need the Authorization header, so they're fetched as blobs, not plain <img src>. */
-  async image(id: string, variant: string): Promise<string> {
-    const res = await fetch(`/api/v1/documents/${id}/image?variant=${variant}`, {
-      headers: session.token ? { Authorization: `Bearer ${session.token}` } : {},
+  image: (id: string, variant: string) => blobUrl(`/api/v1/documents/${id}/image?variant=${variant}`),
+  templateImage: (id: string) => blobUrl(`/api/v1/templates/${id}/image`),
+
+  /** Upload with progress (fetch can't report upload progress; XMLHttpRequest can). */
+  uploadWithProgress(file: File, register: boolean, account: string, onProgress: (f: number) => void) {
+    return new Promise<{ id: string; status: string; duplicate_of: string | null }>((resolve, reject) => {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("register", String(register));
+      if (account) form.append("account", account);
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "/api/v1/documents");
+      if (session.token) xhr.setRequestHeader("Authorization", `Bearer ${session.token}`);
+      xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(e.loaded / e.total);
+      xhr.onload = () => {
+        let body: { detail?: string } & Record<string, unknown> = {};
+        try {
+          body = JSON.parse(xhr.responseText);
+        } catch {
+          /* not JSON */
+        }
+        if (xhr.status === 401) {
+          session.token = null;
+          onUnauthorized();
+        }
+        if (xhr.status >= 200 && xhr.status < 300) resolve(body as never);
+        else reject(new ApiError(xhr.status, typeof body.detail === "string" ? body.detail : xhr.statusText));
+      };
+      xhr.onerror = () => reject(new ApiError(0, "Network error: is the server running?"));
+      xhr.send(form);
     });
-    if (!res.ok) throw new ApiError(res.status, "Image not available");
-    return URL.createObjectURL(await res.blob());
   },
+
+  templates: () => request<ChequeTemplate[]>("/api/v1/templates"),
+  standardLayout: () => request<TemplateField[]>("/api/v1/templates/standard-layout"),
+  createTemplate(name: string, code: string, fields: TemplateField[], image: File) {
+    const form = new FormData();
+    form.append("name", name);
+    form.append("code", code);
+    form.append("fields", JSON.stringify(fields.map((f) => ({ name: f.name, box: f.box }))));
+    form.append("image", image);
+    return request<ChequeTemplate>("/api/v1/templates", { method: "POST", body: form });
+  },
+  deleteTemplate: (id: string) => request<void>(`/api/v1/templates/${id}`, { method: "DELETE" }),
 
   async exportFile(format: "json" | "xlsx", filters: { status?: string[]; band?: string[] }) {
     const ex = await request<{ id: string; count: number; download: string }>("/api/v1/exports", {

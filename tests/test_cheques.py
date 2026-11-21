@@ -277,9 +277,17 @@ def test_custom_template_dir_is_used(tmp_path: Path, monkeypatch: pytest.MonkeyP
     from findoc.config import get_settings
     from findoc.localize.templates import default_store
 
-    only = TemplateStore([builtin_store().get("ARVL")])
-    only.save(tmp_path)
-    assert [t.id for t in default_store(tmp_path)] == ["ARVL"]
+    base = builtin_store().get("ARVL")
+    # a custom bank, saved at half size: loaded back at the standard width, boxes scaled
+    small = cv2.resize(base.reference, (812, 368))
+    fields = [type(f)(f.name, tuple(v // 2 for v in f.box), f.kind, f.allowlist, f.cells)
+              for f in base.fields]  # fmt: skip
+    TemplateStore([ChequeTemplate("ZZZB", "My Bank", small, fields)]).save(tmp_path)
+    store = default_store(tmp_path)
+    assert len(store) == len(BANKS) + 1  # added to the built-in banks, not replacing them
+    custom = store.get("ZZZB")
+    assert custom.size == base.size and custom.field("payee").box == tuple(
+        v // 2 * 2 for v in base.field("payee").box)  # fmt: skip
     assert len(default_store(tmp_path / "missing")) == len(BANKS)
     assert isinstance(next(iter(default_store(None))), ChequeTemplate)
     get_settings.cache_clear()

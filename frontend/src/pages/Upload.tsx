@@ -2,7 +2,18 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, type DocSummary } from "../api";
 import { RiskBadge, StatusBadge } from "../components/bits";
-import { STAGE_LABEL, ago } from "../format";
+import { STAGE_LABEL, ago, bytes } from "../format";
+import { useToast } from "../ui";
+
+interface Sending {
+  key: number;
+  name: string;
+  size: number;
+  thumb: string | null;
+  progress: number;
+  state: "sending" | "done" | "error";
+  note?: string;
+}
 
 const ACCEPT = "image/jpeg,image/png,image/webp,image/bmp,image/tiff,video/mp4,video/quicktime,video/x-msvideo,video/webm";
 
@@ -11,7 +22,9 @@ export default function Upload() {
   const [over, setOver] = useState(false);
   const [register, setRegister] = useState(false);
   const [account, setAccount] = useState("");
-  const [messages, setMessages] = useState<{ kind: "error" | "note"; text: string }[]>([]);
+  const [sending, setSending] = useState<Sending[]>([]);
+  const toast = useToast();
+  const counter = useRef(0);
   const [rows, setRows] = useState<DocSummary[]>([]);
   const input = useRef<HTMLInputElement>(null);
 
@@ -29,19 +42,38 @@ export default function Upload() {
     return () => clearInterval(t);
   }, [load, busy]);
 
+  function patch(key: number, p: Partial<Sending>) {
+    setSending((all) => all.map((s) => (s.key === key ? { ...s, ...p } : s)));
+  }
+
   async function send(files: FileList | null) {
     if (!files?.length) return;
-    const notes: typeof messages = [];
-    for (const f of Array.from(files)) {
-      try {
-        const r = await api.upload(f, register, account.trim());
-        if (r.duplicate_of) notes.push({ kind: "note", text: `${f.name}: you uploaded this exact file before.` });
-      } catch (e) {
-        notes.push({ kind: "error", text: `${f.name}: ${e instanceof Error ? e.message : "upload failed"}` });
-      }
-    }
-    setMessages(notes);
+    const list = Array.from(files).map((f) => ({
+      file: f,
+      item: {
+        key: ++counter.current,
+        name: f.name,
+        size: f.size,
+        thumb: f.type.startsWith("image/") ? URL.createObjectURL(f) : null,
+        progress: 0,
+        state: "sending" as const,
+      },
+    }));
+    setSending((s) => [...list.map((x) => x.item), ...s].slice(0, 12));
     if (input.current) input.current.value = "";
+    let ok = 0;
+    await Promise.all(
+      list.map(async ({ file, item }) => {
+        try {
+          const r = await api.uploadWithProgress(file, register, account.trim(), (p) => patch(item.key, { progress: p }));
+          ok++;
+          patch(item.key, { state: "done", progress: 1, note: r.duplicate_of ? "You uploaded this exact file before" : "Queued for processing" });
+        } catch (e) {
+          patch(item.key, { state: "error", note: e instanceof Error ? e.message : "Upload failed" });
+        }
+      }),
+    );
+    if (ok) toast.show(`Uploaded ${ok} file${ok > 1 ? "s" : ""}; processing has started`);
     load();
   }
 
@@ -75,11 +107,36 @@ export default function Upload() {
             </span>
             <input ref={input} type="file" multiple accept={ACCEPT} className="visually-hidden" onChange={(e) => send(e.target.files)} />
           </label>
-          {messages.map((m, i) => (
-            <p key={i} className={m.kind === "error" ? "error-box" : "note-box"} role={m.kind === "error" ? "alert" : "status"}>
-              {m.text}
-            </p>
-          ))}
+          <label className="btn camera">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+              <path d="M2 5h3l1.5-2h3L11 5h3v8H2z" />
+              <circle cx="8" cy="9" r="2.5" />
+            </svg>
+            Take a photo
+            <input type="file" accept="image/*" capture="environment" className="visually-hidden" onChange={(e) => send(e.target.files)} />
+          </label>
+          {sending.length > 0 && (
+            <ul className="sending" aria-label="Uploads in progress">
+              {sending.map((s) => (
+                <li key={s.key} className={s.state}>
+                  <span className="thumb">{s.thumb ? <img src={s.thumb} alt="" /> : <span className="vid">▶</span>}</span>
+                  <span className="meta">
+                    <span className="file">{s.name}</span>
+                    <span className="small muted">
+                      {bytes(s.size)}
+                      {s.note ? ` · ${s.note}` : s.state === "sending" ? ` · ${Math.round(s.progress * 100)}%` : ""}
+                    </span>
+                    <span className="progress" style={{ width: "100%" }}>
+                      <span style={{ width: `${Math.round(s.progress * 100)}%` }} />
+                    </span>
+                  </span>
+                  <span className="state" aria-label={s.state}>
+                    {s.state === "done" ? "✓" : s.state === "error" ? "!" : ""}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         <div className="options">
           <h2>Cheque options</h2>

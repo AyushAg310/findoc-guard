@@ -146,6 +146,17 @@ class DecisionIn(BaseModel):
     comment: str = Field(default="", max_length=2000)
 
 
+class BulkDecisionIn(BaseModel):
+    ids: list[str] = Field(min_length=1, max_length=200)
+    decision: Literal["approved", "rejected", "escalated"]
+    comment: str = Field(default="", max_length=2000)
+
+
+class BulkDecisionOut(BaseModel):
+    done: list[str]
+    skipped: dict[str, str]  # id -> why
+
+
 class ExportIn(BaseModel):
     format: Literal["json", "xlsx"] = "xlsx"
     status: list[str] | None = None
@@ -167,6 +178,10 @@ class Stats(BaseModel):
     by_type: dict[str, int]
     average_risk: float | None
     open_reviews: int
+    daily: list[dict[str, Any]] = []  # last 14 days: date, received, decided, flagged
+    by_check: dict[str, int] = {}  # how often each check fired (last 1000 processed)
+    median_seconds: float | None = None  # processing time, last 1000 processed
+    risk_histogram: list[int] = []  # documents per 10-point risk bucket (0-9, ..., 90-100)
 
 
 class AuditOut(BaseModel):

@@ -3,6 +3,44 @@
 All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org/);
 each build phase is released as a minor version.
 
+## [0.9.1] - Review desk upgrade, more banks, template editor
+
+### Added
+- **Review UI**:
+  - command palette (Ctrl/Cmd+K: search documents, jump anywhere), shortcuts help (?), G-then-key
+    navigation;
+  - toasts, dark mode, loading skeletons, an error boundary, and code-split pages;
+  - **Overview** page: documents per day, risk-score histogram, why documents are flagged,
+    high-risk documents waiting (hand-made SVG charts);
+  - queue: sortable columns, row selection and **bulk approve / reject / escalate**
+    (`POST /api/v1/documents/bulk-decision`);
+  - review screen:
+    - **zoom and pan** (scroll, drag, double-click, + / − / 0);
+    - the **tamper heatmap as a transparent overlay** on the page with an opacity slider (H);
+    - J / K to step through the queue, and "then open the next" after a decision;
+    - a stage timeline;
+  - upload: per-file progress with thumbnails, and **Take a photo** (phone camera).
+- **8 more fictional banks** (12 in all), with new security backgrounds (rosette, mesh, dots)
+  and logos. All 144 synthetic test photos are matched to the right bank.
+- **Template editor** (FR-APP-08): `GET/POST/DELETE /api/v1/templates`. An admin uploads a
+  blank leaf, drags the field boxes, and the bank is recognised from the next upload (tested
+  end to end with a bank the code doesn't know). Template images are served with the account
+  number and MICR covered.
+- `GET /api/v1/documents/stats` adds per-day counts, check frequencies, a risk histogram and
+  the median processing time.
+
+### Changed
+- Custom templates (`FINDOC_TEMPLATES_DIR`, now `data/templates` by default and git-ignored)
+  are **added to** the built-in banks instead of replacing them, and are scaled to the
+  standard leaf width.
+- Matching compares a cheque with every bank, so it takes longer as banks are added (~1 s with
+  12-13 banks on a 2-core machine).
+
+### Fixed
+- A phone **video** of a genuine cheque was scored "high risk" by the tamper check (page score
+  1.00). The tamper model reads JPEG traces, and video frames are H.264-compressed. For videos
+  the check now reports "not checked" and keeps the heatmap for review only.
+
 ## [0.9.0] - Phase 8: the product
 
 ### Added

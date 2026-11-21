@@ -383,6 +383,68 @@ no job failed, was lost or ran twice.
 **Tests:** 15 API tests and 4 UI tests. The API tests pass on SQLite and on PostgreSQL 16. Core
 coverage stays above 90%.
 
+### 3.13 v0.9.1: the review desk upgrade, more banks, the template editor
+
+**Frontend files added:**
+
+| File | What |
+| --- | --- |
+| `src/ui.tsx` | Theme (light/dark, remembered, follows the system by default), toasts, a reusable `Dialog` (focus moves in, Esc closes, focus returns), the **command palette** (Ctrl/Cmd+K: documents searched as you type, plus commands; arrow keys + Enter; ARIA combobox), the shortcuts dialog, global keys, and `reviewList`, the queue order the review screen steps through |
+| `src/components/ZoomCanvas.tsx` | Pan and zoom with one CSS transform: `translate(x, y) scale(s)`. Zooming at the pointer keeps the point under it still: `x' = px − (px − x)·k`. Wheel events need a native listener with `{passive: false}`, because React's are passive and can't stop the page scrolling. A drag of more than 4 px is a pan, not a click on a field box. |
+| `src/components/charts.tsx` | Three SVG charts, no library: grouped bars per day, a risk histogram coloured by band, horizontal bars. Each has an `aria-label` with the numbers and a hover readout. |
+| `src/pages/Overview.tsx` | The operations page |
+| `src/pages/Templates.tsx` | Bank cards and the **template editor**. Boxes are stored as fractions of the image (0..1), so the editor works at any image size. Pointer positions are mapped into SVG coordinates with `getScreenCTM().inverse()`. Drag moves a box, the corner handle resizes it, the arrow keys nudge the selected one. |
+
+**What changed in the existing screens:**
+- **Queue:** sorting (state in the URL, so it survives reloads and can be shared), checkboxes
+  only on documents that can still be decided, and a bulk bar. A rejection or escalation asks
+  for one comment, saved with every document.
+- **Review:**
+  - **Heatmap overlay.** The worker now also saves `overlay.png`, the tamper map as a
+    transparent BGRA image warped into the same frame as `page.png` (template coordinates for
+    a cheque). The browser lays it over the page with an opacity slider, so a reviewer sees
+    the suspicious region on the fields themselves.
+  - **Navigation.** "Then open the next" moves on after a decision, and the toast has a "Go
+    back" link.
+- **Upload:** files go up with `XMLHttpRequest`, because `fetch` can't report upload progress.
+  `capture="environment"` opens the phone's back camera.
+- **Lazy loading:** pages few people open (Overview, banks, admin) are separate bundles, loaded
+  on demand with `React.lazy`.
+
+**Banks** (`findoc/synth/cheque.py`): `BankStyle` gains `pattern` (`waves`, `rosette`, `mesh`,
+`dots`) and `branch`, and there are four new logo shapes. The names are invented on purpose:
+synthetic look-alikes of real banks' cheques are how forgeries start, so real banks come in
+only as local templates. With 12 banks, all 144 synthetic test photos were identified
+correctly.
+
+**Template store** (`findoc/localize/templates.py`):
+- `default_store` now merges the built-in banks with the custom folder. Before, any custom
+  template hid all the built-ins.
+- `custom_store` caches the folder and re-reads it only when a `template.json` changes (the key
+  is the files' modification times).
+- `ChequeTemplate.scaled()` brings every template to 1624 px wide, because registration
+  compares a photo with all templates at one scale.
+
+**Templates API** (`app/routers/templates.py`):
+- Upload checks: an image that decodes, a leaf-like aspect ratio (1.6 to 2.8), a 4-letter code
+  that isn't a built-in, known field names, and the five fields the cheque checks need.
+- Kind, character allowlist and date cells come from the standard layout by field name, so the
+  admin only places boxes.
+- A personalised leaf carries the holder's account number, so template images are served with
+  the same redaction as document images.
+
+**Video tamper fix** (`findoc/fraud/stages.py`): your real cheque video scored 1.00 on the
+tamper check and was sent to review as high risk. The model was trained on JPEG
+re-compression traces, but a video frame has been through H.264, so every block looks
+"different". For video input the check is now `fired=False` with a reason, and the heatmap is
+kept for a person to look at. The honest fix is a tamper model trained on video frames (future
+work).
+
+**Cost of more banks.** Identification compares SIFT features with every template, so time
+grows linearly with the number of banks: about 0.2 s with 4 on a laptop, about 1 s with 12-13
+on a 2-core machine. With many banks you would shortlist first, for example with a global
+descriptor (colour histogram, or a small CNN embedding), then run SIFT only on the top few.
+
 ## 4. Concepts used in this phase
 
 - **REST and status codes.**
@@ -447,6 +509,13 @@ coverage stays above 90%.
 6. Change `REDACT["account_number"]` to `1.0`, reprocess a cheque, and look at the page image.
    Which test fails, and what does it check?
 
+7. Press **Ctrl K**, type part of a file name, press Enter. Then open a cheque, press **H**,
+   and drag the heatmap slider. Scroll on the page to zoom and drag to move.
+8. As an admin, open **Cheque banks → Add a bank**. Upload a scan of a blank leaf (cover the
+   account number first if it's personalised), move the boxes onto the fields, and save.
+   Upload a filled cheque of that bank: which template does the processing log say matched,
+   and with how many inliers?
+
 ## 6. Viva and interview questions
 
 **Q: Why is the upload answered with 202 and not the result?**
@@ -505,3 +574,14 @@ metadata and anything appended to the file.
 So you can always see what the machine read and what a person changed. That's the audit
 requirement, and it is also training data: every correction is a labelled error for the next
 model.
+
+**Q: How does the zoom keep the point under the mouse still?**
+The content is drawn with `translate(x, y) scale(s)`. A screen point p shows the content point
+(p − x) / s. After zooming by k, that content point must stay at p, so the new offset is
+x' = p − (p − x)·k. This is the same "zoom about a point" algebra as an affine transform in
+image processing.
+
+**Q: Why add the bank through a template and not by training a model?**
+A cheque leaf is a fixed layout. One blank image plus 9 boxes is enough for SIFT + RANSAC to
+register any photo of that bank and read each field from its box. No training data, and it
+works the moment it's saved. A learned detector would need many labelled photos per bank.

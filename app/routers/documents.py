@@ -8,7 +8,7 @@ level authorisation). Reviewers and admins see all.
 from __future__ import annotations
 
 import re
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
@@ -30,6 +30,8 @@ from app.models import (
     now,
 )
 from app.schemas import (
+    BulkDecisionIn,
+    BulkDecisionOut,
     CheckView,
     DecisionIn,
     DecisionOut,
@@ -64,6 +66,11 @@ def mask_digits(text: str | None, keep: int = 4) -> str | None:
         else:
             out.append(ch)
     return "".join(out)
+
+
+def _as_utc(stamp: datetime) -> datetime:
+    """SQLite returns naive datetimes (stored as UTC); PostgreSQL returns aware ones."""
+    return stamp if stamp.tzinfo else stamp.replace(tzinfo=timezone.utc)
 
 
 def is_reviewer(user: User) -> bool:
@@ -275,7 +282,45 @@ def stats(db: Session = Depends(get_db), _: User = Depends(require(Role.REVIEWER
         }
 
     by_status = counts(Document.status)
+    today = now().date()
+    days = [today - timedelta(days=i) for i in range(13, -1, -1)]
+    daily = {
+        day: {"date": day.isoformat(), "received": 0, "decided": 0, "flagged": 0} for day in days
+    }
+    since = datetime.combine(days[0], datetime.min.time(), tzinfo=timezone.utc)
+    for created, decided, band in db.execute(
+        select(Document.created_at, Document.decided_at, Document.risk_band).where(
+            (Document.created_at >= since) | (Document.decided_at >= since)
+        )
+    ):
+        for stamp, key in ((created, "received"), (decided, "decided")):
+            day = _as_utc(stamp).date() if stamp else None
+            if day in daily:
+                daily[day][key] += 1
+        if band in ("medium", "high") and _as_utc(created).date() in daily:
+            daily[_as_utc(created).date()]["flagged"] += 1
+    by_check: dict[str, int] = {}
+    seconds = []
+    hist = [0] * 10
+    recent = db.execute(
+        select(Document.result, Document.started_at, Document.finished_at, Document.risk_score)
+        .where(Document.result.is_not(None))
+        .order_by(Document.created_at.desc())
+        .limit(1000)
+    ).all()
+    for result, started, finished, score in recent:
+        for c in (result or {}).get("checks", []):
+            if c.get("fired"):
+                by_check[c["id"]] = by_check.get(c["id"], 0) + 1
+        if started and finished:
+            seconds.append((_as_utc(finished) - _as_utc(started)).total_seconds())
+        if score is not None:
+            hist[min(9, int(score) // 10)] += 1
     return Stats(
+        daily=list(daily.values()),
+        by_check=dict(sorted(by_check.items(), key=lambda kv: -kv[1])),
+        median_seconds=round(sorted(seconds)[len(seconds) // 2], 1) if seconds else None,
+        risk_histogram=hist,
         total=sum(by_status.values()),
         by_status=by_status,
         by_band=counts(Document.risk_band),
@@ -284,6 +329,50 @@ def stats(db: Session = Depends(get_db), _: User = Depends(require(Role.REVIEWER
         open_reviews=sum(by_status.get(s.value, 0) for s in OPEN_FOR_REVIEW)
         + by_status.get(DocStatus.ESCALATED.value, 0),
     )
+
+
+@router.post("/bulk-decision", response_model=BulkDecisionOut)
+def bulk_decide(
+    body: BulkDecisionIn,
+    db: Session = Depends(get_db),
+    user: User = Depends(require(Role.REVIEWER)),
+) -> BulkDecisionOut:
+    """Decide several documents at once (for example, approve the low-risk ones). Each is
+    checked like a single decision; the ones that can't take it are skipped, with the reason."""
+    if body.decision in ("rejected", "escalated") and not body.comment.strip():
+        raise HTTPException(422, "A comment is required to reject or escalate")
+    done, skipped = [], {}
+    for doc_id in dict.fromkeys(body.ids):
+        row = db.get(Document, doc_id)
+        if row is None:
+            skipped[doc_id] = "not found"
+            continue
+        if body.decision not in allowed_decisions(row, user):
+            skipped[doc_id] = f"is {row.status}"
+            continue
+        previous = row.status
+        row.status, row.decided_at = body.decision, now()
+        db.add(
+            Decision(
+                document_id=row.id,
+                user_id=user.id,
+                decision=body.decision,
+                comment=body.comment.strip(),
+            )
+        )
+        audit(
+            db,
+            user,
+            f"document.{body.decision}",
+            "document",
+            row.id,
+            previous=previous,
+            comment=body.comment.strip(),
+            bulk=True,
+        )
+        done.append(doc_id)
+    db.commit()
+    return BulkDecisionOut(done=done, skipped=skipped)
 
 
 @router.get("/{doc_id}", response_model=DocumentDetail)

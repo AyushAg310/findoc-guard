@@ -60,3 +60,6 @@ data/signatures/
 # Phase 8: service data (uploads, rendered images, SQLite database)
 data/storage/
 data/findoc.db*
+
+# Custom cheque templates (blank leaves of real banks; personalised leaves carry account data)
+data/templates/

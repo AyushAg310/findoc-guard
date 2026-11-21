@@ -18,7 +18,7 @@ from app import __version__
 from app.db import get_sessionmaker, init_db
 from app.deps import audit
 from app.models import Role, User, new_id
-from app.routers import documents, other
+from app.routers import documents, other, templates
 from app.security import hash_password
 from app.settings import get_api_settings
 from findoc.logging import get_logger
@@ -139,6 +139,7 @@ def create_app() -> FastAPI:
     app.include_router(other.auth)
     app.include_router(documents.router)
     app.include_router(other.exports)
+    app.include_router(templates.router)
     app.include_router(other.admin)
     app.include_router(other.system)
     mount_frontend(app, get_api_settings().frontend_dir)

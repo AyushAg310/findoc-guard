@@ -5,6 +5,8 @@
                                   (template coordinates) or the flat page
     flat.png                      flattened, enhanced page
     heatmap.jpg                   tamper heatmap over the flat page
+    overlay.png                   the heatmap alone, transparent, aligned with page.png (the UI
+                                  lays it over the page with an opacity slider)
     annotated.png                 cheque with its template's field boxes drawn
     original.jpg                  capture (best video frame) with the detected outline
 
@@ -18,7 +20,7 @@ from pathlib import Path
 
 from app.settings import get_api_settings
 
-VARIANTS = ("page", "flat", "heatmap", "annotated", "original")
+VARIANTS = ("page", "flat", "heatmap", "overlay", "annotated", "original")
 
 
 def doc_dir(doc_id: str) -> Path:

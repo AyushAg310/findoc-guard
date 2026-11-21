@@ -37,7 +37,9 @@ class Settings(BaseSettings):
     focal_px: float | None = None
 
     # Cheques (Phase 2)
-    templates_dir: Path | None = None  # folder of custom templates; None = built-in banks
+    # Folder of custom cheque templates (real banks: kept local, git-ignored). They are added
+    # to the twelve built-in fictional banks.
+    templates_dir: Path | None = Path("data/templates")
     feature_method: str = "sift"  # "sift" or "orb"
 
     # Invoices (Phase 7): document-type model, LayoutLMv3 model folder, which extractor to use

@@ -126,7 +126,7 @@ data/templates/ARVL/template.json    {"id", "name", "fields": [{name, box, kind,
 
 `TemplateStore.from_dir()` loads a folder of them, so supporting a real bank means scanning a
 blank leaf and writing its field boxes (the SRS's FR-APP-08), with no code change.
-`builtin_store()` renders the four fictional banks once and caches them (`@lru_cache`);
+`builtin_store()` renders the fictional banks (four in v0.3, twelve since v0.9.1) once and caches them (`@lru_cache`);
 `default_store()` uses `FINDOC_TEMPLATES_DIR` when set. `findoc templates export` writes the
 built-ins to disk as a starting point.
 

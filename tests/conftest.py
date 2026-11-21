@@ -45,6 +45,7 @@ def _isolated_fraud_state(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> No
     monkeypatch.setenv("FINDOC_INVOICE_MODEL", str(tmp_path / "no_invoice_model"))
     monkeypatch.setenv("FINDOC_DUPLICATE_INDEX", str(tmp_path / "dup_index"))
     monkeypatch.setenv("FINDOC_SIGNATURES_DIR", str(tmp_path / "signatures"))
+    monkeypatch.setenv("FINDOC_TEMPLATES_DIR", str(tmp_path / "templates"))
     from findoc.classify import doctype
 
     get_settings.cache_clear()

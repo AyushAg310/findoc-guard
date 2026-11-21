@@ -19,7 +19,7 @@ from findoc.fraud.tamper import (
     to_flat,
     upsample,
 )
-from findoc.types import CheckResult, DocType, Document
+from findoc.types import CheckResult, DocType, Document, InputKind
 
 
 def rules_stage(doc: Document) -> Document:
@@ -96,6 +96,22 @@ def tamper_stage(doc: Document) -> Document:
         )
         return doc
     threshold = model.threshold
+    if doc.kind is InputKind.VIDEO:
+        # The model reads JPEG re-compression traces. A video frame went through H.264, which
+        # leaves different traces across the whole frame, so the model calls every page edited
+        # (a genuine cheque filmed on a phone scored 1.00). Keep the map for a reviewer to look
+        # at; don't score it. Tamper evidence for videos needs a model trained on video frames.
+        doc.checks.append(
+            CheckResult(
+                id="TAMPER_REGION",
+                fired=False,
+                reason="Not checked: the tamper model is trained on JPEG photos, and video frames "
+                "are H.264-compressed. The heatmap is saved for review only; for a forensic "
+                f"check, upload a photo (hottest region in the video: '{top}', {scores[top]:.2f}).",
+                evidence=evidence | {"threshold": threshold, "skipped": "video"},
+            )
+        )
+        return doc
     fired = weighted[top] >= threshold
     doc.checks.append(
         CheckResult(

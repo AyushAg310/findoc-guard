@@ -42,7 +42,21 @@ fields to correct. Clicking a flag lights up its region on the page. **A** appro
 rejects and **E** escalates (an admin decides escalations), and everything goes into an
 audit trail. Results export to Excel or JSON.
 
-![Review queue](docs/images/phase8_queue.png)
+![Review screen](docs/images/phase8_review.png)
+
+The review screen has:
+- zoom and pan;
+- the tamper heatmap laid over the page with an opacity slider (**H**);
+- **J** / **K** to step through the queue, and "approve and open the next";
+- a command palette (**Ctrl K**), shortcuts help (**?**) and dark mode.
+
+The queue sorts, selects and decides in bulk. An **Overview** page charts volumes, risk scores
+and why documents are flagged.
+
+**Cheque banks:** twelve fictional built-in banks for synthetic data, each with its own colour,
+security pattern and logo. Real banks are added by an admin in the **template editor**: upload
+a blank leaf, drag the field boxes into place, save. The bank is recognised from the next
+upload. Its template stays on that machine and is git-ignored.
 
 - **API:** FastAPI with OpenAPI docs at `/docs`. Authentication is by JWT for people and
   hashed API keys for systems. Roles are submitter, reviewer and admin, and other users'
@@ -64,6 +78,7 @@ audit trail. Results export to Excel or JSON.
 | Invoice photo | ~15 s (almost all full-page OCR) |
 | 500 queued cheques, 1 / 2 workers (2-core machine, OCR off) | 12.5 / 6.3 min: 40 / 79 per minute, 1.97× |
 | Lost or repeated jobs | none: every document processed exactly once |
+| Bank identification, 144 synthetic cheque photos, 12 banks | 100% |
 
 ## Earlier phases
 
@@ -223,7 +238,7 @@ Measured on 120 synthetic cheque photos from four fictional banks
 | Bank template identification | 100% |
 | Field-box IoU vs. ground truth (mean / worst) | 0.995 / 0.982 |
 | Signature presence | 100% |
-| Median template matching time (4 templates, laptop CPU) | ~0.2 s |
+| Median template matching time (4 templates, laptop CPU) | ~0.2 s (v0.9.1: ~1 s with 12-13 banks on a 2-core machine; it grows with the number of banks) |
 
 With **real OCR** (EasyOCR on an RTX 3050 laptop GPU, 100 cheques, v0.3.2):
 

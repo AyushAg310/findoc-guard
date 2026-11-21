@@ -30,6 +30,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+import cv2
 import numpy as np
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
@@ -144,6 +145,14 @@ def _cover(img: np.ndarray, quads: list[np.ndarray], hom: np.ndarray | None = No
     return out
 
 
+def heat_overlay(heat: np.ndarray) -> np.ndarray:
+    """A [0, 1] heat map as a transparent BGRA image: clear where cold, red where hot."""
+    h = np.clip(heat.astype(np.float32), 0, 1)
+    colour = cv2.applyColorMap((h * 255).astype(np.uint8), cv2.COLORMAP_JET)
+    alpha = (np.clip((h - 0.25) / 0.6, 0, 1) * 215).astype(np.uint8)
+    return np.dstack([colour, alpha])
+
+
 def save_images(doc: Any, out: Path) -> dict[str, str]:
     """Render the review images of a processed pipeline Document into ``out``. On cheques the
     account number and MICR line are covered in every image, mapped through the page geometry;
@@ -181,6 +190,13 @@ def save_images(doc: Any, out: Path) -> dict[str, str]:
             put("original", "original.jpg", orig, to_orig)
     if doc.tamper_map is not None and doc.flat is not None:
         put("heatmap", "heatmap.jpg", tamper_overlay(doc.flat, doc.tamper_map), to_flat)
+    if doc.tamper_map is not None:
+        heat = doc.tamper_map
+        if doc.registered is not None and doc.template_homography is not None:  # page = template
+            th, tw = doc.registered.shape[:2]
+            heat = cv2.warpPerspective(heat, np.array(doc.template_homography), (tw, th))
+        save_image(out / "overlay.png", heat_overlay(heat))
+        images["overlay"] = "overlay.png"
     if doc.registered is not None and doc.template_id:
         put("page", "page.png", doc.registered)
         template = default_store(get_settings().templates_dir).get(doc.template_id)

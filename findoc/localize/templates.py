@@ -10,8 +10,12 @@ Templates live on disk as::
     <templates_dir>/<ID>/reference.png
     <templates_dir>/<ID>/template.json   {"id", "name", "fields": [{name, box, kind, allowlist}]}
 
-so an administrator can register a new bank from a scanned blank cheque (FR-APP-08).
-The built-in set is the four fictional banks from :mod:`findoc.synth.cheque`.
+so an administrator can register a new bank from a scanned blank cheque (FR-APP-08): with
+``findoc templates``, or in the web UI's template editor (Phase 8). The built-in set is the
+twelve fictional banks from :mod:`findoc.synth.cheque`; templates in ``templates_dir`` are
+added to it (a custom template with a built-in's id replaces it). Every template is scaled to
+the standard leaf width (1624 px), because registration compares a photo against all of them
+at one scale.
 """
 
 from __future__ import annotations
@@ -25,7 +29,7 @@ import cv2
 import numpy as np
 
 from findoc.io import load_image, save_image
-from findoc.synth.cheque import BANKS, FieldSpec, field_specs, render_blank
+from findoc.synth.cheque import BANKS, TEMPLATE_SIZE, FieldSpec, field_specs, render_blank
 
 
 @dataclass
@@ -62,7 +66,20 @@ class ChequeTemplate:
             FieldSpec(f["name"], tuple(f["box"]), f["kind"], f.get("allowlist"), f.get("cells", 1))  # type: ignore[arg-type]
             for f in meta["fields"]
         ]
-        return cls(meta["id"], meta["name"], load_image(folder / "reference.png"), fields)
+        return cls(meta["id"], meta["name"], load_image(folder / "reference.png"), fields).scaled()
+
+    def scaled(self, width: int = TEMPLATE_SIZE[0]) -> ChequeTemplate:
+        """This template at the standard leaf width (boxes scaled with the image)."""
+        w, h = self.size
+        if w == width:
+            return self
+        s = width / w
+        ref = cv2.resize(self.reference, (width, round(h * s)), interpolation=cv2.INTER_AREA)
+        fields = [
+            FieldSpec(f.name, tuple(round(v * s) for v in f.box), f.kind, f.allowlist, f.cells)  # type: ignore[arg-type]
+            for f in self.fields
+        ]
+        return ChequeTemplate(self.id, self.name, ref, fields)
 
 
 class TemplateStore:
@@ -98,13 +115,31 @@ def builtin_store() -> TemplateStore:
     )
 
 
+def _dir_signature(root: Path) -> tuple:
+    return tuple(
+        (p.parent.name, p.stat().st_mtime_ns) for p in sorted(root.glob("*/template.json"))
+    )
+
+
+@lru_cache(maxsize=4)
+def _custom_store(root: Path, signature: tuple) -> TemplateStore:  # noqa: ARG001 - cache key
+    return TemplateStore.from_dir(root)
+
+
+def custom_store(templates_dir: Path | None) -> TemplateStore:
+    """Templates saved in ``templates_dir`` (re-read only when one is added or changed)."""
+    if not templates_dir or not templates_dir.is_dir():
+        return TemplateStore([])
+    return _custom_store(templates_dir.resolve(), _dir_signature(templates_dir))
+
+
 def default_store(templates_dir: Path | None = None) -> TemplateStore:
-    """Templates from ``templates_dir`` if it has any, otherwise the built-in set."""
-    if templates_dir and templates_dir.is_dir():
-        store = TemplateStore.from_dir(templates_dir)
-        if len(store):
-            return store
-    return builtin_store()
+    """The built-in banks plus the templates in ``templates_dir`` (same id: custom wins)."""
+    custom = custom_store(templates_dir)
+    if not len(custom):
+        return builtin_store()
+    merged = {t.id: t for t in builtin_store()} | {t.id: t for t in custom}
+    return TemplateStore(list(merged.values()))
 
 
 def draw_fields(img: np.ndarray, template: ChequeTemplate) -> np.ndarray:

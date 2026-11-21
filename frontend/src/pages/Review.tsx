@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, type CheckView, type DocDetail, type FieldView } from "../api";
 import { isReviewer, useAuth } from "../auth";
 import { RiskBadge, StatusBadge, useApiImage } from "../components/bits";
+import { ZoomCanvas, type ZoomHandle } from "../components/ZoomCanvas";
 import {
   MONEY_FIELDS,
   STAGE_LABEL,
@@ -14,10 +15,11 @@ import {
   fieldsForCheck,
   rupees,
 } from "../format";
+import { reviewList, useToast } from "../ui";
 
 const VIEWS: Record<string, string> = {
   page: "Fields",
-  heatmap: "Tamper heatmap",
+  heatmap: "Heatmap on the flat page",
   original: "Capture",
   annotated: "Template boxes",
 };
@@ -49,7 +51,26 @@ export default function Review() {
   const [edits, setEdits] = useState<Record<string, string>>({});
   const [comment, setComment] = useState("");
   const [busy, setBusy] = useState(false);
+  const [heat, setHeat] = useState(0); // heatmap overlay opacity on the Fields view, 0..1
+  const [autoNext, setAutoNext] = useState(true);
   const commentRef = useRef<HTMLTextAreaElement>(null);
+  const zoom = useRef<ZoomHandle>(null);
+  const toast = useToast();
+
+  // the queue this document was opened from: J / K and "approve and next" walk through it
+  const list = useMemo(() => reviewList.get(), []);
+  const pos = list.indexOf(id);
+  const prevId = pos > 0 ? list[pos - 1] : null;
+  const nextId = pos >= 0 && pos < list.length - 1 ? list[pos + 1] : null;
+  useEffect(() => {
+    setSelected(null);
+    setLitCheck(null);
+    setEdits({});
+    setComment("");
+    setError(null);
+    setDoc(null);
+    setView(null);
+  }, [id]);
 
   const load = useCallback(() => {
     api
@@ -88,9 +109,10 @@ export default function Review() {
     setBusy(true);
     try {
       setDoc(await api.correct(doc.id, edits));
+      toast.show(`Saved ${Object.keys(edits).length} correction${Object.keys(edits).length > 1 ? "s" : ""}`);
       setEdits({});
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Saving failed");
+      toast.show(e instanceof Error ? e.message : "Saving failed", "error");
     } finally {
       setBusy(false);
     }
@@ -108,17 +130,24 @@ export default function Review() {
       try {
         if (dirty) await api.correct(doc.id, edits);
         const d = await api.decide(doc.id, decision, comment);
-        setDoc(d);
+        const verb = { approved: "Approved", rejected: "Rejected", escalated: "Escalated" }[decision];
         setEdits({});
         setComment("");
         setError(null);
+        if (autoNext && nextId) {
+          toast.show(`${verb} ${d.filename}`, "ok", { label: "Go back", run: () => navigate(`/documents/${d.id}`) });
+          navigate(`/documents/${nextId}`);
+        } else {
+          setDoc(d);
+          toast.show(`${verb} ${d.filename}${nextId ? "" : ". That was the last one in the queue."}`);
+        }
       } catch (e) {
-        setError(e instanceof Error ? e.message : "The decision wasn't saved");
+        toast.show(e instanceof Error ? e.message : "The decision wasn't saved", "error");
       } finally {
         setBusy(false);
       }
     },
-    [doc, comment, dirty, edits],
+    [doc, comment, dirty, edits, autoNext, nextId, navigate, toast],
   );
 
   // A approve, E escalate, R reject (SRS 12), unless typing in a field
@@ -126,18 +155,27 @@ export default function Review() {
     function onKey(e: KeyboardEvent) {
       const t = e.target as HTMLElement;
       if (e.ctrlKey || e.metaKey || e.altKey || ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName)) return;
-      const d = DECISIONS.find((x) => x.key === e.key.toLowerCase());
+      const k = e.key.toLowerCase();
+      const d = DECISIONS.find((x) => x.key === k);
       if (d && doc?.allowed_decisions.includes(d.id)) {
         e.preventDefault();
         decide(d.id);
+      } else if (k === "j" && nextId) navigate(`/documents/${nextId}`);
+      else if (k === "k" && prevId) navigate(`/documents/${prevId}`);
+      else if (k === "+" || k === "=") zoom.current?.zoomBy(1.4);
+      else if (k === "-") zoom.current?.zoomBy(1 / 1.4);
+      else if (k === "0") zoom.current?.fit();
+      else if (k === "h" && doc?.images.includes("overlay")) {
+        setView("page");
+        setHeat((h) => (h > 0 ? 0 : 0.6));
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [doc, decide]);
+  }, [doc, decide, nextId, prevId, navigate]);
 
   if (error && !doc) return <p className="error-box">{error}</p>;
-  if (!doc) return <p className="muted">Loading…</p>;
+  if (!doc) return <ReviewSkeleton />;
 
   return (
     <>
@@ -153,7 +191,22 @@ export default function Review() {
             {doc.flattening === "3d" && " · flattened in 3D"}
           </p>
         </div>
-        <StatusBadge status={doc.status} />
+        <div className="head-side">
+          <StatusBadge status={doc.status} />
+          {pos >= 0 && list.length > 1 && (
+            <div className="stepper" aria-label="Queue position">
+              <button className="icon" disabled={!prevId} onClick={() => prevId && navigate(`/documents/${prevId}`)} title="Previous (K)" aria-label="Previous document">
+                ‹
+              </button>
+              <span className="small muted">
+                {pos + 1} of {list.length}
+              </span>
+              <button className="icon" disabled={!nextId} onClick={() => nextId && navigate(`/documents/${nextId}`)} title="Next (J)" aria-label="Next document">
+                ›
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {running && <Processing doc={doc} />}
@@ -210,6 +263,9 @@ export default function Review() {
               view={view}
               selected={selected}
               lit={lit}
+              heat={heat}
+              setHeat={setHeat}
+              zoomRef={zoom}
               onSelect={(n) => {
                 setSelected(n);
                 document.getElementById(`f-${n}`)?.focus();
@@ -244,8 +300,8 @@ export default function Review() {
                   {fired.map((c) => (
                     <CheckRow key={c.id} c={c} active={litCheck === c.id} onClick={() => {
                       setLitCheck(litCheck === c.id ? null : c.id);
-                      if (c.id === "TAMPER_REGION" && doc.images.includes("heatmap")) setView("heatmap");
-                      else if (doc.images.includes("page")) setView("page");
+                      if (doc.images.includes("page")) setView("page");
+                      if (c.id === "TAMPER_REGION" && doc.images.includes("overlay")) setHeat((h) => (h > 0 && litCheck === c.id ? 0 : 0.6));
                     }} />
                   ))}
                   {passed.length > 0 && (
@@ -332,13 +388,7 @@ export default function Review() {
 
             <details className="section" style={{ padding: "10px 16px" }}>
               <summary className="small">Processing details</summary>
-              <div className="stages" style={{ marginTop: 8 }}>
-                {doc.stages.map((s) => (
-                  <span key={s.stage} title={s.note} style={{ color: s.ok ? undefined : "var(--high)" }}>
-                    {s.stage} {s.ms < 1000 ? `${Math.round(s.ms)} ms` : `${(s.ms / 1000).toFixed(1)} s`}
-                  </span>
-                ))}
-              </div>
+              <StageTimeline stages={doc.stages} />
               <ul className="small muted" style={{ paddingLeft: 18 }}>
                 {doc.messages.map((m, i) => (
                   <li key={i}>{m}</li>
@@ -366,9 +416,11 @@ export default function Review() {
               {d.label} <kbd>{d.key.toUpperCase()}</kbd>
             </button>
           ))}
-          <button className="btn" onClick={() => navigate(reviewer ? "/" : "/upload")}>
-            Back
-          </button>
+          {nextId && (
+            <label className="small auto-next">
+              <input type="checkbox" checked={autoNext} onChange={(e) => setAutoNext(e.target.checked)} /> then open the next
+            </label>
+          )}
         </div>
       )}
     </>
@@ -397,56 +449,120 @@ function Canvas({
   selected,
   lit,
   onSelect,
+  heat,
+  setHeat,
+  zoomRef,
 }: {
   doc: DocDetail;
   view: string | null;
   selected: string | null;
   lit: Set<string>;
   onSelect: (name: string) => void;
+  heat: number;
+  setHeat: (v: number) => void;
+  zoomRef: RefObject<ZoomHandle>;
 }) {
   const { src, size } = useApiImage(doc.id, view);
+  const hasOverlay = view === "page" && doc.images.includes("overlay");
+  const overlay = useApiImage(doc.id, hasOverlay && heat > 0 ? "overlay" : null);
   if (!view) return <div className="canvas empty">No image was produced for this document.</div>;
-  if (!src || !size) return <div className="canvas empty">Loading image…</div>;
+  if (!src || !size) return <div className="canvas skel-block" style={{ aspectRatio: "2.2 / 1" }} aria-label="Loading image" />;
   const boxes = view === "page" ? doc.fields.filter((f) => f.bbox) : [];
   return (
     <>
       <div className="canvas">
-        <svg viewBox={`0 0 ${size.w} ${size.h}`} role="img" aria-label={`${VIEWS[view]} of ${doc.filename}`}>
-          <image href={src} width={size.w} height={size.h} />
-          {boxes.map((f) => {
-            const [x0, y0, x1, y1] = f.bbox!;
-            const cls = ["box", confidenceOf(f.confidence), lit.has(f.name) && "lit", selected === f.name && "sel"]
-              .filter(Boolean)
-              .join(" ");
-            return (
-              <rect key={f.name} className={cls} x={x0} y={y0} width={x1 - x0} height={y1 - y0} rx={4} onClick={() => onSelect(f.name)}>
-                <title>
-                  {fieldLabel(f.name)}: {f.corrected ?? f.normalized ?? f.value ?? "unread"} ({Math.round(f.confidence * 100)}%)
-                </title>
-              </rect>
-            );
-          })}
-        </svg>
+        <ZoomCanvas ref={zoomRef} label={`${VIEWS[view] ?? view} of ${doc.filename}. Scroll to zoom, drag to move.`}>
+          <svg viewBox={`0 0 ${size.w} ${size.h}`} role="img" aria-label={`${VIEWS[view]} of ${doc.filename}`}>
+            <image href={src} width={size.w} height={size.h} />
+            {hasOverlay && heat > 0 && overlay.src && (
+              <image href={overlay.src} width={size.w} height={size.h} opacity={heat} preserveAspectRatio="none" style={{ pointerEvents: "none" }} />
+            )}
+            {boxes.map((f) => {
+              const [x0, y0, x1, y1] = f.bbox!;
+              const cls = ["box", confidenceOf(f.confidence), lit.has(f.name) && "lit", selected === f.name && "sel"]
+                .filter(Boolean)
+                .join(" ");
+              return (
+                <rect key={f.name} className={cls} x={x0} y={y0} width={x1 - x0} height={y1 - y0} rx={4} onClick={() => onSelect(f.name)}>
+                  <title>
+                    {fieldLabel(f.name)}: {f.corrected ?? f.normalized ?? f.value ?? "unread"} ({Math.round(f.confidence * 100)}%)
+                  </title>
+                </rect>
+              );
+            })}
+          </svg>
+        </ZoomCanvas>
       </div>
-      {boxes.length > 0 && (
-        <div className="legend">
-          <span>
-            <i style={{ borderColor: "var(--teal)" }} />
-            Read with confidence
-          </span>
-          <span>
-            <i style={{ borderColor: "var(--medium-line)", borderStyle: "dashed" }} />
-            Low confidence: check it
-          </span>
-          <span>
-            <i style={{ borderColor: "var(--high)", background: "var(--high-wash)" }} />
-            Selected flag
-          </span>
-        </div>
-      )}
-      {view === "heatmap" && (
+      <div className="legend">
+        {boxes.length > 0 && (
+          <>
+            <span>
+              <i style={{ borderColor: "var(--teal)" }} />
+              Read with confidence
+            </span>
+            <span>
+              <i style={{ borderColor: "var(--medium-line)", borderStyle: "dashed" }} />
+              Low confidence: check it
+            </span>
+            <span>
+              <i style={{ borderColor: "var(--high)", background: "var(--high-wash)" }} />
+              Selected flag
+            </span>
+          </>
+        )}
+        {hasOverlay && (
+          <label className="heat-slider">
+            Tamper heatmap
+            <input type="range" min={0} max={1} step={0.05} value={heat} onChange={(e) => setHeat(Number(e.target.value))} aria-valuetext={`${Math.round(heat * 100)}%`} />
+            <kbd>H</kbd>
+          </label>
+        )}
+      </div>
+      {(view === "heatmap" || (hasOverlay && heat > 0)) && (
         <p className="legend">Red marks areas whose compression traces differ from the rest of the page: possible edits.</p>
       )}
+    </>
+  );
+}
+
+function StageTimeline({ stages }: { stages: DocDetail["stages"] }) {
+  const total = stages.reduce((a, s) => a + s.ms, 0) || 1;
+  const shown = stages.filter((s) => s.ms / total > 0.01 || !s.ok);
+  return (
+    <div className="timeline" style={{ marginTop: 10 }}>
+      <div className="tl-bar" role="img" aria-label={`Processing took ${(total / 1000).toFixed(1)} seconds`}>
+        {shown.map((s) => (
+          <span key={s.stage} style={{ flexGrow: s.ms }} className={s.ok ? "" : "bad"} title={`${s.stage}: ${(s.ms / 1000).toFixed(2)} s`} />
+        ))}
+      </div>
+      <div className="stages">
+        {stages.map((s) => (
+          <span key={s.stage} title={s.note} style={{ color: s.ok ? undefined : "var(--high)" }}>
+            {STAGE_LABEL[s.stage] ?? s.stage} {s.ms < 1000 ? `${Math.round(s.ms)} ms` : `${(s.ms / 1000).toFixed(1)} s`}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ReviewSkeleton() {
+  return (
+    <>
+      <div className="page-head">
+        <div>
+          <span className="skel" style={{ width: 90, height: 12 }} />
+          <span className="skel" style={{ width: 260, height: 26, marginTop: 8 }} />
+        </div>
+      </div>
+      <div className="review">
+        <div className="canvas skel-block" style={{ aspectRatio: "2.2 / 1" }} />
+        <div className="panel">
+          <div className="section skel-block" style={{ height: 90 }} />
+          <div className="section skel-block" style={{ height: 160 }} />
+          <div className="section skel-block" style={{ height: 260 }} />
+        </div>
+      </div>
     </>
   );
 }

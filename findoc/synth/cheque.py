@@ -68,9 +68,14 @@ class BankStyle:
     pattern_freq: float  # security-pattern wave frequency
     dx: int = 0  # layout offsets so banks differ slightly
     dy: int = 0
-    logo: str = "circle"  # circle | diamond | bars | ring
+    logo: str = "circle"  # circle | diamond | bars | ring | shield | peak | square | wave
+    pattern: str = "waves"  # security background: waves | rosette | mesh | dots
+    branch: str = "Main Branch, Jaipur"
 
 
+# Fictional banks only: rendering look-alikes of real banks' cheques is how forgeries start.
+# Real banks are added as local templates (``findoc templates``, or the admin's template
+# editor in the web UI), which stay on the machine that uses them.
 BANKS: dict[str, BankStyle] = {
     "ARVL": BankStyle(
         "ARVL", "ARAVALLI BANK", (250, 238, 222), (150, 90, 30), 0.020, 0, 0, "circle"
@@ -84,7 +89,24 @@ BANKS: dict[str, BankStyle] = {
     "DCCN": BankStyle(
         "DCCN", "DECCAN COMMERCIAL BANK", (214, 242, 250), (30, 110, 170), 0.017, 6, 10, "ring"
     ),
-}
+    # added in v0.9.1: 8 more styles, so template identification has a real choice to make
+    "VNDS": BankStyle("VNDS", "VINDHYA SETU BANK", (232, 240, 246), (60, 70, 150), 0.023, -6,
+                      4, "shield", "rosette", "Civil Lines, Bhopal"),
+    "SHYL": BankStyle("SHYL", "SAHYADRI LEDGER BANK", (222, 236, 222), (50, 100, 60), 0.028, 8,
+                      -4, "peak", "mesh", "FC Road, Pune"),
+    "KNPL": BankStyle("KNPL", "KONKAN PEARL BANK", (246, 238, 230), (140, 100, 40), 0.019, -12,
+                      -8, "wave", "dots", "Station Road, Ratnagiri"),
+    "MGVL": BankStyle("MGVL", "MEGHA VALLEY BANK", (240, 230, 238), (120, 50, 110), 0.033, 4, 6,
+                      "square", "rosette", "Police Bazar, Shillong"),
+    "THRS": BankStyle("THRS", "THAR SANDS BANK", (214, 232, 246), (40, 90, 160), 0.021, 10, 2,
+                      "peak", "dots", "Station Road, Bikaner"),
+    "NLGC": BankStyle("NLGC", "NILGIRI CREST BANK", (230, 244, 238), (70, 120, 90), 0.025, -8,
+                      10, "shield", "mesh", "Commercial Road, Ooty"),
+    "GNGT": BankStyle("GNGT", "GANGOTRI TRUST BANK", (244, 240, 226), (150, 110, 50), 0.018, 2,
+                      -10, "wave", "waves", "Har Ki Pauri, Haridwar"),
+    "BRHR": BankStyle("BRHR", "BRAHMAPUTRA HERITAGE BANK", (226, 228, 244), (60, 50, 130), 0.03,
+                      -4, -2, "square", "rosette", "GS Road, Guwahati"),
+}  # fmt: skip
 
 DIGITS = "0123456789"
 
@@ -113,9 +135,29 @@ def field_specs(style: BankStyle) -> list[FieldSpec]:
 
 
 def _security_pattern(img: np.ndarray, style: BankStyle) -> None:
-    """Faint guilloche-like waves: the anti-copy background printed on real cheques."""
+    """Faint anti-copy background, as printed on real cheques: guilloche waves, a rosette of
+    rings, a diagonal mesh, or a dot screen."""
     h, w = img.shape[:2]
     colour = tuple(int(c * 0.35 + 255 * 0.65) for c in style.accent)
+    faint = tuple(int(c * 0.18 + t * 0.82) for c, t in zip(style.accent, style.tint, strict=True))
+    if style.pattern == "rosette":
+        cx, cy = w // 2, h // 2
+        for i, r in enumerate(range(60, int(np.hypot(w, h) / 2), 34)):
+            cv2.ellipse(img, (cx, cy), (r, int(r * 0.55)), (i * 5) % 180, 0, 360, faint, 1,
+                        cv2.LINE_AA)  # fmt: skip
+        return
+    if style.pattern == "mesh":
+        step = int(14 + style.pattern_freq * 300)
+        for k in range(-h, w, step):
+            cv2.line(img, (k, 0), (k + h, h), colour, 1, cv2.LINE_AA)
+            cv2.line(img, (k + h, 0), (k, h), colour, 1, cv2.LINE_AA)
+        return
+    if style.pattern == "dots":
+        step = int(10 + style.pattern_freq * 200)
+        for y in range(4, h, step):
+            for x in range(4 + (y // step % 2) * step // 2, w, step):
+                cv2.circle(img, (x, y), 2, colour, -1, cv2.LINE_AA)
+        return
     xs = np.arange(0, w, 3)
     for k in range(0, h + 60, 22):
         ys = k + 9 * np.sin(xs * style.pattern_freq + k * 0.05)
@@ -134,6 +176,23 @@ def _logo(img: np.ndarray, style: BankStyle, x: int, y: int) -> None:
     elif style.logo == "bars":
         for i in range(4):
             cv2.rectangle(img, (x + i * 18, y + 60 - i * 15), (x + i * 18 + 12, y + 70), c, -1)
+    elif style.logo == "shield":
+        pts = np.array([[x + 5, y + 4], [x + 65, y + 4], [x + 65, y + 38], [x + 35, y + 70],
+                        [x + 5, y + 38]])  # fmt: skip
+        cv2.fillPoly(img, [pts], c)
+        cv2.putText(img, style.code[0], (x + 20, y + 46), FONT, 1.1, (255, 255, 255), 3)
+    elif style.logo == "peak":
+        cv2.fillPoly(img, [np.array([[x, y + 70], [x + 28, y + 12], [x + 48, y + 44],
+                                     [x + 58, y + 30], [x + 72, y + 70]])], c)  # fmt: skip
+    elif style.logo == "square":
+        cv2.rectangle(img, (x + 4, y + 4), (x + 66, y + 66), c, -1)
+        cv2.rectangle(img, (x + 16, y + 16), (x + 54, y + 54), (255, 255, 255), 4)
+    elif style.logo == "wave":
+        xs = np.arange(0, 70)
+        for j in range(3):
+            ys = y + 20 + j * 18 + 7 * np.sin(xs / 9.0)
+            pts = np.stack([x + xs, ys], axis=1).astype(np.int32).reshape(-1, 1, 2)
+            cv2.polylines(img, [pts], False, c, 6, cv2.LINE_AA)
     else:
         cv2.circle(img, (x + 35, y + 35), 32, c, 6)
         cv2.circle(img, (x + 35, y + 35), 12, c, -1)
@@ -150,7 +209,7 @@ def render_blank(style: BankStyle) -> np.ndarray:
 
     _logo(img, style, 40 + dx, 30 + dy)
     cv2.putText(img, style.name, (130 + dx, 82 + dy), FONT, 1.25, style.accent, 3, cv2.LINE_AA)
-    cv2.putText(img, "Main Branch, Jaipur", (130 + dx, 120 + dy), FONT, 0.6, PRINT, 1, cv2.LINE_AA)
+    cv2.putText(img, style.branch, (130 + dx, 120 + dy), FONT, 0.6, PRINT, 1, cv2.LINE_AA)
     cv2.putText(img, "IFSC:", (40 + dx, 178 + dy), FONT, 0.75, PRINT, 2, cv2.LINE_AA)
 
     # Date boxes DDMMYYYY

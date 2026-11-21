@@ -180,6 +180,15 @@ def test_tamper_stage_with_and_without_model(
     assert set(tc.evidence["field_scores"]) >= {"amount_figures", "payee", "date"}
     assert doc.risk["band"] in {"low", "medium", "high"} and doc.risk_score is not None
 
+    # a video frame is H.264-compressed: the JPEG-trained model must not raise the flag
+    from findoc.fraud.stages import tamper_stage
+    from findoc.types import InputKind
+
+    doc.checks = [c for c in doc.checks if c.id != "TAMPER_REGION"]
+    doc.kind = InputKind.VIDEO
+    tc = next(c for c in tamper_stage(doc).checks if c.id == "TAMPER_REGION")
+    assert not tc.fired and tc.evidence["skipped"] == "video" and doc.tamper_map is not None
+
     monkeypatch.setenv("FINDOC_TAMPER", "off")
     get_settings.cache_clear()
     assert not any(c.id == "TAMPER_REGION" for c in process(path, ocr=False).checks)
