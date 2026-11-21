@@ -12,6 +12,7 @@ Stage roadmap (see README):
     Phase 5  recon3d      SfM, surface fit, ARAP flattening (video)  (done)
     Phase 6  fraud        tamper map, duplicates, signature, risk score  (done)
     Phase 7  invoices     classifier, rules + LayoutLMv3 extraction, GST checks  (done)
+    Phase 8  product      FastAPI service, job queue, review UI (``app/``, ``frontend/``)
 """
 
 from __future__ import annotations
@@ -46,11 +47,17 @@ class Pipeline:
         self.stages.append((name, stage))
         return self
 
-    def run(self, source: Path) -> Document:
+    def run(
+        self, source: Path, on_stage: Callable[[str, int, int], None] | None = None
+    ) -> Document:
+        """Run every stage in order. ``on_stage(name, index, total)`` is called before each
+        stage (Phase 8: the API worker uses it to report progress)."""
         doc = Document(source=source, kind=detect_kind(source))
-        for name, stage in self.stages:
+        for i, (name, stage) in enumerate(self.stages):
             if doc.status is not Status.OK:
                 break
+            if on_stage is not None:
+                on_stage(name, i, len(self.stages))
             t0 = time.perf_counter()
             try:
                 doc = stage(doc)

@@ -1,0 +1,55 @@
+# The full stack: PostgreSQL, the API (serves the review UI) and workers.
+#   cp .env.example .env   # then set the secrets
+#   docker compose up --build             # http://localhost:8000
+#   docker compose up --scale worker=3    # more workers
+# Models trained on your machine (models/*.pkl, models/invoice_layoutlmv3) are mounted read-only.
+
+x-app: &app
+  build:
+    context: .
+    args:
+      EXTRAS: ${FINDOC_EXTRAS:-api,ocr}
+  image: findoc-guard:${FINDOC_TAG:-latest}
+  env_file: .env
+  environment:
+    FINDOC_API_DATABASE_URL: postgresql+psycopg://findoc:${POSTGRES_PASSWORD}@db:5432/findoc
+    FINDOC_API_STORAGE_DIR: /data/storage
+  volumes:
+    - storage:/data
+    - ./models:/app/models:ro
+  depends_on:
+    db:
+      condition: service_healthy
+  restart: unless-stopped
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: findoc
+      POSTGRES_DB: findoc
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U findoc -d findoc"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    <<: *app
+    command: ["api", "serve", "--host", "0.0.0.0", "--no-worker"]
+    ports:
+      - "${FINDOC_PORT:-8000}:8000"
+
+  worker:
+    <<: *app
+    command: ["api", "worker"]
+    healthcheck:
+      disable: true
+
+volumes:
+  pgdata:
+  storage:

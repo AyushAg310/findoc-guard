@@ -3,6 +3,47 @@
 All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org/);
 each build phase is released as a minor version.
 
+## [0.9.0] - Phase 8: the product
+
+### Added
+- **Web service** (`app/`, `pip install -e ".[api]"`): FastAPI under `/api/v1`, with OpenAPI
+  docs at `/docs`.
+  - Endpoints: upload (202 + job id), list and filter, stats, detail, rendered images, field
+    corrections, approve / reject / escalate, retry, delete, JSON / Excel exports, users, API
+    keys, audit log, risk rules, `/health`, Prometheus `/metrics`.
+  - RFC 9457 problem-details errors and security headers.
+- **Auth and roles**:
+  - scrypt passwords, JWT sessions, hashed API keys (`X-API-Key`);
+  - submitter < reviewer < admin;
+  - object-level access: another user's document answers 404;
+  - escalations go to admins;
+  - every change is in an append-only audit log.
+- **Job queue** (`app/worker.py`): the `documents` table, claimed with
+  `FOR UPDATE SKIP LOCKED` on PostgreSQL (compare-and-set on SQLite). Up to 3 attempts, stale
+  jobs are requeued, and progress is reported per stage (`Pipeline.run(on_stage=...)`).
+  Workers run inside `findoc api serve` or as `findoc api worker` processes.
+- **Upload safety**: type from magic bytes; images re-encoded to PNG (EXIF and appended data
+  removed, pixels kept exactly); size limits.
+- **Privacy**:
+  - account number and MICR masked to their last 4 digits in the API and exports, and covered
+    in every rendered image (mapped through the page geometry);
+  - `findoc api purge` deletes media after the retention period (30 days);
+  - `DELETE` erases a document.
+- **Review UI** (`frontend/`, React + TypeScript + Vite, served by the API):
+  - review queue with counts, filters and exports;
+  - upload with live progress;
+  - review screen: page with confidence-coloured field boxes, flags that light up their
+    region, heatmap, editable fields, line items, history, A/R/E shortcuts;
+  - users, API keys and audit trail.
+- **Deployment**: multi-stage `Dockerfile` (UI built by Node, served by Python; non-root; health
+  check), `docker-compose.yml` (PostgreSQL 16, API, scalable workers), `.env.example`.
+- **CLI**: `findoc api serve | worker | create-user | purge`.
+- **Tests**: 15 API tests that run on SQLite and PostgreSQL, and 4 UI unit tests. CI adds a
+  PostgreSQL job, a UI build job and a Docker smoke test.
+- **Experiment** `experiments/phase8_queue_eval.py`: queue throughput per worker count and
+  an exactly-once check.
+- Guide: `docs/learn/phase-8-product.md`.
+
 ## [0.8.3] - Two more EasyOCR habits
 
 ### Fixed

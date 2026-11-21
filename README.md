@@ -7,7 +7,7 @@
 [![CI](https://github.com/AyushAg310/findoc-guard/actions/workflows/ci.yml/badge.svg)](https://github.com/AyushAg310/findoc-guard/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Status](https://img.shields.io/badge/status-Phase%207%20of%209-orange)
+![Status](https://img.shields.io/badge/status-Phase%208%20of%209-orange)
 
 </div>
 
@@ -32,7 +32,41 @@ multi-view 3D reconstruction flattens folded documents while preserving forensic
 template alignment handles cheques, LayoutLMv3 handles invoices, and Indian-format validation
 feeds an explainable fraud score.
 
-## Current capability (Phase 7)
+## Current capability (Phase 8)
+
+**A web service and review desk (Phase 8).** Upload photos or videos from the browser or
+through the REST API. Workers process them in the background, and the queue shows each
+document's risk. A reviewer opens one and sees the page with every field box (colour = how
+confident the reading was), the checks that fired with their reasons and points, and the
+fields to correct. Clicking a flag lights up its region on the page. **A** approves, **R**
+rejects and **E** escalates (an admin decides escalations), and everything goes into an
+audit trail. Results export to Excel or JSON.
+
+![Review queue](docs/images/phase8_queue.png)
+
+- **API:** FastAPI with OpenAPI docs at `/docs`. Authentication is by JWT for people and
+  hashed API keys for systems. Roles are submitter, reviewer and admin, and other users'
+  documents answer 404. Errors use RFC 9457 problem details. `/health` and Prometheus
+  `/metrics` are included.
+- **Jobs:** the PostgreSQL table is the queue (`FOR UPDATE SKIP LOCKED`), with 3 attempts,
+  requeueing of jobs from crashed workers, and live stage progress.
+- **Privacy:**
+  - account numbers are masked in the API and covered in every rendered image;
+  - uploads are re-encoded, which strips EXIF;
+  - raw media is purged after 30 days;
+  - documents are deleted on request.
+- **Deploy:** run `docker compose up` for PostgreSQL, the API and N workers. On one machine,
+  `findoc api serve` uses SQLite.
+
+| Measured (PostgreSQL, CPU, EasyOCR) | Result |
+| --- | --- |
+| Cheque photo, upload to decision-ready | 2.3-2.6 s (target: 20 s on CPU) |
+| Invoice photo | ~15 s (almost all full-page OCR) |
+| Queue, 2 workers vs 1 (2-core sandbox, 24 cheques) | 1.73× faster |
+| Lost or repeated jobs | none: every document processed exactly once |
+
+## Earlier phases
+
 
 **GST invoices (Phase 7).** An invoice photo is classified (cheque / invoice / receipt / other),
 read, and its fields and line items are extracted: vendor, buyer, both GSTINs, invoice number,
@@ -259,8 +293,8 @@ Each phase is a working, demoable increment released as a new minor version.
 | 5 | 0.6 | 3D reconstruction: SfM, surface fit, ARAP flattening, camera calibration | ✅ Done |
 | 6 | 0.7 | Fraud engine: tamper mapping, duplicates, signature, risk score | ✅ Done |
 | 7 | 0.8 | Invoices: classifier, rules + LayoutLMv3 extraction, GSTIN, invoice arithmetic, Excel export | ✅ Done |
-| 8 | 0.9 | Product: FastAPI, PostgreSQL, workers, React review UI, Docker Compose | ⏳ Next |
-| 9 | 1.0 | Evaluation, ablations, demo video, term paper | ⬜ |
+| 8 | 0.9 | Product: FastAPI, PostgreSQL, workers, React review UI, Docker Compose | ✅ Done |
+| 9 | 1.0 | Evaluation, ablations, demo video, term paper | ⏳ Next |
 
 Phase 4 was added after real phone videos showed that classical page detection depends on the
 background (it failed on a pale wooden board and on patterned cloth); 3D reconstruction moved to
@@ -303,7 +337,29 @@ pytest
 For GPU OCR on Windows with an NVIDIA card, install the CUDA build of PyTorch first
 (see [pytorch.org](https://pytorch.org/get-started/locally/)), then `pip install -e ".[ocr]"`.
 
-With Docker:
+### The web service (Phase 8)
+
+On one machine (SQLite, a worker thread inside the server):
+
+```bash
+pip install -e ".[api,ocr]"
+cd frontend && npm ci && npm run build && cd ..      # the review UI (Node 18+)
+findoc api create-user --email you@example.com --role admin
+findoc api serve                                      # http://127.0.0.1:8000 (API docs: /docs)
+```
+
+The full stack with Docker (PostgreSQL, API, workers):
+
+```bash
+cp .env.example .env          # set the passwords and the JWT secret
+docker compose up --build     # http://localhost:8000, admin from .env
+docker compose up --scale worker=3
+```
+
+For UI development, run `npm run dev` in `frontend/` (http://localhost:5173). It sends API calls
+to `findoc api serve`.
+
+The CLI in Docker:
 
 ```bash
 docker build -t findoc-guard .
@@ -327,8 +383,8 @@ findoc-guard/
 │   ├── recon3d/         # Phase 5  SfM, surface fit, ARAP flattening, calibration (CO-5)
 │   ├── fraud/           # Phase 2  rules; Phase 6 tamper, duplicates, signature, risk score
 │   └── export/          # Phase 7  Excel export
-├── app/                 # Phase 8  FastAPI service
-├── frontend/            # Phase 8  React review UI
+├── app/                 # Phase 8  FastAPI service: routers, models, auth, job worker
+├── frontend/            # Phase 8  React + TypeScript review UI (Vite)
 ├── data/                # Synthetic generators and samples (no real documents)
 ├── experiments/         # Evaluation configs and notebooks
 ├── docs/                # SRS/design document and diagrams
@@ -337,8 +393,8 @@ findoc-guard/
 
 ## Tech stack
 
-Python · OpenCV · PyTorch · Hugging Face Transformers (LayoutLMv3) · SciPy (bundle adjustment, ARAP) · scikit-learn (tamper model) · SuperPoint + LightGlue · EasyOCR / PaddleOCR · FastAPI · PostgreSQL · Celery + Redis ·
-React + three.js · Docker · GitHub Actions
+Python · OpenCV · PyTorch · Hugging Face Transformers (LayoutLMv3) · SciPy (bundle adjustment, ARAP) · scikit-learn (tamper model) · SuperPoint + LightGlue · EasyOCR / PaddleOCR · FastAPI · SQLAlchemy · PostgreSQL ·
+React + TypeScript (Vite) · Docker Compose · GitHub Actions
 
 ## Responsible use
 

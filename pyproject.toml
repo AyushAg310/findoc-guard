@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "findoc-guard"
-version = "0.8.3"
+version = "0.9.0"
 description = "3D-aware cheque and invoice processing with explainable fraud detection"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -42,12 +42,22 @@ train = ["torch>=2.2", "onnx>=1.15"]
 # Phase 5's 3D reconstruction needs only numpy, OpenCV and SciPy (core dependencies).
 # Phase 7: LayoutLMv3 invoice tagging (training and inference)
 layout = ["torch>=2.2", "transformers>=4.44"]
+# Phase 8: web service (FastAPI, SQLAlchemy; psycopg for PostgreSQL)
+api = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "sqlalchemy>=2.0",
+    "python-multipart>=0.0.9",
+    "pyjwt>=2.8",
+    "psycopg[binary]>=3.1",
+]
 dev = [
     "pytest>=8.0",
     "pytest-cov>=5.0",
     "ruff>=0.5",
     "mypy>=1.10",
     "pre-commit>=3.7",
+    "httpx>=0.27",  # FastAPI's TestClient
 ]
 
 [project.scripts]
@@ -58,7 +68,7 @@ Homepage = "https://github.com/AyushAg310/findoc-guard"
 Issues = "https://github.com/AyushAg310/findoc-guard/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["findoc"]
+packages = ["findoc", "app"]
 
 [tool.ruff]
 line-length = 100
@@ -76,7 +86,7 @@ ignore = ["B008"]  # typer uses function calls in argument defaults
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q --cov=findoc --cov-report=term-missing"
+addopts = "-q --cov=findoc --cov=app --cov-report=term-missing"
 
 [tool.mypy]
 python_version = "3.11"

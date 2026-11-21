@@ -14,8 +14,8 @@ line yourself.
 | [Phase 5 - 3D reconstruction](phase-5-3d-reconstruction.md) | Developable surfaces, incremental SfM, bundle adjustment, focal search, planarity test, surface fit, ARAP flattening, correspondence map, camera calibration, evaluation | 0.6.0 |
 | [Phase 6 - Fraud engine](phase-6-fraud-engine.md) | JPEG forensics, learned tamper model, heatmap mapping through the correspondence map, duplicate index, signature comparison, explainable risk score | 0.7.0 |
 | [Phase 7 - Invoices](phase-7-invoices.md) | Synthetic GST invoices, GSTIN check digit, rule-based and LayoutLMv3 extraction, misread-aware invoice checks, document-type classifier, Excel export | 0.8.0 |
-| Phase 8 - Product | FastAPI, PostgreSQL, Celery, React UI | coming next |
-| Phase 9 - Evaluation | Metrics, ablations, results | |
+| [Phase 8 - Product](phase-8-product.md) | FastAPI service, JWT and API keys, roles, upload safety, PostgreSQL job queue (SKIP LOCKED), retries, redaction, React review UI, Docker Compose, CI on PostgreSQL | 0.9.0 |
+| Phase 9 - Evaluation | Metrics, ablations, results | coming next |
 
 > **Phase numbers changed in v0.5.0.** Learned page detection was inserted as Phase 4, so 3D
 > reconstruction is now Phase 5, the fraud engine Phase 6, invoices Phase 7, the product Phase 8

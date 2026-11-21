@@ -551,3 +551,9 @@ def invoice_train(
         f"Saved {out}: field F1 {b['f1']}, line-item cells {b['item_cell_accuracy']} "
         f"(epoch {b['epoch']}, {rec['device']})"
     )
+
+
+# Phase 8: web service (the app package ships in the same wheel; FastAPI is the [api] extra)
+from app.cli import api_app  # noqa: E402
+
+app.add_typer(api_app, name="api")

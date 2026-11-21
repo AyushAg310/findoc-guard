@@ -56,3 +56,7 @@ desktop.ini
 # Duplicate-cheque index (derived from processed cheques: keep private)
 data/index/
 data/signatures/
+
+# Phase 8: service data (uploads, rendered images, SQLite database)
+data/storage/
+data/findoc.db*
