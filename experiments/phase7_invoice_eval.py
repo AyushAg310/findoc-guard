@@ -109,35 +109,49 @@ def extraction(n: int, layout_dir: Path | None) -> dict:
     return out
 
 
-def checks(n_per_kind: int) -> dict:
+def _check_one(args: tuple[float, str | None, int]) -> tuple[bool, bool, bool]:
+    """(any check flagged, sent to review, the expected check fired) for one invoice."""
+    cer, kind, i = args
+    seed = 700_000 + 1000 * (FRAUDS.index(kind) + 1 if kind else 0) + i
+    _, _, words = render_invoice(np.random.default_rng(seed), fraud=kind)
+    ocr = simulate_ocr(words, np.random.default_rng((seed, 5)), cer=cer)
+    inv = RuleExtractor().extract(ocr)
+    text = amount_in_words_text(ocr)
+    if text:
+        inv.fields["amount_words"] = text
+    results = [c for c in run_invoice_rules(inv.normalized()) if c.fired]
+    fired = {c.id for c in results} - {"INVOICE_UNVERIFIED"}
+    return (
+        bool(fired),
+        risk_score(results).band != "low",
+        kind is not None and EXPECTED[kind] in fired,
+    )
+
+
+def checks(n_per_kind: int, workers: int = -1) -> dict:
     """Which checks fire, and whether the risk score sends the invoice to review (medium or
-    high band), for clean invoices and each planted error, at each OCR error rate."""
+    high band), for clean invoices and each planted error, at each OCR error rate. Invoices
+    are rendered and checked in parallel processes."""
+    import os
+    from concurrent.futures import ProcessPoolExecutor
+
+    workers = workers if workers > 0 else max(1, (os.cpu_count() or 2) - 1)
+    jobs = [(cer, kind, i) for cer in CERS for kind in (None, *FRAUDS) for i in range(n_per_kind)]
+    with ProcessPoolExecutor(workers) as pool:
+        results = dict(zip(jobs, pool.map(_check_one, jobs, chunksize=4), strict=True))
     out: dict = {}
     for cer in CERS:
         res: dict = {}
         for kind in (None, *FRAUDS):
-            right, flagged, review = 0, 0, 0
-            for i in range(n_per_kind):
-                seed = 700_000 + 1000 * (FRAUDS.index(kind) + 1 if kind else 0) + i
-                _, truth, words = render_invoice(np.random.default_rng(seed), fraud=kind)
-                ocr = simulate_ocr(words, np.random.default_rng((seed, 5)), cer=cer)
-                inv = RuleExtractor().extract(ocr)
-                text = amount_in_words_text(ocr)
-                if text:
-                    inv.fields["amount_words"] = text
-                results = [c for c in run_invoice_rules(inv.normalized()) if c.fired]
-                fired = {c.id for c in results} - {"INVOICE_UNVERIFIED"}
-                flagged += bool(fired)
-                review += risk_score(results).band != "low"
-                right += kind is not None and EXPECTED[kind] in fired
+            rows = [results[(cer, kind, i)] for i in range(n_per_kind)]
             key = kind or "clean"
             res[key] = {
                 "n": n_per_kind,
-                "flagged": round(flagged / n_per_kind, 3),
-                "sent_to_review": round(review / n_per_kind, 3),
+                "flagged": round(sum(r[0] for r in rows) / n_per_kind, 3),
+                "sent_to_review": round(sum(r[1] for r in rows) / n_per_kind, 3),
             }
             if kind:
-                res[key]["right_check"] = round(right / n_per_kind, 3)
+                res[key]["right_check"] = round(sum(r[2] for r in rows) / n_per_kind, 3)
         out[f"cer_{cer}"] = res
         print(
             f"CER {cer:.0%}: "

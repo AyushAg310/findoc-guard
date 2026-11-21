@@ -529,6 +529,7 @@ def invoice_train(
     epochs: int = typer.Option(5),
     batch_size: int = typer.Option(4, "--batch-size"),
     device: str = typer.Option("auto", help="'auto', 'cuda' or 'cpu'"),
+    workers: int = typer.Option(-1, help="Processes rendering invoices; -1 = CPU cores - 2"),
 ) -> None:
     """Fine-tune LayoutLMv3 to tag invoice fields (needs the [layout] extra; GPU recommended)."""
     try:
@@ -542,6 +543,7 @@ def invoice_train(
         epochs=epochs,
         batch_size=batch_size,
         device=device,
+        workers=workers,
         log=console.print,
     )
     b = rec["best"]

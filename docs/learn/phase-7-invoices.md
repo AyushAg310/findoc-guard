@@ -151,6 +151,15 @@ with OCR noise), uses AdamW with a one-cycle learning rate and gradient clipping
 fixed invoices by assembling fields and scoring them like the rules, and saves the best epoch
 with `save_pretrained`. `LayoutExtractor` loads it for the pipeline.
 
+Since v0.8.1 training is faster in three ways:
+- **fp16 mixed precision** on CUDA (`torch.autocast`, with a `GradScaler` that scales the loss up
+  so small fp16 gradients don't round to zero): tensor cores roughly double the speed and the
+  activations take half the memory;
+- **dynamic padding** (`collate`): each batch is padded to its longest invoice (~250-400
+  tokens), not to the model's 512;
+- **parallel rendering** (`SyntheticInvoices` in `--workers` DataLoader processes, defined at
+  module level so Windows can pickle it into the workers): the GPU doesn't wait for the CPU.
+
 `base="tiny"` builds a 2-layer, width-64 LayoutLMv3 with a byte-level BPE tokenizer trained on
 synthetic invoice text, entirely offline. The development environment cannot download the
 pre-trained weights, so this is how the training and inference code is tested; in a short CPU

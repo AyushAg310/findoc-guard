@@ -3,7 +3,16 @@
 All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org/);
 each build phase is released as a minor version.
 
-## [0.8.0] - Phase 7: invoices
+## [0.8.1] - Faster LayoutLMv3 training
+
+### Changed
+- `findoc invoice train`: fp16 mixed precision on CUDA (autocast + GradScaler; about twice as
+  fast on tensor cores and half the GPU memory), batches padded to their longest invoice instead
+  of 512 tokens (invoices are ~250-400 tokens), and invoices rendered by parallel worker
+  processes (`--workers`, default CPU cores - 2). Inference also runs in fp16 on CUDA.
+- `experiments/phase7_invoice_eval.py`: the checks part renders and checks invoices in parallel.
+
+ - Phase 7: invoices
 
 ### Added
 - **Synthetic GST invoices** (`findoc/synth/invoice.py`, `findoc synth --kind invoice`): three

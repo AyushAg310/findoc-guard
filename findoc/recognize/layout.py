@@ -15,6 +15,12 @@ label: ``B-TOTAL`` = first word of the total, ``I-VENDOR`` = a later word of the
 ``O`` = not a field. Only each word's first sub-word token is scored (the rest get label -100,
 ignored by the loss), so predictions map back one per word.
 
+**Speed.** On a CUDA GPU the forward and backward passes run in fp16 mixed precision
+(``torch.autocast`` with a ``GradScaler`` that keeps small fp16 gradients from rounding to
+zero): about twice as fast on tensor cores and half the memory. Batches are padded only to
+their longest invoice (``collate``), not to 512 tokens, and invoices are rendered by
+``workers`` background processes so the GPU never waits for the CPU.
+
 **Training data** is generated on the fly from :mod:`findoc.synth.invoice`: a new invoice for
 every step, with the page image degraded like a photo (blur, noise, lighting, JPEG) and the
 words given OCR-like noise (box jitter and character errors). Validation uses a fixed set of
@@ -200,10 +206,50 @@ def encode(proc, image: np.ndarray, words: list[OcrWord], tags: list[str] | None
         boxes=[norm_box(wd.bbox, w, h) for wd in words],
         truncation=True,
         max_length=MAX_LEN,
-        padding="max_length",
         return_tensors="pt",
         **kwargs,
     )
+
+
+class SyntheticInvoices:
+    """Training data: a new synthetic invoice for every (epoch, index), encoded for the model.
+    A module-level class so DataLoader worker processes can receive it (Windows starts workers
+    by pickling the dataset)."""
+
+    def __init__(self, proc, samples: int, seed: int) -> None:  # type: ignore[no-untyped-def]  # noqa: ANN001
+        self.proc, self.samples, self.seed, self.epoch = proc, samples, seed, 0
+
+    def __len__(self) -> int:
+        return self.samples
+
+    def __getitem__(self, i: int) -> dict:
+        img, words, tags, _ = synthetic_sample(hash((self.seed, self.epoch, i)) % (2**31))
+        enc = encode(self.proc, img, words, tags)
+        return {k: v[0] for k, v in enc.items()}
+
+
+def collate(batch: list[dict], pad_id: int) -> dict:
+    """Pad a batch only to its longest sequence (not always to 512 tokens): invoices are
+    ~250-400 tokens, so fixed padding wasted a third or more of every step."""
+    import torch
+
+    n = max(len(b["input_ids"]) for b in batch)
+    fill = {"input_ids": pad_id, "attention_mask": 0, "labels": -100, "bbox": 0}
+    out: dict = {}
+    for key in batch[0]:
+        if key == "pixel_values":
+            out[key] = torch.stack([b[key] for b in batch])
+            continue
+        rows = []
+        for b in batch:
+            t = b[key]
+            pad = n - t.shape[0]
+            if pad:
+                shape = (pad, *t.shape[1:])
+                t = torch.cat([t, torch.full(shape, fill[key], dtype=t.dtype)])
+            rows.append(t)
+        out[key] = torch.stack(rows)
+    return out
 
 
 def predict_tags(proc, model, image: np.ndarray, words: list[OcrWord]) -> list[str]:  # type: ignore[no-untyped-def]  # noqa: ANN001
@@ -214,8 +260,11 @@ def predict_tags(proc, model, image: np.ndarray, words: list[OcrWord]) -> list[s
         return []
     enc = encode(proc, image, words)
     device = next(model.parameters()).device
-    with torch.no_grad():
-        logits = model(**{k: v.to(device) for k, v in enc.items()}).logits[0]
+    with (
+        torch.no_grad(),
+        torch.autocast(device_type=device.type, dtype=torch.float16, enabled=device.type == "cuda"),
+    ):
+        logits = model(**{k: v.to(device) for k, v in enc.items()}).logits[0].float()
     pred = logits.argmax(-1).cpu().numpy()
     tags = ["O"] * len(words)
     seen = set()
@@ -268,10 +317,14 @@ def train(
     lr: float | None = None,
     device: str = "auto",
     seed: int = 0,
+    workers: int = -1,
     log=print,  # noqa: ANN001
 ) -> dict:
+    import os
+    from functools import partial
+
     import torch
-    from torch.utils.data import DataLoader, Dataset
+    from torch.utils.data import DataLoader
 
     from findoc.synth.invoice import truth_normalized
 
@@ -288,19 +341,12 @@ def train(
     model.to(dev)
     lr = lr or (1e-3 if base == "tiny" else 3e-5)
 
-    class Synthetic(Dataset):
-        def __init__(self) -> None:
-            self.epoch = 0
-
-        def __len__(self) -> int:
-            return samples
-
-        def __getitem__(self, i: int):  # type: ignore[no-untyped-def]  # noqa: ANN204
-            img, words, tags, _ = synthetic_sample(hash((seed, self.epoch, i)) % (2**31))
-            enc = encode(proc, img, words, tags)
-            return {k: v[0] for k, v in enc.items()}
-
-    ds = Synthetic()
+    ds = SyntheticInvoices(proc, samples, seed)
+    if workers < 0:  # render invoices in parallel so the GPU is not left waiting
+        workers = max(0, min(8, (os.cpu_count() or 2) - 2))
+    amp = dev.type == "cuda"  # fp16 mixed precision: ~2x faster on tensor cores, half the memory
+    scaler = torch.amp.GradScaler("cuda", enabled=amp)
+    pad_id = proc.tokenizer.pad_token_id
     val = [synthetic_sample(10_000_000 + seed * 1000 + i) for i in range(val_samples)]
     opt = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=0.01)
     steps = epochs * ((samples + batch_size - 1) // batch_size)
@@ -313,12 +359,22 @@ def train(
         ds.epoch = ep
         model.train()
         losses = []
-        for batch in DataLoader(ds, batch_size=batch_size, shuffle=True, num_workers=0):
-            loss = model(**{k: v.to(dev) for k, v in batch.items()}).loss
-            opt.zero_grad()
-            loss.backward()
+        loader = DataLoader(
+            ds,
+            batch_size=batch_size,
+            shuffle=True,
+            num_workers=workers,
+            collate_fn=partial(collate, pad_id=pad_id),
+        )
+        for batch in loader:
+            with torch.autocast(device_type=dev.type, dtype=torch.float16, enabled=amp):
+                loss = model(**{k: v.to(dev, non_blocking=True) for k, v in batch.items()}).loss
+            opt.zero_grad(set_to_none=True)
+            scaler.scale(loss).backward()
+            scaler.unscale_(opt)
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-            opt.step()
+            scaler.step(opt)
+            scaler.update()
             sched.step()
             losses.append(loss.item())
         model.eval()
@@ -337,7 +393,7 @@ def train(
         )
         log(
             f"epoch {ep + 1}/{epochs}: loss {history[-1]['loss']}, field F1 {score['f1']}, "
-            f"item cells {score['item_cell_accuracy']}"
+            f"item cells {score['item_cell_accuracy']} ({history[-1]['seconds']:.0f} s so far)"
         )
         if score["f1"] + score["item_cell_accuracy"] > best:
             best = score["f1"] + score["item_cell_accuracy"]
