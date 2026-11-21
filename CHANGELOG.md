@@ -13,9 +13,9 @@ each build phase is released as a minor version.
   GSTIN alarm 2 -> 1 of 15; forged GSTINs with a full alarm 2 -> 3 of 3.
 
 ### Results
-- `experiments/results/phase7_real_ocr.json`: v0.8.2 on the laptop with LayoutLMv3. Header F1
-  0.928, line items 0.951; clean invoices sent to review 13% (2 of 15); planted errors sent to
-  review 93% (14 of 15).
+- `experiments/results/phase7_real_ocr.json`: v0.8.3 on the laptop with LayoutLMv3. Header F1
+  0.940, line items 0.951, GSTINs read exactly 85%; clean invoices sent to review 7% (1 of 15,
+  v0.8.2: 2); planted errors sent to review by the right check 100% (15 of 15, v0.8.2: 14).
 
 ## [0.8.2] - GSTINs under real OCR
 

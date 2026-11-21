@@ -1,20 +1,20 @@
 {
   "real_ocr": {
-    "precision": 0.9395,
-    "recall": 0.9167,
-    "f1": 0.9279,
+    "precision": 0.9504,
+    "recall": 0.9306,
+    "f1": 0.9404,
     "item_cell_accuracy": 0.9507,
     "extractor": "layoutlmv3",
-    "sent_to_review_clean": 0.133,
-    "sent_to_review_planted": 0.933,
-    "right_check_planted": 0.933,
-    "gstin_read_exactly": 0.783,
-    "median_seconds": 4.15,
+    "sent_to_review_clean": 0.067,
+    "sent_to_review_planted": 1.0,
+    "right_check_planted": 1.0,
+    "gstin_read_exactly": 0.85,
+    "median_seconds": 2.8499999999999996,
     "rows": [
       {
         "invoice": 0,
         "planted": null,
-        "seconds": 16.3,
+        "seconds": 13.1,
         "method": "layoutlmv3",
         "risk_band": "medium",
         "risk_score": 38,
@@ -45,7 +45,7 @@
       {
         "invoice": 1,
         "planted": "total",
-        "seconds": 3.0,
+        "seconds": 2.2,
         "method": "layoutlmv3",
         "risk_band": "medium",
         "risk_score": 38,
@@ -76,14 +76,14 @@
       {
         "invoice": 2,
         "planted": null,
-        "seconds": 5.2,
+        "seconds": 3.7,
         "method": "layoutlmv3",
         "risk_band": "low",
         "risk_score": 0,
         "checks": [],
         "vendor_gstin": {
           "true": "09DJRHO1778V1Z3",
-          "read": "09DJRHO1778V1Z3",
+          "read": "OQDJRHO1778V1Z3",
           "normalized": "09DJRHO1778V1Z3",
           "valid": true
         },
@@ -101,7 +101,7 @@
       {
         "invoice": 3,
         "planted": "lineitem",
-        "seconds": 3.4,
+        "seconds": 2.3,
         "method": "layoutlmv3",
         "risk_band": "medium",
         "risk_score": 68,
@@ -132,7 +132,7 @@
       {
         "invoice": 4,
         "planted": null,
-        "seconds": 4.7,
+        "seconds": 3.3,
         "method": "layoutlmv3",
         "risk_band": "low",
         "risk_score": 0,
@@ -157,7 +157,7 @@
       {
         "invoice": 5,
         "planted": "taxsplit",
-        "seconds": 4.4,
+        "seconds": 3.7,
         "method": "layoutlmv3",
         "risk_band": "high",
         "risk_score": 70,
@@ -193,7 +193,7 @@
       {
         "invoice": 6,
         "planted": null,
-        "seconds": 4.6,
+        "seconds": 3.3,
         "method": "layoutlmv3",
         "risk_band": "low",
         "risk_score": 0,
@@ -218,15 +218,21 @@
       {
         "invoice": 7,
         "planted": "gstin",
-        "seconds": 4.9,
+        "seconds": 4.1,
         "method": "layoutlmv3",
-        "risk_band": "low",
-        "risk_score": 0,
-        "checks": [],
+        "risk_band": "medium",
+        "risk_score": 38,
+        "checks": [
+          {
+            "id": "GSTIN_INVALID",
+            "confidence": 0.9,
+            "reason": "Vendor GSTIN 07AQUCA4401O2Z0: '07AQUCA4401O2Z0': check character is 0, should be C."
+          }
+        ],
         "vendor_gstin": {
           "true": "07AQUCA4401Q2Z0",
           "read": "@7AQUCA440102Z0",
-          "normalized": null,
+          "normalized": "07AQUCA4401O2Z0",
           "valid": false
         },
         "buyer_gstin": {
@@ -243,26 +249,20 @@
       {
         "invoice": 8,
         "planted": null,
-        "seconds": 3.3,
+        "seconds": 2.2,
         "method": "layoutlmv3",
         "risk_band": "low",
-        "risk_score": 13,
-        "checks": [
-          {
-            "id": "GSTIN_INVALID",
-            "confidence": 0.3,
-            "reason": "Vendor GSTIN 07AEDPI0000R2ZH: '07AEDPI0000R2ZH': check character is H, should be Q; one misread character away from 97AEDPI0000R2ZH (valid), so probably an OCR error: check the printed number."
-          }
-        ],
+        "risk_score": 0,
+        "checks": [],
         "vendor_gstin": {
           "true": "07AEDPI9099R2ZH",
           "read": "O7AEDPIQOQQRZZH",
-          "normalized": "07AEDPI0000R2ZH",
-          "valid": false
+          "normalized": "07AEDPI9099R2ZH",
+          "valid": true
         },
         "buyer_gstin": {
           "true": "08ANQPP2583A1ZT",
-          "read": "08ANQPP2583A1ZT",
+          "read": "@8ANQPP2S83A1ZT",
           "normalized": "08ANQPP2583A1ZT",
           "valid": true
         },
@@ -274,7 +274,7 @@
       {
         "invoice": 9,
         "planted": "total",
-        "seconds": 4.6,
+        "seconds": 3.9,
         "method": "layoutlmv3",
         "risk_band": "medium",
         "risk_score": 36,
@@ -305,7 +305,7 @@
       {
         "invoice": 10,
         "planted": null,
-        "seconds": 2.9,
+        "seconds": 2.1,
         "method": "layoutlmv3",
         "risk_band": "low",
         "risk_score": 0,
@@ -330,7 +330,7 @@
       {
         "invoice": 11,
         "planted": "lineitem",
-        "seconds": 4.6,
+        "seconds": 3.1,
         "method": "layoutlmv3",
         "risk_band": "medium",
         "risk_score": 68,
@@ -361,7 +361,7 @@
       {
         "invoice": 12,
         "planted": null,
-        "seconds": 3.1,
+        "seconds": 2.1,
         "method": "layoutlmv3",
         "risk_band": "low",
         "risk_score": 0,
@@ -386,7 +386,7 @@
       {
         "invoice": 13,
         "planted": "taxsplit",
-        "seconds": 2.8,
+        "seconds": 2.0,
         "method": "layoutlmv3",
         "risk_band": "medium",
         "risk_score": 45,
@@ -422,7 +422,7 @@
       {
         "invoice": 14,
         "planted": null,
-        "seconds": 4.4,
+        "seconds": 2.9,
         "method": "layoutlmv3",
         "risk_band": "low",
         "risk_score": 0,
@@ -447,7 +447,7 @@
       {
         "invoice": 15,
         "planted": "gstin",
-        "seconds": 3.3,
+        "seconds": 2.1,
         "method": "layoutlmv3",
         "risk_band": "medium",
         "risk_score": 38,
@@ -455,13 +455,13 @@
           {
             "id": "GSTIN_INVALID",
             "confidence": 0.9,
-            "reason": "Vendor GSTIN 00QEQTG7930Y1ZP: '00QEQTG7930Y1ZP': unknown state code 00."
+            "reason": "Vendor GSTIN 09QEQTG7930Y1ZP: '09QEQTG7930Y1ZP': check character is P, should be H."
           }
         ],
         "vendor_gstin": {
           "true": "09QEQTG7930Y1ZP",
           "read": "OQQEQTG7930Y1ZP",
-          "normalized": "00QEQTG7930Y1ZP",
+          "normalized": "09QEQTG7930Y1ZP",
           "valid": false
         },
         "buyer_gstin": {
@@ -478,14 +478,14 @@
       {
         "invoice": 16,
         "planted": null,
-        "seconds": 4.4,
+        "seconds": 3.1,
         "method": "layoutlmv3",
         "risk_band": "low",
         "risk_score": 0,
         "checks": [],
         "vendor_gstin": {
           "true": "07WTQPB9308H2ZV",
-          "read": "07WTQPB9308H2ZV",
+          "read": "@7WTQPB93O8HZZV",
           "normalized": "07WTQPB9308H2ZV",
           "valid": true
         },
@@ -503,25 +503,15 @@
       {
         "invoice": 17,
         "planted": "total",
-        "seconds": 2.9,
+        "seconds": 1.9,
         "method": "layoutlmv3",
-        "risk_band": "high",
-        "risk_score": 83,
+        "risk_band": "medium",
+        "risk_score": 38,
         "checks": [
-          {
-            "id": "GSTIN_INVALID",
-            "confidence": 0.3,
-            "reason": "Buyer GSTIN 20UYMFO0840F1ZB: '20UYMFO0840F1ZB': check character is B, should be T; one misread character away from 29UYMFO0840F1ZB (valid), so probably an OCR error: check the printed number."
-          },
           {
             "id": "INVOICE_MATH",
             "confidence": 0.85,
             "reason": "Invoice arithmetic does not add up: subtotal + tax = 594,052.72, total says 597,595.72 (the amount in words agrees with the printed total)."
-          },
-          {
-            "id": "TAX_TYPE_MISMATCH",
-            "confidence": 0.9,
-            "reason": "Supply Karnataka to Jharkhand: IGST expected, CGST + SGST charged (wrong tax type)."
           }
         ],
         "vendor_gstin": {
@@ -533,8 +523,8 @@
         "buyer_gstin": {
           "true": "29UYMFO0840F1ZB",
           "read": "2QUYMFOO84OFIZB",
-          "normalized": "20UYMFO0840F1ZB",
-          "valid": false
+          "normalized": "29UYMFO0840F1ZB",
+          "valid": true
         },
         "total": {
           "true": "597595.72",
@@ -544,7 +534,7 @@
       {
         "invoice": 18,
         "planted": null,
-        "seconds": 4.4,
+        "seconds": 2.9,
         "method": "layoutlmv3",
         "risk_band": "low",
         "risk_score": 0,
@@ -569,7 +559,7 @@
       {
         "invoice": 19,
         "planted": "lineitem",
-        "seconds": 4.0,
+        "seconds": 2.8,
         "method": "layoutlmv3",
         "risk_band": "medium",
         "risk_score": 68,
@@ -600,7 +590,7 @@
       {
         "invoice": 20,
         "planted": null,
-        "seconds": 4.5,
+        "seconds": 3.2,
         "method": "layoutlmv3",
         "risk_band": "low",
         "risk_score": 0,
@@ -625,7 +615,7 @@
       {
         "invoice": 21,
         "planted": "taxsplit",
-        "seconds": 4.8,
+        "seconds": 3.2,
         "method": "layoutlmv3",
         "risk_band": "medium",
         "risk_score": 32,
@@ -656,7 +646,7 @@
       {
         "invoice": 22,
         "planted": null,
-        "seconds": 4.3,
+        "seconds": 3.0,
         "method": "layoutlmv3",
         "risk_band": "low",
         "risk_score": 0,
@@ -681,7 +671,7 @@
       {
         "invoice": 23,
         "planted": "gstin",
-        "seconds": 3.5,
+        "seconds": 2.3,
         "method": "layoutlmv3",
         "risk_band": "high",
         "risk_score": 70,
@@ -689,7 +679,7 @@
           {
             "id": "GSTIN_INVALID",
             "confidence": 0.9,
-            "reason": "Vendor GSTIN 02XJTPY9002R1ZK: '02XJTPY9002R1ZK': check character is K, should be N."
+            "reason": "Vendor GSTIN 02XJTPY9902R1ZK: '02XJTPY9902R1ZK': check character is K, should be E."
           },
           {
             "id": "TAX_TYPE_MISMATCH",
@@ -700,7 +690,7 @@
         "vendor_gstin": {
           "true": "07XJTPY9902R1ZK",
           "read": "OZXJTPY9QO2RIZK",
-          "normalized": "02XJTPY9002R1ZK",
+          "normalized": "02XJTPY9902R1ZK",
           "valid": false
         },
         "buyer_gstin": {
@@ -717,7 +707,7 @@
       {
         "invoice": 24,
         "planted": null,
-        "seconds": 3.5,
+        "seconds": 2.3,
         "method": "layoutlmv3",
         "risk_band": "low",
         "risk_score": 0,
@@ -742,7 +732,7 @@
       {
         "invoice": 25,
         "planted": "total",
-        "seconds": 2.8,
+        "seconds": 1.9,
         "method": "layoutlmv3",
         "risk_band": "medium",
         "risk_score": 36,
@@ -773,7 +763,7 @@
       {
         "invoice": 26,
         "planted": null,
-        "seconds": 3.0,
+        "seconds": 1.9,
         "method": "layoutlmv3",
         "risk_band": "low",
         "risk_score": 13,
@@ -804,7 +794,7 @@
       {
         "invoice": 27,
         "planted": "lineitem",
-        "seconds": 3.0,
+        "seconds": 2.0,
         "method": "layoutlmv3",
         "risk_band": "medium",
         "risk_score": 68,
@@ -835,20 +825,15 @@
       {
         "invoice": 28,
         "planted": null,
-        "seconds": 3.1,
+        "seconds": 2.2,
         "method": "layoutlmv3",
-        "risk_band": "medium",
-        "risk_score": 50,
+        "risk_band": "low",
+        "risk_score": 13,
         "checks": [
           {
             "id": "GSTIN_INVALID",
             "confidence": 0.3,
             "reason": "Vendor GSTIN 33LROCN2568R2Z9: '33LROCN2568R2Z9': check character is 9, should be B; one misread character away from 33LRQCN2568R2Z9 (valid), so probably an OCR error: check the printed number."
-          },
-          {
-            "id": "GSTIN_INVALID",
-            "confidence": 0.9,
-            "reason": "Buyer GSTIN 00EXVTM3980P1ZM: '00EXVTM3980P1ZM': unknown state code 00."
           }
         ],
         "vendor_gstin": {
@@ -860,8 +845,8 @@
         "buyer_gstin": {
           "true": "09EXVTM3989P1ZM",
           "read": "@OQEXVTM398QP1ZM",
-          "normalized": "00EXVTM3980P1ZM",
-          "valid": false
+          "normalized": "09EXVTM3989P1ZM",
+          "valid": true
         },
         "total": {
           "true": "3228305.95",
@@ -871,7 +856,7 @@
       {
         "invoice": 29,
         "planted": "taxsplit",
-        "seconds": 4.5,
+        "seconds": 3.0,
         "method": "layoutlmv3",
         "risk_band": "medium",
         "risk_score": 32,

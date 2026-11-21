@@ -280,15 +280,16 @@ explained (the suggested fix was the true number every time), 1 clean invoice wi
 (two errors in one number). The rules extractor's line items fall to 0.49 on real OCR, and its
 arithmetic alarms send 40% of clean invoices to review, so use LayoutLMv3 for real photos.
 
-**v0.8.2 on the laptop with LayoutLMv3** (`phase7_real_ocr.json`, 4 s per invoice on the GPU):
+**On the laptop with LayoutLMv3** (`phase7_real_ocr.json` is the v0.8.3 run; ~3 s per invoice
+on the GPU):
 
-| | Result |
-| --- | --- |
-| Header field F1 / line-item cells | **0.928** / **0.951** |
-| GSTINs read exactly | 78% (83% with the v0.8.3 repairs, replayed on the same reads) |
-| Clean invoices sent to review | **13%** (2 of 15; 1 of 15 after v0.8.3) |
-| Planted errors sent to review, right check fired | **93%** (14 of 15) |
-| Wrong total / wrong line / wrong tax type / invalid GSTIN | 4/4, 4/4, 4/4, 2/3 (3/3 after v0.8.3) |
+| | v0.8.1 | v0.8.2 | **v0.8.3** |
+| --- | --- | --- | --- |
+| Header field F1 / line-item cells | 0.868 / 0.951 | 0.928 / 0.951 | **0.940 / 0.951** |
+| GSTINs read exactly | | 78% | **85%** |
+| Clean invoices with a GSTIN alarm (any confidence) | 13 of 15 | 4 of 15 | 3 of 15 |
+| Clean invoices sent to review | | 2 of 15 | **1 of 15 (7%)** |
+| Planted errors sent to review by the right check | | 14 of 15 | **15 of 15 (100%)** |
 
 The one clean invoice left (invoice 0) has two misread characters in one GSTIN; telling that
 from a forged number would need a second confusion, which would excuse many more forgeries.
