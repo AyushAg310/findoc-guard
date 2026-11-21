@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { api, type DocSummary, type Stats } from "../api";
+import { api, type DocSummary, type FlagBrief, type Stats } from "../api";
 import { RiskBar, StatusBadge } from "../components/bits";
-import { ago } from "../format";
+import { ago, checkLabel, compactRupees } from "../format";
 import { Dialog, reviewList, useToast } from "../ui";
 
 const STATUS_FILTERS: [string, string[]][] = [
@@ -251,10 +251,11 @@ export default function Queue() {
                 />
               </th>
               {head("name", "Document")}
-              <th>Type</th>
               <th>Status</th>
               {head("risk", "Risk")}
-              <th className="hide-sm">Submitted by</th>
+              <th>Why flagged</th>
+              <th className="num">Amount</th>
+              <th className="hide-md">Submitted by</th>
               {head("received", "Received")}
             </tr>
           </thead>
@@ -262,7 +263,7 @@ export default function Queue() {
             {sorted === null
               ? Array.from({ length: 6 }, (_, i) => (
                   <tr key={i}>
-                    {Array.from({ length: 7 }, (_, j) => (
+                    {Array.from({ length: 8 }, (_, j) => (
                       <td key={j}>
                         <span className="skel" style={{ width: j === 1 ? 180 : 70, height: 12 }} />
                       </td>
@@ -298,8 +299,8 @@ export default function Queue() {
                       <td className="file" title={r.filename}>
                         {r.filename}
                         {r.kind === "video" && <span className="tag">video</span>}
+                        <span className="sub">{r.doc_type && r.doc_type !== "unknown" ? r.doc_type : r.kind}</span>
                       </td>
-                      <td>{r.doc_type && r.doc_type !== "unknown" ? r.doc_type : <span className="muted">–</span>}</td>
                       <td>
                         <StatusBadge status={r.status} />
                         {r.status === "processing" && <span className="pulse" aria-hidden="true" />}
@@ -307,7 +308,11 @@ export default function Queue() {
                       <td>
                         <RiskBar band={r.risk_band} score={r.risk_score} />
                       </td>
-                      <td className="hide-sm small">{r.owner_email}</td>
+                      <td>
+                        <Reasons flags={r.top_flags} />
+                      </td>
+                      <td className="num">{r.amount ? compactRupees(r.amount) : <span className="muted">–</span>}</td>
+                      <td className="hide-md small">{r.owner_email}</td>
                       <td className="small muted">{ago(r.created_at)}</td>
                     </tr>
                   );
@@ -362,5 +367,20 @@ export default function Queue() {
         </Dialog>
       )}
     </>
+  );
+}
+
+/** The checks that fired, biggest first: two as chips, the rest as a count. */
+function Reasons({ flags }: { flags: FlagBrief[] }) {
+  if (!flags.length) return <span className="muted small">–</span>;
+  return (
+    <span className="reasons">
+      {flags.slice(0, 2).map((f) => (
+        <span key={f.id} className="flag-chip" title={f.reason}>
+          {checkLabel(f.id)}
+        </span>
+      ))}
+      {flags.length > 2 && <span className="small muted">+{flags.length - 2}</span>}
+    </span>
   );
 }

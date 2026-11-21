@@ -4,6 +4,7 @@ import { ago, bytes, checkLabel, confidenceOf, fieldLabel, fieldsForCheck, rupee
 describe("format", () => {
   it("labels checks and fields", () => {
     expect(checkLabel("AMOUNT_MISMATCH")).toBe("Amount mismatch");
+    expect(checkLabel("GSTIN_INVALID")).toBe("GSTIN invalid");
     expect(fieldLabel("vendor_gstin")).toBe("Vendor GSTIN");
     expect(fieldLabel("some_new_field")).toBe("Some new field");
   });
@@ -32,5 +33,29 @@ describe("format", () => {
     expect(bytes(5 * 1024 ** 2)).toBe("5.0 MB");
     expect(confidenceOf(0.95)).toBe("high");
     expect(confidenceOf(0.4)).toBe("low");
+  });
+});
+
+import { compactRupees, stepIndex, verdictFor } from "./format";
+
+describe("results", () => {
+  it("shortens rupees the Indian way", () => {
+    expect(compactRupees(2500)).toBe("₹2,500");
+    expect(compactRupees("612650")).toBe("₹6.13 L");
+    expect(compactRupees(25000000)).toBe("₹2.5 Cr");
+    expect(compactRupees(null)).toBe("–");
+  });
+  it("places a running document in its pipeline step", () => {
+    expect(stepIndex("queued", null)).toBe(-1);
+    expect(stepIndex("processing", "recon3d")).toBe(2);
+    expect(stepIndex("processing", "tamper")).toBe(4);
+    expect(stepIndex("needs_review", "risk")).toBe(6);
+  });
+  it("turns a band into advice", () => {
+    expect(verdictFor("needs_review", "high", 1, "AMOUNT_MISMATCH").title).toBe("Stop this document");
+    expect(verdictFor("needs_review", "high", 1, "AMOUNT_MISMATCH").advice).toContain("Amount mismatch");
+    expect(verdictFor("needs_review", "medium", 2).advice).toContain("2 flagged items");
+    expect(verdictFor("processed", "low", 0).advice).toBe("Every check passed.");
+    expect(verdictFor("rejected_quality", null, 0).tone).toBe("neutral");
   });
 });

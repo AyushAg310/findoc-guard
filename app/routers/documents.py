@@ -41,6 +41,7 @@ from app.schemas import (
     FieldEditOut,
     FieldsPatch,
     FieldView,
+    FlagBrief,
     Stats,
     Submitted,
 )
@@ -84,7 +85,38 @@ def get_visible(db: Session, doc_id: str, user: User) -> Document:
     return row
 
 
+AMOUNT_FIELDS = ("amount_figures", "total")  # the money a cheque or an invoice is about
+
+
+def _amount(result: dict[str, Any], corrections: dict[str, str] | None) -> str | None:
+    """The document's amount as checked: a reviewer's correction wins over what was read."""
+    for name in AMOUNT_FIELDS:
+        fix = (corrections or {}).get(name, "").replace(",", "").strip()
+        if re.fullmatch(r"\d+(\.\d+)?", fix):
+            return fix
+        for f in result.get("fields", []):
+            if f.get("name") == name:
+                value = f.get("normalized") or ""
+                if re.fullmatch(r"\d+(\.\d+)?", value):
+                    return value
+    return None
+
+
+def _top_flags(result: dict[str, Any], n: int = 3) -> list[FlagBrief]:
+    contrib = {
+        c["check"]: c["contribution"] for c in (result.get("risk") or {}).get("contributions", [])
+    }
+    fired = [
+        FlagBrief(id=c["id"], reason=c.get("reason", ""), contribution=contrib.get(c["id"]))
+        for c in result.get("checks", [])
+        if c.get("fired")
+    ]
+    fired.sort(key=lambda f: -(f.contribution or 0.0))
+    return fired[:n]
+
+
 def summary(row: Document) -> DocumentSummary:
+    r: dict[str, Any] = row.result or {}
     return DocumentSummary(
         id=row.id,
         filename=row.filename,
@@ -99,6 +131,8 @@ def summary(row: Document) -> DocumentSummary:
         owner_email=row.owner.email,
         created_at=row.created_at,
         finished_at=row.finished_at,
+        top_flags=_top_flags(r),
+        amount=_amount(r, row.corrections),
     )
 
 
@@ -303,12 +337,24 @@ def stats(db: Session = Depends(get_db), _: User = Depends(require(Role.REVIEWER
     seconds = []
     hist = [0] * 10
     recent = db.execute(
-        select(Document.result, Document.started_at, Document.finished_at, Document.risk_score)
+        select(
+            Document.result,
+            Document.started_at,
+            Document.finished_at,
+            Document.risk_score,
+            Document.risk_band,
+            Document.status,
+            Document.decided_at,
+            Document.corrections,
+        )
         .where(Document.result.is_not(None))
         .order_by(Document.created_at.desc())
         .limit(1000)
     ).all()
-    for result, started, finished, score in recent:
+    value_flagged = value_rejected = 0.0
+    agree = decided_n = 0
+    decision_minutes = []
+    for result, started, finished, score, band, state, decided, fixes in recent:
         for c in (result or {}).get("checks", []):
             if c.get("fired"):
                 by_check[c["id"]] = by_check.get(c["id"], 0) + 1
@@ -316,11 +362,31 @@ def stats(db: Session = Depends(get_db), _: User = Depends(require(Role.REVIEWER
             seconds.append((_as_utc(finished) - _as_utc(started)).total_seconds())
         if score is not None:
             hist[min(9, int(score) // 10)] += 1
+        amount = float(_amount(result or {}, fixes) or 0)
+        flagged = band in ("medium", "high")
+        if flagged:
+            value_flagged += amount
+        if state == DocStatus.REJECTED.value:
+            value_rejected += amount
+        if state in (DocStatus.APPROVED.value, DocStatus.REJECTED.value, DocStatus.ESCALATED.value):
+            # the system "agrees" when a flagged document is stopped (rejected or escalated)
+            # and an unflagged one is approved
+            decided_n += 1
+            agree += flagged == (state != DocStatus.APPROVED.value)
+            if decided and finished:
+                decision_minutes.append((_as_utc(decided) - _as_utc(finished)).total_seconds() / 60)
     return Stats(
         daily=list(daily.values()),
         by_check=dict(sorted(by_check.items(), key=lambda kv: -kv[1])),
         median_seconds=round(sorted(seconds)[len(seconds) // 2], 1) if seconds else None,
         risk_histogram=hist,
+        value_flagged=round(value_flagged, 2),
+        value_rejected=round(value_rejected, 2),
+        agreement=round(agree / decided_n, 3) if decided_n else None,
+        agreement_n=decided_n,
+        median_decision_minutes=round(sorted(decision_minutes)[len(decision_minutes) // 2], 1)
+        if decision_minutes
+        else None,
         total=sum(by_status.values()),
         by_status=by_status,
         by_band=counts(Document.risk_band),

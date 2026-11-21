@@ -121,3 +121,52 @@ function niceMax(v: number): number {
   for (const m of [1, 2, 5, 10]) if (v <= m * p) return m * p;
   return 10 * p;
 }
+
+/** A ring split into parts (decisions made), with the total in the middle and a legend. */
+export function Donut({ parts, centre }: { parts: { label: string; value: number; cls: string }[]; centre: string }) {
+  const [hover, setHover] = useState<number | null>(null);
+  const total = parts.reduce((a, p) => a + p.value, 0);
+  const r = 46,
+    len = 2 * Math.PI * r;
+  let offset = 0;
+  return (
+    <figure className="chart donut">
+      <svg viewBox="0 0 120 120" role="img" aria-label={parts.map((p) => `${p.label}: ${p.value}`).join(", ")}>
+        <circle cx="60" cy="60" r={r} className="d-track" />
+        {total > 0 &&
+          parts.map((p, i) => {
+            const share = p.value / total;
+            const el = (
+              <circle
+                key={p.label}
+                cx="60"
+                cy="60"
+                r={r}
+                className={`d-seg ${p.cls} ${hover === i ? "on" : ""}`}
+                strokeDasharray={`${Math.max(0, share * len - (share < 1 ? 2 : 0))} ${len}`}
+                strokeDashoffset={-offset * len}
+                transform="rotate(-90 60 60)"
+                onMouseEnter={() => setHover(i)}
+                onMouseLeave={() => setHover(null)}
+              />
+            );
+            offset += share;
+            return el;
+          })}
+        <text x="60" y="58" textAnchor="middle" className="d-num">
+          {hover != null ? parts[hover].value : centre}
+        </text>
+        <text x="60" y="74" textAnchor="middle" className="tick">
+          {hover != null ? parts[hover].label.toLowerCase() : "decided"}
+        </text>
+      </svg>
+      <figcaption>
+        {parts.map((p, i) => (
+          <span key={p.label} onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}>
+            <i className={`sw ${p.cls}`} /> {p.label} {p.value}
+          </span>
+        ))}
+      </figcaption>
+    </figure>
+  );
+}

@@ -35,8 +35,11 @@ feeds an explainable fraud score.
 ## Current capability (Phase 8)
 
 **A web service and review desk (Phase 8).** Upload photos or videos from the browser or
-through the REST API. Workers process them in the background, and the queue shows each
-document's risk. A reviewer opens one and sees the page with every field box (colour = how
+through the REST API. Workers process them in the background. Every screen leads with the
+result: an upload turns into a live card that steps through the pipeline and ends with the
+verdict, the main reason and the amount; the queue says why each document was flagged and how
+much it is for. A reviewer opens one and sees a **verdict card** first (score gauge, a
+suggested action, what the score is made of), then the page with every field box (colour = how
 confident the reading was), the checks that fired with their reasons and points, and the
 fields to correct. Clicking a flag lights up its region on the page. **A** approves, **R**
 rejects and **E** escalates (an admin decides escalations), and everything goes into an
@@ -45,13 +48,20 @@ audit trail. Results export to Excel or JSON.
 ![Review screen](docs/images/phase8_review.png)
 
 The review screen has:
+- a **before / after** slider between the photo as taken and the flattened page;
 - zoom and pan;
 - the tamper heatmap laid over the page with an opacity slider (**H**);
 - **J** / **K** to step through the queue, and "approve and open the next";
 - a command palette (**Ctrl K**), shortcuts help (**?**) and dark mode.
 
-The queue sorts, selects and decides in bulk. An **Overview** page charts volumes, risk scores
-and why documents are flagged.
+The queue sorts, selects and decides in bulk. An **Overview** page starts with outcomes: money
+stopped by reviewers and sent for a closer look, how often reviewers agreed with the risk score,
+and the time to a decision. Below are charts of volumes, decisions, risk scores and why
+documents are flagged.
+
+| Upload: each file ends in its result | Overview: outcomes first |
+| --- | --- |
+| ![Upload results](docs/images/phase8_upload_results.png) | ![Overview](docs/images/phase8_overview.png) |
 
 **Cheque banks:** twelve fictional built-in banks for synthetic data, each with its own colour,
 security pattern and logo. Real banks are added by an admin in the **template editor**: upload
@@ -308,7 +318,7 @@ Each phase is a working, demoable increment released as a new minor version.
 | 5 | 0.6 | 3D reconstruction: SfM, surface fit, ARAP flattening, camera calibration | ✅ Done |
 | 6 | 0.7 | Fraud engine: tamper mapping, duplicates, signature, risk score | ✅ Done |
 | 7 | 0.8 | Invoices: classifier, rules + LayoutLMv3 extraction, GSTIN, invoice arithmetic, Excel export | ✅ Done |
-| 8 | 0.9 | Product: FastAPI, PostgreSQL, workers, React review UI, Docker Compose | ✅ Done |
+| 8 | 0.9 | Product: FastAPI, PostgreSQL, workers, React review UI (results-first in 0.9.2), Docker Compose | ✅ Done |
 | 9 | 1.0 | Evaluation, ablations, demo video, term paper | ⏳ Next |
 
 Phase 4 was added after real phone videos showed that classical page detection depends on the

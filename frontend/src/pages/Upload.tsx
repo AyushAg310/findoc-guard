@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, type DocSummary } from "../api";
 import { RiskBadge, StatusBadge } from "../components/bits";
-import { STAGE_LABEL, ago, bytes } from "../format";
+import { PipelineSteps, ScoreRing } from "../components/results";
+import { STAGE_LABEL, ago, bytes, checkLabel, compactRupees, verdictFor } from "../format";
 import { useToast } from "../ui";
 
 interface Sending {
@@ -13,6 +14,7 @@ interface Sending {
   progress: number;
   state: "sending" | "done" | "error";
   note?: string;
+  id?: string; // the document, once uploaded
 }
 
 const ACCEPT = "image/jpeg,image/png,image/webp,image/bmp,image/tiff,video/mp4,video/quicktime,video/x-msvideo,video/webm";
@@ -30,7 +32,7 @@ export default function Upload() {
 
   const load = useCallback(() => {
     api
-      .documents(new URLSearchParams({ limit: "15" }))
+      .documents(new URLSearchParams({ limit: "30" }))
       .then((r) => setRows(r.items))
       .catch(() => {});
   }, []);
@@ -67,7 +69,7 @@ export default function Upload() {
         try {
           const r = await api.uploadWithProgress(file, register, account.trim(), (p) => patch(item.key, { progress: p }));
           ok++;
-          patch(item.key, { state: "done", progress: 1, note: r.duplicate_of ? "You uploaded this exact file before" : "Queued for processing" });
+          patch(item.key, { state: "done", progress: 1, id: r.id, note: r.duplicate_of ? "You uploaded this exact file before" : undefined });
         } catch (e) {
           patch(item.key, { state: "error", note: e instanceof Error ? e.message : "Upload failed" });
         }
@@ -116,24 +118,9 @@ export default function Upload() {
             <input type="file" accept="image/*" capture="environment" className="visually-hidden" onChange={(e) => send(e.target.files)} />
           </label>
           {sending.length > 0 && (
-            <ul className="sending" aria-label="Uploads in progress">
+            <ul className="results" aria-label="Your uploads" aria-live="polite">
               {sending.map((s) => (
-                <li key={s.key} className={s.state}>
-                  <span className="thumb">{s.thumb ? <img src={s.thumb} alt="" /> : <span className="vid">▶</span>}</span>
-                  <span className="meta">
-                    <span className="file">{s.name}</span>
-                    <span className="small muted">
-                      {bytes(s.size)}
-                      {s.note ? ` · ${s.note}` : s.state === "sending" ? ` · ${Math.round(s.progress * 100)}%` : ""}
-                    </span>
-                    <span className="progress" style={{ width: "100%" }}>
-                      <span style={{ width: `${Math.round(s.progress * 100)}%` }} />
-                    </span>
-                  </span>
-                  <span className="state" aria-label={s.state}>
-                    {s.state === "done" ? "✓" : s.state === "error" ? "!" : ""}
-                  </span>
-                </li>
+                <ResultCard key={s.key} s={s} doc={rows.find((r) => r.id === s.id) ?? null} />
               ))}
             </ul>
           )}
@@ -163,7 +150,7 @@ export default function Upload() {
           <tr>
             <th>Document</th>
             <th>Status</th>
-            <th>Progress</th>
+            <th>Result</th>
             <th>Risk</th>
             <th className="hide-sm">Uploaded</th>
           </tr>
@@ -190,7 +177,7 @@ export default function Upload() {
                       </span>
                     </div>
                   ) : (
-                    <span className="muted">Done</span>
+                    <span className="muted">{r.top_flags[0] ? `${checkLabel(r.top_flags[0].id)}${r.top_flags.length > 1 ? ` +${r.top_flags.length - 1}` : ""}` : r.risk_band ? "All checks passed" : "–"}</span>
                   )}
                 </td>
                 <td>
@@ -204,5 +191,62 @@ export default function Upload() {
       </table>
       {rows.length === 0 && <p className="empty">No uploads yet.</p>}
     </>
+  );
+}
+
+/** One upload, from sending to its result: upload progress, then the six pipeline steps lighting
+ * up, then the verdict with the main reason and the amount, and a link to the full review. */
+function ResultCard({ s, doc }: { s: Sending; doc: DocSummary | null }) {
+  const running = !doc || doc.status === "queued" || doc.status === "processing";
+  const finished = doc && !running;
+  const v = doc ? verdictFor(doc.status, doc.risk_band, doc.top_flags.length) : null;
+  const top = doc?.top_flags[0];
+  return (
+    <li className={`rcard ${s.state} ${finished ? `fin ${v?.tone}` : ""}`}>
+      <span className="thumb">{s.thumb ? <img src={s.thumb} alt="" /> : <span className="vid">▶</span>}</span>
+      <div className="rc-body">
+        <div className="rc-top">
+          <span className="file">{s.name}</span>
+          <span className="small muted">{bytes(s.size)}</span>
+        </div>
+        {s.state === "sending" && (
+          <>
+            <span className="progress" style={{ width: "100%" }}>
+              <span style={{ width: `${Math.round(s.progress * 100)}%` }} />
+            </span>
+            <span className="small muted">Uploading · {Math.round(s.progress * 100)}%</span>
+          </>
+        )}
+        {s.state === "error" && <span className="small err">{s.note}</span>}
+        {s.state === "done" && running && (
+          <>
+            <PipelineSteps status={doc?.status ?? "queued"} stage={doc?.stage ?? null} compact />
+            <span className="small muted">
+              {!doc || doc.status === "queued" ? "Waiting for a worker" : STAGE_LABEL[doc.stage ?? ""] ?? "Processing"}
+              {s.note ? ` · ${s.note}` : ""}
+            </span>
+          </>
+        )}
+        {doc && finished && v && (
+          <div className="rc-result">
+            {doc.risk_score != null && doc.risk_band ? <ScoreRing score={doc.risk_score} band={doc.risk_band} /> : null}
+            <div className="rc-text">
+              <strong>{v.title}</strong>
+              <span className="small">
+                {top ? `${checkLabel(top.id)}: ${top.reason}` : v.advice}
+                {doc.top_flags.length > 1 ? ` (+${doc.top_flags.length - 1} more)` : ""}
+              </span>
+              <span className="small muted">
+                {doc.doc_type && doc.doc_type !== "unknown" ? doc.doc_type : "document"}
+                {doc.amount ? ` · ${compactRupees(doc.amount)}` : ""}
+              </span>
+            </div>
+            <Link className="btn" to={`/documents/${doc.id}`}>
+              Open
+            </Link>
+          </div>
+        )}
+      </div>
+    </li>
   );
 }

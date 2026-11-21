@@ -61,6 +61,14 @@ class Submitted(BaseModel):
     duplicate_of: str | None = None  # same file uploaded before (by sha256)
 
 
+class FlagBrief(BaseModel):
+    """A fired check, short: what the queue and upload cards show as "why flagged"."""
+
+    id: str
+    reason: str
+    contribution: float | None = None
+
+
 class DocumentSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: str
@@ -76,6 +84,8 @@ class DocumentSummary(BaseModel):
     owner_email: str
     created_at: datetime
     finished_at: datetime | None
+    top_flags: list[FlagBrief] = []  # fired checks, largest contribution first (at most 3)
+    amount: str | None = None  # cheque amount in figures or invoice total, as checked
 
 
 class FieldView(BaseModel):
@@ -182,6 +192,12 @@ class Stats(BaseModel):
     by_check: dict[str, int] = {}  # how often each check fired (last 1000 processed)
     median_seconds: float | None = None  # processing time, last 1000 processed
     risk_histogram: list[int] = []  # documents per 10-point risk bucket (0-9, ..., 90-100)
+    # Outcomes (v0.9.2), over the last 1000 processed documents:
+    value_flagged: float = 0.0  # sum of amounts on documents scored medium or high
+    value_rejected: float = 0.0  # sum of amounts on documents a reviewer rejected
+    agreement: float | None = None  # share of decisions that agree with the risk band
+    agreement_n: int = 0  # decisions the agreement is computed from
+    median_decision_minutes: float | None = None  # processed -> decided
 
 
 class AuditOut(BaseModel):

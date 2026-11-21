@@ -11,6 +11,12 @@ export interface User {
   created_at: string;
 }
 
+export interface FlagBrief {
+  id: string;
+  reason: string;
+  contribution: number | null;
+}
+
 export interface DocSummary {
   id: string;
   filename: string;
@@ -25,6 +31,8 @@ export interface DocSummary {
   owner_email: string;
   created_at: string;
   finished_at: string | null;
+  top_flags: FlagBrief[];
+  amount: string | null; // cheque amount in figures or invoice total, as checked
 }
 
 export interface FieldView {
@@ -77,6 +85,11 @@ export interface Stats {
   by_check: Record<string, number>;
   median_seconds: number | null;
   risk_histogram: number[];
+  value_flagged: number;
+  value_rejected: number;
+  agreement: number | null;
+  agreement_n: number;
+  median_decision_minutes: number | null;
 }
 
 export interface TemplateField {

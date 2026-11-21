@@ -3,6 +3,37 @@
 All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org/);
 each build phase is released as a minor version.
 
+## [0.9.2] - Results-first review desk
+
+### Added
+- **Review screen:** a **verdict card** at the top of the panel:
+  - an animated score gauge with the 30 / 70 band edges;
+  - a suggested action in plain words ("Stop this document", "Check before approving", "Safe to
+    approve"); the reviewer still decides;
+  - a **score breakdown** bar, one coloured segment per check that fired, sized by its points.
+    Clicking a segment highlights that check's fields on the page, like clicking the check;
+  - key facts: amount, how many fields were read with confidence, how the page was flattened,
+    processing time.
+- **Before / after** view: drag (or use the arrow keys) to compare the capture with the
+  flattened page.
+- **Upload:** each file becomes a live card: upload progress, then six pipeline steps (Capture,
+  Find page, Flatten, Read, Check, Score) lighting up as the worker reports its stage, then the
+  result: score ring, verdict, main reason, amount, and **Open**.
+- **Queue:** "Why flagged" (the checks that fired, biggest first) and "Amount" columns.
+- **Overview:** an **Outcomes** row: money stopped by reviewers (rejected), money sent for a
+  closer look (scored medium or high), how often reviewers agreed with the risk score, and the
+  median time from processed to decided. A **Decisions** donut (approved / escalated / rejected).
+- API (additive, nothing removed): document summaries carry `top_flags` (up to 3 fired checks
+  with reason and points) and `amount` (cheque amount in figures or invoice total; a reviewer's
+  correction wins). `GET /documents/stats` adds `value_flagged`, `value_rejected`,
+  `agreement`, `agreement_n` and `median_decision_minutes`.
+
+### Changed
+- "Checks" on the review screen is now "What was found"; GSTIN, MICR and IFSC are capitalised
+  in check names.
+- Narrow screens: the review page no longer scrolls sideways (grid columns are
+  `minmax(0, 1fr)`), and upload cards stack.
+
 ## [0.9.1] - Review desk upgrade, more banks, template editor
 
 ### Added

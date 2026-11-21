@@ -445,6 +445,62 @@ grows linearly with the number of banks: about 0.2 s with 4 on a laptop, about 1
 on a 2-core machine. With many banks you would shortlist first, for example with a global
 descriptor (colour histogram, or a small CNN embedding), then run SIFT only on the top few.
 
+### 3.14 v0.9.2: results first
+
+The question a reviewer brings to every screen is "what's the answer, and why?". Before 0.9.2
+the answer was there (a score, a band, a list of checks), but the reviewer had to assemble it.
+This version puts the result first on every page and keeps the evidence one click away.
+
+![Before / after](../images/phase8_before_after.png)
+
+**API (additive only: no field was removed or renamed, so old clients keep working):**
+
+| Where | New field | How it is computed |
+| --- | --- | --- |
+| Document summary (`summary()` in `app/routers/documents.py`) | `top_flags` | Fired checks from the stored result, joined with their points from `risk.contributions`, sorted by points, first 3 (`_top_flags`) |
+| Document summary | `amount` | `_amount`: a reviewer's numeric correction of `amount_figures` or `total` wins; otherwise the checked (normalised) value; never the raw OCR text |
+| `GET /documents/stats` | `value_flagged`, `value_rejected` | Sum of amounts over the last 1000 processed documents scored medium/high, and over those a reviewer rejected |
+| `GET /documents/stats` | `agreement`, `agreement_n` | Share of decided documents where the reviewer agreed with the band: a flagged document stopped (rejected or escalated), or a low one approved |
+| `GET /documents/stats` | `median_decision_minutes` | Median of `decided_at - finished_at` |
+
+Summaries are built from the `result` JSON already stored per document, so the queue needs no
+new query and no migration. `test_results_in_summaries_and_outcome_stats` checks each number,
+including that a correction like "lots" is ignored.
+
+**Frontend:**
+
+| File | What |
+| --- | --- |
+| `src/components/results.tsx` (new) | `ScoreGauge` (a half-circle SVG arc whose `stroke-dashoffset` is `length × (1 − score/100)`; the number counts up with `requestAnimationFrame` and an ease-out curve, instantly with reduced motion), `ScoreRing`, `RiskBreakdown`, `PipelineSteps`, `BeforeAfter` |
+| `src/format.ts` | `verdictFor` (band → title and advice), `PIPELINE_STEPS` and `stepIndex` (the 17 stages grouped into 6 steps), `compactRupees` (₹2,500, ₹6.13 L, ₹2.5 Cr). Plain functions, unit-tested in `format.test.ts` |
+| `src/pages/Review.tsx` | `VerdictCard` replaces the score box; one `pickCheck` handles clicks from a breakdown segment and from a check row, so both highlight the same fields; a "Before / after" tab when both the capture and the flat page exist |
+| `src/pages/Upload.tsx` | `ResultCard`: one card per file, from upload progress to steps to the result. The cards read the same polled list as the table below, so there are no extra requests |
+| `src/pages/Queue.tsx`, `Overview.tsx`, `components/charts.tsx` | "Why flagged" chips and "Amount"; the Outcomes row and the `Donut` chart |
+
+**How the pieces work:**
+- **Breakdown bar.** Each segment's width is its points as a share of the bar. Contributions can
+  add up to more than 100 (the score is capped at 100), so the segments are scaled to the
+  score. The 30 and 70 band edges are drawn on top, so you can see which check pushed the
+  document over a line. Each segment is a `<button>` with a hidden text label, so it works from
+  the keyboard and with a screen reader.
+- **Same colour, same check.** Segment colours come from CSS variables `--seg1..4`. The check row
+  with the same rank shows a matching swatch, so the bar works as a legend without a separate
+  legend.
+- **Steps.** The worker already writes the current stage to the row for the progress bar. The
+  UI maps that stage name to one of six steps. No new server work was needed.
+- **Before / after.** Two images in one box, both `object-fit: contain`. The capture is on top,
+  clipped with `clip-path: inset(0 X% 0 0)`. An invisible full-size `<input type="range">` sits
+  over them, so dragging, clicking and the arrow keys all work, and it is announced as a slider.
+  For a cheque flattened in 3D no capture image is saved (the account number can't be covered
+  reliably through a non-planar mapping), so the tab doesn't appear.
+- **Suggested action.** The text follows the band and `forced_by` only. It never says
+  "approved": the reviewer decides, and every decision is still audited.
+
+**Why "agreement" and not "accuracy".** There is no ground truth in production, only the
+reviewer's decision. Agreement says how often the risk score and the reviewer pointed the same
+way. Watched over time, a drop means a new kind of document or a drifting threshold. It is not
+a claim that the model is right.
+
 ## 4. Concepts used in this phase
 
 - **REST and status codes.**
@@ -585,3 +641,19 @@ image processing.
 A cheque leaf is a fixed layout. One blank image plus 9 boxes is enough for SIFT + RANSAC to
 register any photo of that bank and read each field from its box. No training data, and it
 works the moment it's saved. A learned detector would need many labelled photos per bank.
+
+**Q: Your overview says reviewers agreed with the score 100% of the time. Is the model perfect?**
+No. Agreement isn't accuracy: there is no ground truth in production, only the reviewer's
+decision, and a reviewer may simply trust the score. It is a monitoring number: if it drops,
+something changed (a new bank layout, a new fraud pattern, a threshold that no longer fits).
+Accuracy is measured offline on labelled data, as in the phase results.
+
+**Q: How does the score breakdown stay honest when contributions add up to more than 100?**
+The score is capped at 100, so the bar scales the segments to the score rather than to their
+sum. The order and relative sizes stay right, and the band lines (30, 70) show which check
+pushed the document over. A finding that forces "high" on its own is named under the bar.
+
+**Q: Why did you add fields to the summary instead of making the UI fetch each document?**
+A queue of 100 rows would mean 100 detail requests. The summary is built from the result JSON
+that is already loaded for the row, so `top_flags` and `amount` cost no extra query, and the
+change is additive: existing API clients ignore the new fields.

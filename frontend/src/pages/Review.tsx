@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, type CheckView, type DocDetail, type FieldView } from "../api";
 import { isReviewer, useAuth } from "../auth";
 import { RiskBadge, StatusBadge, useApiImage } from "../components/bits";
+import { BeforeAfter, PipelineSteps, RiskBreakdown, ScoreGauge } from "../components/results";
 import { ZoomCanvas, type ZoomHandle } from "../components/ZoomCanvas";
 import {
   MONEY_FIELDS,
@@ -10,10 +11,12 @@ import {
   ago,
   bytes,
   checkLabel,
+  compactRupees,
   confidenceOf,
   fieldLabel,
   fieldsForCheck,
   rupees,
+  verdictFor,
 } from "../format";
 import { reviewList, useToast } from "../ui";
 
@@ -21,6 +24,7 @@ const VIEWS: Record<string, string> = {
   page: "Fields",
   heatmap: "Heatmap on the flat page",
   original: "Capture",
+  compare: "Before / after",
   annotated: "Template boxes",
 };
 const READ_ONLY = new Set(["account_number", "micr", "signature"]); // masked, or not text
@@ -103,6 +107,15 @@ export default function Review() {
     return new Set(c ? fieldsForCheck(c.id, c.evidence) : []);
   }, [fired, litCheck]);
   const dirty = Object.keys(edits).length > 0;
+
+  /** Select a flag: highlight its fields on the page (and the heatmap for tampering). */
+  function pickCheck(id: string) {
+    if (!doc) return;
+    const on = litCheck !== id;
+    setLitCheck(on ? id : null);
+    if (doc.images.includes("page")) setView("page");
+    if (id === "TAMPER_REGION" && doc.images.includes("overlay")) setHeat(on ? 0.6 : 0);
+  }
 
   async function saveEdits() {
     if (!doc || !dirty) return;
@@ -249,7 +262,7 @@ export default function Review() {
           <div className="canvas-wrap">
             {doc.images.length > 0 && (
               <div className="view-tabs" role="tablist" aria-label="Image">
-                {doc.images
+                {[...doc.images, ...(doc.images.includes("original") && doc.images.includes("flat") ? ["compare"] : [])]
                   .filter((v) => v in VIEWS)
                   .map((v) => (
                     <button key={v} role="tab" aria-selected={view === v} onClick={() => setView(v)}>
@@ -274,35 +287,17 @@ export default function Review() {
           </div>
 
           <div className="panel">
-            {doc.risk.score != null && (
-              <section className={`section score ${doc.risk.band}`} aria-label="Risk">
-                <span className="num">{doc.risk.score}</span>
-                <div>
-                  <RiskBadge band={doc.risk.band ?? null} />
-                  <p className="small muted">
-                    {doc.risk.forced_by
-                      ? `Forced high by ${checkLabel(doc.risk.forced_by)}`
-                      : fired.length
-                        ? `${fired.length} check${fired.length > 1 ? "s" : ""} raised a flag`
-                        : "No check raised a flag"}
-                  </p>
-                </div>
-              </section>
-            )}
+            <VerdictCard doc={doc} fired={fired} active={litCheck} onPick={pickCheck} />
 
             {doc.checks.length > 0 && (
               <section className="section" aria-labelledby="checks-h">
                 <header>
-                  <h2 id="checks-h">Checks</h2>
+                  <h2 id="checks-h">What was found</h2>
                   {fired.length > 0 && <span className="small muted">Select a flag to see it on the page</span>}
                 </header>
                 <ul className="checks">
-                  {fired.map((c) => (
-                    <CheckRow key={c.id} c={c} active={litCheck === c.id} onClick={() => {
-                      setLitCheck(litCheck === c.id ? null : c.id);
-                      if (doc.images.includes("page")) setView("page");
-                      if (c.id === "TAMPER_REGION" && doc.images.includes("overlay")) setHeat((h) => (h > 0 && litCheck === c.id ? 0 : 0.6));
-                    }} />
+                  {fired.map((c, i) => (
+                    <CheckRow key={c.id} c={c} swatch={(c.contribution ?? 0) > 0 ? `seg${(i % 4) + 1}` : null} active={litCheck === c.id} onClick={() => pickCheck(c.id)} />
                   ))}
                   {passed.length > 0 && (
                     <li>
@@ -430,8 +425,9 @@ export default function Review() {
 function Processing({ doc }: { doc: DocDetail }) {
   const pct = Math.round(doc.progress * 100);
   return (
-    <div className="section" style={{ padding: 20, maxWidth: 520 }} aria-live="polite">
+    <div className="section" style={{ padding: 20, maxWidth: 640 }} aria-live="polite">
       <h2>{doc.status === "queued" ? "Waiting for a worker" : STAGE_LABEL[doc.stage ?? ""] ?? "Processing"}</h2>
+      <PipelineSteps status={doc.status} stage={doc.stage} />
       <div className="progress" style={{ width: "100%", margin: "12px 0 8px" }} role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
         <span style={{ width: `${pct}%` }} />
       </div>
@@ -462,10 +458,20 @@ function Canvas({
   setHeat: (v: number) => void;
   zoomRef: RefObject<ZoomHandle>;
 }) {
-  const { src, size } = useApiImage(doc.id, view);
+  const { src, size } = useApiImage(doc.id, view === "compare" ? null : view);
   const hasOverlay = view === "page" && doc.images.includes("overlay");
   const overlay = useApiImage(doc.id, hasOverlay && heat > 0 ? "overlay" : null);
   if (!view) return <div className="canvas empty">No image was produced for this document.</div>;
+  if (view === "compare")
+    return (
+      <>
+        <BeforeAfter docId={doc.id} />
+        <p className="legend">
+          Drag the line, or use the arrow keys. Left: the photo as taken, with the page outline found. Right: the page after{" "}
+          {doc.flattening === "3d" ? "3D reconstruction and unrolling" : "straightening"}.
+        </p>
+      </>
+    );
   if (!src || !size) return <div className="canvas skel-block" style={{ aspectRatio: "2.2 / 1" }} aria-label="Loading image" />;
   const boxes = view === "page" ? doc.fields.filter((f) => f.bbox) : [];
   return (
@@ -525,6 +531,52 @@ function Canvas({
   );
 }
 
+/** The answer first: a gauge, what it means, what the score is made of, and the key facts. */
+function VerdictCard({ doc, fired, active, onPick }: { doc: DocDetail; fired: CheckView[]; active: string | null; onPick: (id: string) => void }) {
+  const v = verdictFor(doc.status, doc.risk.band ?? doc.risk_band, fired.length, doc.risk.forced_by);
+  const readable = doc.fields.filter((f) => f.name !== "signature" && f.value);
+  const confident = readable.filter((f) => confidenceOf(f.confidence) === "high").length;
+  const seconds = doc.stages.reduce((a, s) => a + s.ms, 0) / 1000;
+  const score = doc.risk.score ?? doc.risk_score;
+  const band = doc.risk.band ?? doc.risk_band ?? "low";
+  const facts: [string, string][] = [];
+  if (doc.amount) facts.push([doc.doc_type === "invoice" ? "Invoice total" : "Amount", compactRupees(doc.amount)]);
+  if (readable.length) facts.push(["Fields read", `${confident} of ${readable.length} sure`]);
+  if (doc.flattening) facts.push(["Page", doc.flattening === "3d" ? "Unrolled in 3D" : doc.flattening === "homography" ? "Straightened" : doc.flattening]);
+  if (seconds > 0) facts.push(["Processed in", `${seconds.toFixed(1)} s`]);
+  return (
+    <section className={`section verdict ${v.tone}`} aria-label="Result">
+      <div className="v-head">
+        {score != null && <ScoreGauge score={score} band={band} />}
+        <div>
+          <p className="v-title">{v.title}</p>
+          <p className="small">{v.advice}</p>
+          {score != null && <RiskBadge band={band} score={score} />}
+        </div>
+      </div>
+      {score != null && (
+        <RiskBreakdown
+          parts={fired.filter((c) => (c.contribution ?? 0) > 0).map((c) => ({ id: c.id, points: c.contribution ?? 0 }))}
+          score={score}
+          forcedBy={doc.risk.forced_by}
+          active={active}
+          onPick={onPick}
+        />
+      )}
+      {facts.length > 0 && (
+        <dl className="facts">
+          {facts.map(([k, val]) => (
+            <div key={k}>
+              <dt>{k}</dt>
+              <dd>{val}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+    </section>
+  );
+}
+
 function StageTimeline({ stages }: { stages: DocDetail["stages"] }) {
   const total = stages.reduce((a, s) => a + s.ms, 0) || 1;
   const shown = stages.filter((s) => s.ms / total > 0.01 || !s.ok);
@@ -567,12 +619,15 @@ function ReviewSkeleton() {
   );
 }
 
-function CheckRow({ c, active, onClick }: { c: CheckView; active: boolean; onClick: () => void }) {
+function CheckRow({ c, swatch, active, onClick }: { c: CheckView; swatch: string | null; active: boolean; onClick: () => void }) {
   const low = c.confidence < 0.5;
   return (
     <li>
       <button aria-pressed={active} onClick={onClick}>
-        <strong>{checkLabel(c.id)}</strong>
+        <strong>
+          {swatch && <i className={`swatch ${swatch}`} aria-hidden="true" />}
+          {checkLabel(c.id)}
+        </strong>
         <span className="pts small">{c.contribution != null ? `+${Math.round(c.contribution)}` : ""}</span>
         <span className="reason">
           {c.reason}

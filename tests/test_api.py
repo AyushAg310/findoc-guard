@@ -582,3 +582,49 @@ def test_bulk_decisions_and_stats(api: TestClient, users: dict, cheque_jpg: byte
     assert len(s["daily"]) == 14 and s["daily"][-1]["received"] == 2
     assert s["daily"][-1]["decided"] == 1 and s["by_check"] == {"AMOUNT_MISMATCH": 1}
     assert sum(s["risk_histogram"]) == 1 and s["risk_histogram"][7] == 1
+
+
+def test_results_in_summaries_and_outcome_stats(
+    api: TestClient, users: dict, cheque_jpg: bytes
+) -> None:
+    """v0.9.2: list rows say why a document was flagged and how much it is for; the overview
+    reports money flagged and rejected and how often reviewers agreed with the risk band."""
+    rev = users["reviewer"]
+    a = upload(api, users["submitter"], cheque_jpg)
+    b = upload(api, users["submitter"], cheque_jpg)
+    put_result(a)
+    put_result(b)
+    from app.db import get_sessionmaker
+    from app.models import Document, now
+
+    with get_sessionmaker()() as ses:  # processed now; decided a moment later
+        for doc_id in (a, b):
+            ses.get(Document, doc_id).finished_at = now()
+        ses.commit()
+    rows = {r["id"]: r for r in api.get("/api/v1/documents", headers=rev).json()["items"]}
+    assert rows[a]["amount"] == "2500.00"
+    assert rows[a]["top_flags"] == [
+        {"id": "AMOUNT_MISMATCH", "reason": "Words say 25,000", "contribution": 72.0}
+    ]
+    # a reviewer's correction wins; one that isn't a number is ignored
+    api.patch(
+        f"/api/v1/documents/{a}/fields", headers=rev, json={"fields": {"amount_figures": "25,000"}}
+    )
+    api.patch(
+        f"/api/v1/documents/{b}/fields", headers=rev, json={"fields": {"amount_figures": "lots"}}
+    )
+    rows = {r["id"]: r for r in api.get("/api/v1/documents", headers=rev).json()["items"]}
+    assert rows[a]["amount"] == "25000" and rows[b]["amount"] == "2500.00"
+    api.post(
+        f"/api/v1/documents/{a}/decision",
+        headers=rev,
+        json={"decision": "rejected", "comment": "forged"},
+    )
+    api.post(
+        f"/api/v1/documents/{b}/decision", headers=rev, json={"decision": "approved", "comment": ""}
+    )
+    s = api.get("/api/v1/documents/stats", headers=rev).json()
+    assert s["value_flagged"] == 27500.0 and s["value_rejected"] == 25000.0
+    # both were scored high: rejecting a agrees with that, approving b doesn't
+    assert s["agreement_n"] == 2 and s["agreement"] == 0.5
+    assert s["median_decision_minutes"] is not None
