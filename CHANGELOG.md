@@ -3,6 +3,13 @@
 All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org/);
 each build phase is released as a minor version.
 
+## [0.9.4] - New visual theme
+
+### Changed
+- The review app drops the dark-blue look: a light sidebar, neutral warm paper, near-black text
+  and one violet accent for actions and selection. Violet was chosen because it never competes
+  with the risk colours (green, amber, red). Dark mode follows the same palette.
+
 ## [0.9.3] - No empty space on the main screens
 
 ### Changed

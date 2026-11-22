@@ -81,9 +81,9 @@ export function useApiImage(docId: string, variant: string | null) {
 export function Logo() {
   return (
     <svg width="26" height="18" viewBox="0 0 26 18" aria-hidden="true">
-      <rect x="0.75" y="0.75" width="24.5" height="16.5" rx="2" fill="none" stroke="#78C2C2" strokeWidth="1.5" />
-      <path d="M4 5h11 M4 8.5h7" stroke="#fff" strokeWidth="1.5" />
-      <path d="M4 13h2 M7.5 13h1 M10 13h3 M14.5 13h1 M17 13h2" stroke="#78C2C2" strokeWidth="2" />
+      <rect x="0.75" y="0.75" width="24.5" height="16.5" rx="2" fill="none" stroke="var(--rail-accent)" strokeWidth="1.5" />
+      <path d="M4 5h11 M4 8.5h7" stroke="var(--rail-ink)" strokeWidth="1.5" />
+      <path d="M4 13h2 M7.5 13h1 M10 13h3 M14.5 13h1 M17 13h2" stroke="var(--rail-accent)" strokeWidth="2" />
     </svg>
   );
 }
