@@ -122,7 +122,17 @@ export function RiskBreakdown({
 }
 
 /** Six steps of the pipeline, lit up as a document moves through them. */
-export function PipelineSteps({ status, stage, compact = false }: { status: string; stage: string | null; compact?: boolean }) {
+export function PipelineSteps({
+  status,
+  stage,
+  compact = false,
+  times,
+}: {
+  status: string;
+  stage: string | null;
+  compact?: boolean;
+  times?: number[]; // milliseconds spent in each step, shown under its label
+}) {
   const at = stepIndex(status, stage);
   return (
     <ol className={`steps ${compact ? "compact" : ""}`} aria-label="Processing steps">
@@ -134,6 +144,7 @@ export function PipelineSteps({ status, stage, compact = false }: { status: stri
               {state === "done" ? "✓" : ""}
             </span>
             <span className="lbl">{s.label}</span>
+            {times && <span className="ms">{times[i] ? fmtMs(times[i]) : "skipped"}</span>}
           </li>
         );
       })}
@@ -168,3 +179,5 @@ export function BeforeAfter({ docId }: { docId: string }) {
     </div>
   );
 }
+
+const fmtMs = (ms: number) => (ms < 1000 ? `${Math.round(ms)} ms` : `${(ms / 1000).toFixed(1)} s`);

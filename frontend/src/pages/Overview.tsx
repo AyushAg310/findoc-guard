@@ -14,10 +14,13 @@ export default function Overview() {
   useEffect(() => {
     const load = () => {
       api.stats().then(setStats).catch((e) => setError(e.message));
-      const p = new URLSearchParams({ limit: "5" });
+      const p = new URLSearchParams({ limit: "100" });
       ["needs_review", "escalated"].forEach((s) => p.append("status", s));
-      p.append("band", "high");
-      api.documents(p).then((r) => setUrgent(r.items)).catch(() => {});
+      ["high", "medium"].forEach((b) => p.append("band", b));
+      api
+        .documents(p)
+        .then((r) => setUrgent([...r.items].sort((a, b) => (b.risk_score ?? 0) - (a.risk_score ?? 0)).slice(0, 4)))
+        .catch(() => {});
     };
     load();
     const t = setInterval(load, 15000);
@@ -137,23 +140,27 @@ export default function Overview() {
         </section>
         <section className="section">
           <header>
-            <h2>High risk, waiting</h2>
-            <Link className="small" to="/?view=To+review&band=high">
+            <h2>Most urgent, waiting</h2>
+            <Link className="small" to="/?view=To+review">
               See all
             </Link>
           </header>
           <ul className="urgent">
             {urgent.map((d) => (
               <li key={d.id}>
-                <Link to={`/documents/${d.id}`} className="file">
-                  {d.filename}
-                </Link>
-                <span className="small">{d.top_flags[0] ? checkLabel(d.top_flags[0].id) : ""}</span>
+                <span className="u-name">
+                  <Link to={`/documents/${d.id}`} className="file">
+                    {d.filename}
+                  </Link>
+                  <span className="small muted">
+                    {d.top_flags[0] ? `${checkLabel(d.top_flags[0].id)} · ` : ""}
+                    {ago(d.created_at)}
+                  </span>
+                </span>
                 <RiskBadge band={d.risk_band} score={d.risk_score} />
-                <span className="muted small">{ago(d.created_at)}</span>
               </li>
             ))}
-            {urgent.length === 0 && <li className="muted">No high-risk document is waiting.</li>}
+            {urgent.length === 0 && <li className="muted">Nothing flagged is waiting. The queue is clear.</li>}
           </ul>
         </section>
       </div>

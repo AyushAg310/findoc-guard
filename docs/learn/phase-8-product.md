@@ -496,6 +496,12 @@ including that a correction like "lots" is ignored.
 - **Suggested action.** The text follows the band and `forced_by` only. It never says
   "approved": the reviewer decides, and every decision is still audited.
 
+**v0.9.3: filling the page.** The space under the image now holds previews of the other
+views and a "How it was processed" card (step times from the stored stage log, grouped by
+`PIPELINE_STEPS`). The image column is sticky; when it is taller than the window, a small
+effect sets its `top` to `innerHeight − height − decision bar`, a negative value, so it sticks
+by its bottom edge instead. A `ResizeObserver` keeps that right as images load.
+
 **Why "agreement" and not "accuracy".** There is no ground truth in production, only the
 reviewer's decision. Agreement says how often the risk score and the reviewer pointed the same
 way. Watched over time, a drop means a new kind of document or a drifting threshold. It is not

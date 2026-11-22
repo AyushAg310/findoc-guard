@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, type DocSummary } from "../api";
-import { RiskBadge, StatusBadge } from "../components/bits";
+import { RiskBadge, StatusBadge, useApiImage } from "../components/bits";
 import { PipelineSteps, ScoreRing } from "../components/results";
 import { STAGE_LABEL, ago, bytes, checkLabel, compactRupees, verdictFor } from "../format";
 import { useToast } from "../ui";
@@ -37,6 +37,7 @@ export default function Upload() {
       .catch(() => {});
   }, []);
 
+  const latest = rows.filter((r) => r.risk_band).slice(0, 3);
   const busy = rows.some((r) => r.status === "queued" || r.status === "processing");
   useEffect(() => {
     load();
@@ -117,14 +118,33 @@ export default function Upload() {
             Take a photo
             <input type="file" accept="image/*" capture="environment" className="visually-hidden" onChange={(e) => send(e.target.files)} />
           </label>
-          {sending.length > 0 && (
+          {sending.length > 0 ? (
             <ul className="results" aria-label="Your uploads" aria-live="polite">
               {sending.map((s) => (
                 <ResultCard key={s.key} s={s} doc={rows.find((r) => r.id === s.id) ?? null} />
               ))}
             </ul>
+          ) : (
+            latest.length > 0 && (
+              <>
+                <h2 className="ov-h" style={{ margin: "8px 0 0" }}>
+                  Latest results
+                </h2>
+                <ul className="results" aria-label="Latest results">
+                  {latest.map((d) => (
+                    <ResultCard
+                      key={d.id}
+                      s={{ key: 0, name: d.filename, size: 0, thumb: null, progress: 1, state: "done", id: d.id }}
+                      doc={d}
+                    />
+                  ))}
+                </ul>
+              </>
+            )
           )}
         </div>
+        <div className="stack">
+        <UploadSummary rows={rows} />
         <div className="options">
           <h2>Cheque options</h2>
           <label style={{ display: "flex", gap: 8, alignItems: "start" }}>
@@ -141,6 +161,16 @@ export default function Upload() {
             <input type="text" inputMode="numeric" value={account} maxLength={34} onChange={(e) => setAccount(e.target.value)} />
             <span className="muted">Optional; used when the account number can't be read.</span>
           </label>
+        </div>
+        <div className="options tips">
+          <h2>For a good result</h2>
+          <ul>
+            <li>Keep all four corners in view, on a plain, darker surface.</li>
+            <li>Hold steady: blurry photos are sent back.</li>
+            <li>Avoid glare from lamps and windows.</li>
+            <li>Folded cheque? Record a 3–5 second video moving slowly around it; the page is rebuilt in 3D.</li>
+          </ul>
+        </div>
         </div>
       </div>
 
@@ -203,11 +233,13 @@ function ResultCard({ s, doc }: { s: Sending; doc: DocSummary | null }) {
   const top = doc?.top_flags[0];
   return (
     <li className={`rcard ${s.state} ${finished ? `fin ${v?.tone}` : ""}`}>
-      <span className="thumb">{s.thumb ? <img src={s.thumb} alt="" /> : <span className="vid">▶</span>}</span>
+      <span className="thumb">
+        {s.thumb ? <img src={s.thumb} alt="" /> : doc && finished && doc.kind === "image" ? <Thumb docId={doc.id} /> : <span className="vid">▶</span>}
+      </span>
       <div className="rc-body">
         <div className="rc-top">
           <span className="file">{s.name}</span>
-          <span className="small muted">{bytes(s.size)}</span>
+          <span className="small muted">{s.size ? bytes(s.size) : ago(doc?.created_at ?? "")}</span>
         </div>
         {s.state === "sending" && (
           <>
@@ -249,4 +281,49 @@ function ResultCard({ s, doc }: { s: Sending; doc: DocSummary | null }) {
       </div>
     </li>
   );
+}
+
+/** Your recent uploads at a glance: how many came back safe, to check, or stopped. */
+function UploadSummary({ rows }: { rows: DocSummary[] }) {
+  const done = rows.filter((r) => r.risk_band);
+  const count = (b: string) => done.filter((r) => r.risk_band === b).length;
+  const running = rows.filter((r) => r.status === "queued" || r.status === "processing").length;
+  const retake = rows.filter((r) => r.status === "rejected_quality").length;
+  const total = done.reduce((a, r) => a + Number(r.amount ?? 0), 0);
+  const parts = [
+    { label: "Safe", n: count("low"), cls: "low" },
+    { label: "To check", n: count("medium"), cls: "medium" },
+    { label: "Stopped", n: count("high"), cls: "high" },
+  ];
+  return (
+    <div className="options summary-card">
+      <h2>Your recent uploads</h2>
+      {done.length === 0 && !running ? (
+        <p className="muted small">Results appear here as your documents are checked.</p>
+      ) : (
+        <>
+          <div className="mix" role="img" aria-label={parts.map((p) => `${p.label}: ${p.n}`).join(", ")}>
+            {parts.map((p) => p.n > 0 && <span key={p.label} className={p.cls} style={{ flexGrow: p.n }} />)}
+          </div>
+          <ul className="mix-legend">
+            {parts.map((p) => (
+              <li key={p.label}>
+                <i className={p.cls} /> {p.label} <strong>{p.n}</strong>
+              </li>
+            ))}
+          </ul>
+          <p className="small muted">
+            {done.length} checked{running ? ` · ${running} in progress` : ""}
+            {retake ? ` · ${retake} need a retake` : ""}
+            {total ? ` · ${compactRupees(total)} in all` : ""}
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
+
+function Thumb({ docId }: { docId: string }) {
+  const { src } = useApiImage(docId, "page");
+  return src ? <img src={src} alt="" /> : null;
 }

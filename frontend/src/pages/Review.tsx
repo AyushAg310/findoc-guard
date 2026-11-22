@@ -7,6 +7,7 @@ import { BeforeAfter, PipelineSteps, RiskBreakdown, ScoreGauge } from "../compon
 import { ZoomCanvas, type ZoomHandle } from "../components/ZoomCanvas";
 import {
   MONEY_FIELDS,
+  PIPELINE_STEPS,
   STAGE_LABEL,
   ago,
   bytes,
@@ -58,6 +59,7 @@ export default function Review() {
   const [heat, setHeat] = useState(0); // heatmap overlay opacity on the Fields view, 0..1
   const [autoNext, setAutoNext] = useState(true);
   const commentRef = useRef<HTMLTextAreaElement>(null);
+  const leftRef = useRef<HTMLDivElement>(null);
   const zoom = useRef<ZoomHandle>(null);
   const toast = useToast();
 
@@ -91,6 +93,25 @@ export default function Review() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // The image column stays in view while the panel scrolls. When it is taller than the window,
+  // it sticks by its bottom edge (above the decision bar) instead, so nothing is cut off.
+  useEffect(() => {
+    const el = leftRef.current;
+    if (!el) return;
+    const place = () => {
+      const bar = document.querySelector(".decision-bar")?.getBoundingClientRect().height ?? 0;
+      el.style.top = `${Math.min(16, window.innerHeight - el.offsetHeight - bar - 16)}px`;
+    };
+    place();
+    const ro = new ResizeObserver(place);
+    ro.observe(el);
+    window.addEventListener("resize", place);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", place);
+    };
+  }, [doc?.id, running]);
   useEffect(() => {
     if (!running) return;
     const t = setInterval(load, 1500);
@@ -259,7 +280,7 @@ export default function Review() {
 
       {!running && (
         <div className="review">
-          <div className="canvas-wrap">
+          <div className="canvas-wrap" ref={leftRef}>
             {doc.images.length > 0 && (
               <div className="view-tabs" role="tablist" aria-label="Image">
                 {[...doc.images, ...(doc.images.includes("original") && doc.images.includes("flat") ? ["compare"] : [])]
@@ -284,6 +305,8 @@ export default function Review() {
                 document.getElementById(`f-${n}`)?.focus();
               }}
             />
+            <ViewStrip doc={doc} current={view} onPick={setView} />
+            <HowProcessed doc={doc} />
           </div>
 
           <div className="panel">
@@ -528,6 +551,63 @@ function Canvas({
         <p className="legend">Red marks areas whose compression traces differ from the rest of the page: possible edits.</p>
       )}
     </>
+  );
+}
+
+/** Small previews of the other images; click one to show it on the canvas. */
+function ViewStrip({ doc, current, onPick }: { doc: DocDetail; current: string | null; onPick: (v: string) => void }) {
+  const views = doc.images.filter((v) => v in VIEWS && v !== current);
+  if (!views.length) return null;
+  return (
+    <div className="view-strip" aria-label="Other views">
+      {views.map((v) => (
+        <button key={v} onClick={() => onPick(v)} title={`Show ${VIEWS[v].toLowerCase()}`}>
+          <Thumb docId={doc.id} variant={v} />
+          <span>{VIEWS[v]}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function Thumb({ docId, variant }: { docId: string; variant: string }) {
+  const { src } = useApiImage(docId, variant);
+  return src ? <img src={src} alt="" /> : <span className="skel-block" />;
+}
+
+/** The six pipeline steps with the time each took, and what the capture looked like. */
+function HowProcessed({ doc }: { doc: DocDetail }) {
+  if (!doc.stages.length) return null;
+  const times = PIPELINE_STEPS.map((step) => doc.stages.filter((s) => step.stages.includes(s.stage)).reduce((a, s) => a + s.ms, 0));
+  const total = times.reduce((a, t) => a + t, 0) / 1000;
+  const q = doc.quality;
+  const notes: [string, string][] = [];
+  if (q.sharpness != null) notes.push(["Sharpness", `${Math.round(q.sharpness)} (blurry below 100)`]);
+  if (q.glare_fraction != null) notes.push(["Glare", `${(q.glare_fraction * 100).toFixed(1)}% of the photo`]);
+  if (doc.flattening)
+    notes.push([
+      "Flattening",
+      doc.flattening === "3d" ? "rebuilt in 3D from the video, then unrolled" : doc.flattening === "homography" ? "one homography: the page was flat" : doc.flattening,
+    ]);
+  if (doc.page_frame === "template") notes.push(["Layout", "matched to the bank's blank cheque"]);
+  return (
+    <section className="section how" aria-labelledby="how-h">
+      <header>
+        <h2 id="how-h">How it was processed</h2>
+        <span className="small muted">{total.toFixed(1)} s in all</span>
+      </header>
+      <div className="body">
+        <PipelineSteps status="processed" stage={null} times={times} />
+        <dl className="facts">
+          {notes.map(([k, v]) => (
+            <div key={k}>
+              <dt>{k}</dt>
+              <dd>{v}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </section>
   );
 }
 

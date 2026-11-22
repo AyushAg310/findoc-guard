@@ -713,3 +713,30 @@ code.key { display: block; word-break: break-all; background: var(--paper); padd
   .rc-result .btn { grid-column: 1 / -1; justify-self: start; }
   .v-head { grid-template-columns: 1fr; justify-items: start; }
 }
+
+/* Filling the page: previews and processing under the canvas, summary and tips on Upload */
+.view-strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin: 14px 0; }
+.view-strip button { display: grid; gap: 4px; padding: 6px; background: var(--sheet); border: 1px solid var(--rule); border-radius: var(--radius); cursor: pointer; text-align: left; color: var(--ink-2); font-size: var(--step--1); transition: border-color .15s, transform .15s; }
+.view-strip button:hover { border-color: var(--teal); transform: translateY(-1px); }
+.view-strip button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.view-strip img, .view-strip .skel-block { width: 100%; aspect-ratio: 2.2 / 1; object-fit: cover; border-radius: 3px; display: block; background: var(--rule-soft); }
+.how .steps { margin: 4px 0 14px; }
+.steps .ms { font-size: 11px; color: var(--ink-3); font-weight: 400; font-variant-numeric: tabular-nums; }
+.how .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.how .facts dd { font-weight: 500; }
+.summary-card .mix { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: var(--rule-soft); gap: 2px; }
+.summary-card .mix span.low, .mix-legend i.low { background: var(--low); }
+.summary-card .mix span.medium, .mix-legend i.medium { background: var(--medium-line); }
+.summary-card .mix span.high, .mix-legend i.high { background: var(--high); }
+.mix-legend { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: var(--step--1); }
+.mix-legend li { display: flex; align-items: center; gap: 8px; }
+.mix-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.mix-legend strong { margin-left: auto; }
+.tips ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: var(--step--1); color: var(--ink-2); }
+.upload-grid > .stack:last-child { gap: 16px; }
+
+.urgent li { grid-template-columns: minmax(0, 1fr) auto; padding: 7px 16px; }
+.u-name { display: grid; min-width: 0; }
+.u-name .file { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.how .facts { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 1300px) { .how .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

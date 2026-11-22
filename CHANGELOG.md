@@ -3,6 +3,18 @@
 All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org/);
 each build phase is released as a minor version.
 
+## [0.9.3] - No empty space on the main screens
+
+### Changed
+- **Review:** under the page image, previews of the other views (click to switch) and a "How it
+  was processed" card: the six pipeline steps with the time each took, sharpness, glare, how
+  the page was flattened and whether it matched a bank template. The image column sticks by
+  its bottom edge when it is taller than the window, so nothing hides behind the decision bar.
+- **Upload:** a "Your recent uploads" card (safe / to check / stopped, total amount), photo tips,
+  and the latest three results as cards when nothing is uploading.
+- **Overview:** "Most urgent, waiting" lists the highest-scored flagged documents (medium or
+  high) instead of an empty box when nothing is high risk.
+
 ## [0.9.2] - Results-first review desk
 
 ### Added
